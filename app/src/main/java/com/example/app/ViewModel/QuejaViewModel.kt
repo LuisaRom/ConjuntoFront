@@ -60,7 +60,7 @@ class QuejaViewModel @Inject constructor(
         }
     }
 
-    fun guardar(queja: Queja) = viewModelScope.launch {
+    fun guardar(queja: Queja, onSuccess: (() -> Unit)? = null) = viewModelScope.launch {
         _isLoading.value = true
         _error.value = null
         try {
@@ -68,6 +68,7 @@ class QuejaViewModel @Inject constructor(
                 repository.guardar(queja)
             }
             obtenerTodos()
+            onSuccess?.invoke()
         } catch (e: Exception) {
             _error.value = "Error al guardar queja: ${e.message}"
         } finally {

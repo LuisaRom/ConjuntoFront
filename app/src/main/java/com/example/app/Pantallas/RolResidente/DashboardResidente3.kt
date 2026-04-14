@@ -42,6 +42,8 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 
+private const val REFRESCO_NOVEDADES_RESIDENTE_MS = 3000L
+
 @Composable
 fun PantallaInicioResidentes(
     navController: NavController,
@@ -50,6 +52,7 @@ fun PantallaInicioResidentes(
     val notificaciones by notificacionViewModel.notificaciones.collectAsState()
     val isLoading by notificacionViewModel.isLoading.collectAsState()
     val error by notificacionViewModel.error.collectAsState()
+    val notificacionesRender = remember { mutableStateListOf<Notificacion>() }
 
     // Refrescar notificaciones cuando se entra a la pantalla
     LaunchedEffect(Unit) {
@@ -63,11 +66,64 @@ fun PantallaInicioResidentes(
     // Refrescar periódicamente para mantener sincronizado con otros dashboards
     LaunchedEffect(Unit) {
         while (true) {
-            kotlinx.coroutines.delay(5000) // Refrescar cada 5 segundos
+            kotlinx.coroutines.delay(REFRESCO_NOVEDADES_RESIDENTE_MS)
             try {
-                notificacionViewModel.obtenerTodos()
+                notificacionViewModel.obtenerTodosSilencioso()
             } catch (e: Exception) {
                 // Error manejado por el ViewModel
+            }
+        }
+    }
+
+    // Actualiza por cambios de items para evitar recrear toda la vista.
+    LaunchedEffect(notificaciones) {
+        val nuevas = notificaciones.filter { notificacion ->
+            if (!notificacion.esValida()) {
+                return@filter false
+            }
+            val mensaje = notificacion.mensaje?.lowercase() ?: ""
+            val esPaqueteria = (mensaje.contains("paquete") || mensaje.contains("paquetería") || mensaje.contains("transportadora")) &&
+                (mensaje.contains("recoger") || mensaje.contains("portería") || mensaje.contains("disponible"))
+            val tieneRecibo = mensaje.contains("recibo")
+            val tieneTipoRecibo = mensaje.contains("enel") || mensaje.contains("vanti") || mensaje.contains("epz")
+            val esRecibo = tieneRecibo && tieneTipoRecibo
+            !esPaqueteria && !esRecibo
+        }.reversed()
+
+        val actualesPorId = notificacionesRender.withIndex()
+            .associate { (index, item) -> (item.id ?: Long.MIN_VALUE - index.toLong()) to index }
+        val nuevasClaves = mutableSetOf<Long>()
+
+        nuevas.forEachIndexed { nuevoIndex, itemNuevo ->
+            val clave = itemNuevo.id ?: Long.MIN_VALUE - nuevoIndex.toLong()
+            nuevasClaves.add(clave)
+            val indiceActual = actualesPorId[clave]
+
+            if (indiceActual == null) {
+                if (nuevoIndex <= notificacionesRender.lastIndex + 1) {
+                    notificacionesRender.add(nuevoIndex, itemNuevo)
+                } else {
+                    notificacionesRender.add(itemNuevo)
+                }
+            } else {
+                if (indiceActual != nuevoIndex) {
+                    val movido = notificacionesRender.removeAt(indiceActual)
+                    if (nuevoIndex <= notificacionesRender.lastIndex + 1) {
+                        notificacionesRender.add(nuevoIndex, movido)
+                    } else {
+                        notificacionesRender.add(movido)
+                    }
+                }
+                if (notificacionesRender[nuevoIndex] != itemNuevo) {
+                    notificacionesRender[nuevoIndex] = itemNuevo
+                }
+            }
+        }
+
+        for (i in notificacionesRender.lastIndex downTo 0) {
+            val clave = notificacionesRender[i].id ?: Long.MIN_VALUE - i.toLong()
+            if (clave !in nuevasClaves) {
+                notificacionesRender.removeAt(i)
             }
         }
     }
@@ -162,34 +218,7 @@ fun PantallaInicioResidentes(
                 CircularProgressIndicator(color = DoradoElegante)
             }
         } else {
-            // Filtrar notificaciones válidas y EXCLUIR ABSOLUTAMENTE las de paquetería Y recibos (solo mostrar publicaciones/novedades)
-            // Usar derivedStateOf para evitar recálculos innecesarios cuando el contenido no cambia
-            val notificacionesValidas = remember(notificaciones) {
-                notificaciones.filter { notificacion ->
-                    // Primero verificar que sea válida
-                    if (!notificacion.esValida()) {
-                        return@filter false
-                    }
-                    
-                    // Verificar si es de paquetería
-                    val mensaje = notificacion.mensaje?.lowercase() ?: ""
-                    val esPaqueteria = (mensaje.contains("paquete") || mensaje.contains("paquetería") || mensaje.contains("transportadora")) && 
-                                     (mensaje.contains("recoger") || mensaje.contains("portería") || mensaje.contains("disponible"))
-                    
-                    // Verificar si es de recibo (debe contener "recibo" Y uno de los tipos: ENEL, VANTI, EPZ)
-                    val tieneRecibo = mensaje.contains("recibo")
-                    val tieneEnel = mensaje.contains("enel")
-                    val tieneVanti = mensaje.contains("vanti")
-                    val tieneEpz = mensaje.contains("epz")
-                    val tieneTipoRecibo = tieneEnel || tieneVanti || tieneEpz
-                    val esRecibo = tieneRecibo && tieneTipoRecibo
-                    
-                    // SOLO incluir si NO es de paquetería Y NO es de recibo
-                    !esPaqueteria && !esRecibo
-                }
-            }
-            
-            if (notificacionesValidas.isEmpty()) {
+            if (notificacionesRender.isEmpty()) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -203,7 +232,6 @@ fun PantallaInicioResidentes(
                     )
                 }
             } else {
-                val notificacionesReversed = notificacionesValidas.reversed()
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -211,9 +239,9 @@ fun PantallaInicioResidentes(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(
-                        count = notificacionesReversed.size,
+                        count = notificacionesRender.size,
                         key = { index -> 
-                            val notificacion = notificacionesReversed[index]
+                            val notificacion = notificacionesRender[index]
                             notificacion.id ?: run {
                                 val mensajeHash = notificacion.mensajeSeguro().hashCode().toLong()
                                 val fechaHash = notificacion.fechaEnvio?.hashCode()?.toLong() ?: 0L
@@ -221,7 +249,7 @@ fun PantallaInicioResidentes(
                             }
                         }
                     ) { index ->
-                        val notificacion = notificacionesReversed[index]
+                        val notificacion = notificacionesRender[index]
                         PublicacionItemResidente(
                             notificacion = notificacion,
                             usuarioViewModel = hiltViewModel()

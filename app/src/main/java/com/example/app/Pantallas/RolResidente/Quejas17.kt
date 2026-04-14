@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.AttachFile
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,23 +15,52 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.app.Model.Queja
+import com.example.app.ViewModel.QuejaViewModel
+import com.example.app.ViewModel.UsuarioViewModel
 import com.example.app.ui.theme.AzulOscuro
 import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaQuejasResidente(navController: NavController) {
+fun PantallaQuejasResidente(
+    navController: NavController,
+    quejaViewModel: QuejaViewModel = hiltViewModel(),
+    usuarioViewModel: UsuarioViewModel = hiltViewModel()
+) {
     val context = LocalContext.current
+    val usuarioActual by usuarioViewModel.usuarioActual.collectAsState()
+    val quejas by quejaViewModel.quejas.collectAsState()
+    val isLoading by quejaViewModel.isLoading.collectAsState()
 
-    var torreApto by remember { mutableStateOf("") }
+    var torreAcusado by remember { mutableStateOf("") }
+    var apartamentoAcusado by remember { mutableStateOf("") }
     var fecha by remember { mutableStateOf("") }
+    var showDatePicker by remember { mutableStateOf(false) }
     var tipo by remember { mutableStateOf("") }
     var expanded by remember { mutableStateOf(false) }
     var mensaje by remember { mutableStateOf("") }
 
     val opcionesTipo = listOf("Ruido", "Violencia", "Mascota")
+    val torreAptoReporta = remember(usuarioActual) {
+        val torre = usuarioActual?.torre?.ifBlank { "-" } ?: "-"
+        val apto = usuarioActual?.apartamento?.ifBlank { "-" } ?: "-"
+        "$torre - $apto"
+    }
+    val misQuejas = remember(quejas, usuarioActual?.id) {
+        quejas.filter { it.usuario?.id == usuarioActual?.id }
+    }
+
+    LaunchedEffect(Unit) {
+        quejaViewModel.obtenerTodos()
+    }
 
     Column(
         modifier = Modifier
@@ -59,10 +87,43 @@ fun PantallaQuejasResidente(navController: NavController) {
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Text("Torre y Apartamento", color = Color.White)
+        Text("Reporta (usuario logueado)", color = Color.White)
         OutlinedTextField(
-            value = torreApto,
-            onValueChange = { torreApto = it },
+            value = torreAptoReporta,
+            onValueChange = {},
+            enabled = false,
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            colors = OutlinedTextFieldDefaults.colors(
+                disabledTextColor = Color.White,
+                disabledBorderColor = GrisClaro,
+                disabledLabelColor = GrisClaro
+            )
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Text("Torre del acusado *", color = Color.White)
+        OutlinedTextField(
+            value = torreAcusado,
+            onValueChange = { torreAcusado = it },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            colors = OutlinedTextFieldDefaults.colors(
+                unfocusedContainerColor = AzulOscuro,
+                focusedBorderColor = DoradoElegante,
+                unfocusedBorderColor = GrisClaro,
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White
+            )
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Text("Apartamento del acusado (opcional)", color = Color.White)
+        OutlinedTextField(
+            value = apartamentoAcusado,
+            onValueChange = { apartamentoAcusado = it },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             colors = OutlinedTextFieldDefaults.colors(
@@ -79,10 +140,20 @@ fun PantallaQuejasResidente(navController: NavController) {
         Text("Fecha", color = Color.White)
         OutlinedTextField(
             value = fecha,
-            onValueChange = { fecha = it },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            placeholder = { Text("dd/mm/aaaa") },
+            onValueChange = {},
+            readOnly = true,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { showDatePicker = true },
+            placeholder = { Text("Seleccionar en calendario") },
+            trailingIcon = {
+                Text(
+                    "Calendario",
+                    color = DoradoElegante,
+                    fontSize = 12.sp,
+                    modifier = Modifier.clickable { showDatePicker = true }
+                )
+            },
             colors = OutlinedTextFieldDefaults.colors(
                 unfocusedContainerColor = AzulOscuro,
                 focusedBorderColor = DoradoElegante,
@@ -154,15 +225,111 @@ fun PantallaQuejasResidente(navController: NavController) {
 
         Button(
             onClick = {
-                Toast.makeText(context, "Queja creada con exito", Toast.LENGTH_SHORT).show()
+                if (usuarioActual?.id == null) {
+                    Toast.makeText(context, "No hay sesión activa", Toast.LENGTH_SHORT).show()
+                    return@Button
+                }
+                if (torreAcusado.isBlank() || fecha.isBlank() || tipo.isBlank() || mensaje.isBlank()) {
+                    Toast.makeText(context, "Completa los campos obligatorios", Toast.LENGTH_SHORT).show()
+                    return@Button
+                }
+                val detalle = buildString {
+                    append("Fecha: $fecha\n")
+                    append("Tipo: $tipo\n")
+                    append("Acusado Torre: $torreAcusado")
+                    if (apartamentoAcusado.isNotBlank()) append(" - Apto: $apartamentoAcusado")
+                    append("\n")
+                    append("Descripción: $mensaje")
+                }
+                val queja = Queja(
+                    descripcion = detalle,
+                    tipo = tipo,
+                    torreApartamento = "$torreAcusado${if (apartamentoAcusado.isNotBlank()) " - $apartamentoAcusado" else ""}",
+                    mensaje = mensaje,
+                    fechaCreacion = fecha,
+                    estado = "En proceso",
+                    usuario = usuarioActual
+                )
+                quejaViewModel.guardar(queja) {
+                    Toast.makeText(context, "Queja creada con éxito", Toast.LENGTH_SHORT).show()
+                    navController.navigate("PantallaMenuResidente") {
+                        popUpTo("PantallaMenuResidente") { inclusive = false }
+                        launchSingleTop = true
+                    }
+                }
             },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = DoradoElegante)
+            colors = ButtonDefaults.buttonColors(containerColor = DoradoElegante),
+            enabled = !isLoading
         ) {
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("Crear Queja", color = AzulOscuro, fontWeight = FontWeight.Bold)
+            Text(
+                if (isLoading) "Guardando..." else "Crear Queja",
+                color = AzulOscuro,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+        Text("Mis quejas y seguimiento", color = Color.White, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(8.dp))
+
+        if (misQuejas.isEmpty()) {
+            Text("Aún no has creado quejas.", color = Color.LightGray)
+        } else {
+            misQuejas.forEach { q ->
+                val finalizada = q.estado.equals("finalizada", true) || q.estado.equals("finalizado", true)
+                val colorEstado = if (finalizada) Color(0xFF2E7D32) else Color(0xFFE6A700)
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.06f))
+                ) {
+                    Column(modifier = Modifier.padding(10.dp)) {
+                        Text("Tipo: ${q.categoriaVisual()}", color = Color.White, fontWeight = FontWeight.SemiBold)
+                        Text("Detalle: ${q.detalleVisual()}", color = Color.LightGray, fontSize = 12.sp)
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = if (finalizada) "Finalizada" else "En proceso",
+                            color = Color.White,
+                            modifier = Modifier
+                                .background(colorEstado, RoundedCornerShape(6.dp))
+                                .padding(horizontal = 10.dp, vertical = 4.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    if (showDatePicker) {
+        val state = rememberDatePickerState()
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                Button(onClick = {
+                    state.selectedDateMillis?.let { millis ->
+                        fecha = java.time.Instant.ofEpochMilli(millis)
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDate()
+                            .format(DateTimeFormatter.ISO_DATE)
+                    }
+                    showDatePicker = false
+                }) { Text("Aceptar") }
+            },
+            dismissButton = {
+                Text(
+                    "Cancelar",
+                    color = GrisClaro,
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .clickable { showDatePicker = false }
+                )
+            }
+        ) {
+            DatePicker(state = state)
         }
     }
 }

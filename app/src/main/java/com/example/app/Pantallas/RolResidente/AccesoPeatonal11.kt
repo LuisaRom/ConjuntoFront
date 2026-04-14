@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.LightGray
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.LocalTextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -96,7 +97,7 @@ fun PantallaAccesoPeatonalResidente(
                 }
 
                 // Generar código QR único
-                val codigoQR = "ACCESO-${System.currentTimeMillis()}-${torre}-${apartamento}"
+                val codigoQR = "PEAT-${System.currentTimeMillis()}-${torre}-${apartamento}"
                 
                 // Crear el acceso peatonal
                 val acceso = AccesoPeatonal(
@@ -112,9 +113,9 @@ fun PantallaAccesoPeatonalResidente(
 
                 // Guardar en el backend
                 accesoPeatonalViewModel.guardarAccesoPeatonal(acceso)
-                
-                // Generar QR con el código
-                qrBitmap = generarCodigoQR(codigoQR)
+                accesoGuardado = acceso
+                qrBitmap = null
+                Toast.makeText(context, "Acceso peatonal creado", Toast.LENGTH_SHORT).show()
             },
             modifier = Modifier.fillMaxWidth(),
             colors = ButtonDefaults.buttonColors(containerColor = DoradoElegante),
@@ -131,6 +132,22 @@ fun PantallaAccesoPeatonalResidente(
         }
 
         Spacer(modifier = Modifier.height(24.dp))
+
+        if (accesoGuardado != null) {
+            Button(
+                onClick = {
+                    val acceso = accesoGuardado ?: return@Button
+                    val payload = construirPayloadQrPeatonal(acceso)
+                    qrBitmap = generarCodigoQR(payload)
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Black)
+            ) {
+                Text("Generar QR", color = Color.White)
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
 
         qrBitmap?.let {
             Column(
@@ -173,6 +190,18 @@ fun generarCodigoQR(texto: String): Bitmap {
         }
     }
     return bitmap
+}
+
+private fun construirPayloadQrPeatonal(acceso: AccesoPeatonal): String {
+    return listOf(
+        "tipo=PEATONAL",
+        "codigo=${acceso.codigoQr}",
+        "visitante=${acceso.nombreVisitante}",
+        "torre=${acceso.torre}",
+        "apartamento=${acceso.apartamento}",
+        "autoriza=${acceso.autorizadoPor?.nombre ?: acceso.autorizadoPor?.usuario ?: ""}",
+        "fecha=${acceso.horaAutorizada ?: ""}"
+    ).joinToString("|")
 }
 
 @Composable

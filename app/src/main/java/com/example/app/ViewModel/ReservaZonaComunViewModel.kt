@@ -45,7 +45,7 @@ class ReservaZonaComunViewModel @Inject constructor(
         }
     }
 
-    fun guardar(reserva: ReservaZonaComun) = viewModelScope.launch {
+    fun guardar(reserva: ReservaZonaComun, onSuccess: (() -> Unit)? = null) = viewModelScope.launch {
         _isLoading.value = true
         _error.value = null
         try {
@@ -53,6 +53,7 @@ class ReservaZonaComunViewModel @Inject constructor(
                 repository.guardar(reserva)
             }
             obtenerTodos()
+            onSuccess?.invoke()
         } catch (e: Exception) {
             _error.value = "Error al guardar reserva: ${e.message}"
         } finally {

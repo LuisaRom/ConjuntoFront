@@ -74,6 +74,7 @@ fun PantallaAccesoPeatonalCelador(
         }
         accesoSeleccionado = accesosDelDia.firstOrNull { acceso ->
             acceso.codigoQr.equals(codigo, ignoreCase = true) ||
+                codigo.contains(acceso.codigoQr ?: "", ignoreCase = true) ||
                 acceso.id?.toString() == codigo
         }
         mensajeEstado = if (accesoSeleccionado != null) {

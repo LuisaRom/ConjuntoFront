@@ -88,6 +88,8 @@ fun PantallaPagos(
     
     // Monto por defecto
     val monto = remember { "200.000 COP" }
+    // Se incluirá en el PDF y en pago PSE cuando el flujo de reservas lo alimente.
+    val totalServiciosAdicionales = remember { "0 COP" }
     
     // Cargar usuario si no está disponible
     LaunchedEffect(Unit) {
@@ -120,6 +122,7 @@ fun PantallaPagos(
         Campo("Id", id)
         Campo("Fecha", "$fechaActual - $mesActual")
         Campo("Monto", monto)
+        Campo("Servicios adicionales", totalServiciosAdicionales)
 
         Spacer(modifier = Modifier.height(24.dp))
         Text("Método de Pago", color = Color.White)
@@ -140,7 +143,8 @@ fun PantallaPagos(
                         nombre = nombre,
                         id = id,
                         fecha = "$fechaActual - $mesActual",
-                        monto = monto
+                        monto = monto,
+                        totalServiciosAdicionales = totalServiciosAdicionales
                     )
                     if (resultado != null) {
                         val nombreArchivo = resultado.split("/").lastOrNull() ?: "Recibo.pdf"
@@ -161,7 +165,7 @@ fun PantallaPagos(
                 modifier = Modifier.weight(1f)
             ) {
                 metodoSeleccionado = "EN LINEA"
-                Toast.makeText(context, "Redirigiendo a PSE", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Redirigiendo a PSE. Servicios adicionales: $totalServiciosAdicionales", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -221,7 +225,8 @@ suspend fun generarPDF(
     nombre: String,
     id: String,
     fecha: String,
-    monto: String
+    monto: String,
+    totalServiciosAdicionales: String
 ): String? = withContext(Dispatchers.IO) {
     var pdfDocument: PdfDocument? = null
     var fileOutputStream: FileOutputStream? = null
@@ -291,6 +296,9 @@ suspend fun generarPDF(
         
         canvas.drawText("Monto a Pagar:", 50f, yPos, paintLabel)
         canvas.drawText(monto, 250f, yPos, paintMonto)
+        yPos += 40f
+        canvas.drawText("Servicios Adicionales:", 50f, yPos, paintLabel)
+        canvas.drawText(totalServiciosAdicionales, 250f, yPos, paintMonto)
         yPos += 60f
         
         // Línea separadora final

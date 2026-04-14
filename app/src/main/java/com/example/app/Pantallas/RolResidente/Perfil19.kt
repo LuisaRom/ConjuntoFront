@@ -1,6 +1,5 @@
 package com.example.app.Pantallas.RolResidente
 
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -12,23 +11,45 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import com.example.app.ViewModel.UsuarioViewModel
 import com.example.app.ui.theme.AzulOscuro
 import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaPerfilResidente(navController: NavController) {
-    val context = LocalContext.current
+fun PantallaPerfilResidente(
+    navController: NavController,
+    usuarioViewModel: UsuarioViewModel = hiltViewModel()
+) {
+    val usuarioActual by usuarioViewModel.usuarioActual.collectAsState()
+    val usuarios by usuarioViewModel.usuarios.collectAsState()
+    var showDialog by remember { mutableStateOf(false) }
 
-    var nombre by remember { mutableStateOf("Luisa Fernanda Romero") }
-    var usuario by remember { mutableStateOf("LuRomero") }
-    var contraseña by remember { mutableStateOf("") }
-    var estado by remember { mutableStateOf("Activo") }
+    LaunchedEffect(Unit) {
+        usuarioViewModel.obtenerTodos()
+    }
+
+    val usuarioPerfil = remember(usuarioActual, usuarios) {
+        val actual = usuarioActual
+        if (actual?.id != null) {
+            usuarios.find { it.id == actual.id } ?: actual
+        } else {
+            actual
+        }
+    }
+
+    val rolVisual = when (usuarioPerfil?.rol?.uppercase()) {
+        "RESIDENTE" -> "RESIDENTE"
+        null, "" -> "SIN ROL"
+        else -> "${usuarioPerfil?.rol} (usuario no residente)"
+    }
 
     Column(
         modifier = Modifier
@@ -66,42 +87,67 @@ fun PantallaPerfilResidente(navController: NavController) {
         )
 
         Text(
-            text = usuario,
+            text = usuarioPerfil?.usuario ?: "Usuario",
             color = Color.White,
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        CampoPerfil("Nombre", nombre) { nombre = it }
-        CampoPerfil("Usuario", usuario) { usuario = it }
-        CampoPerfil("Contraseña", contraseña) { contraseña = it }
-        CampoPerfil("Estado", estado) { estado = it }
+        CampoPerfil("Nombre", usuarioPerfil?.nombre ?: "", enabled = false)
+        CampoPerfil("Usuario", usuarioPerfil?.usuario ?: "", enabled = false)
+        CampoPerfil("Contraseña", if (usuarioPerfil?.password.isNullOrBlank()) "" else "********", enabled = false)
+        CampoPerfil("Rol", rolVisual, enabled = false)
 
         Spacer(modifier = Modifier.height(32.dp))
 
         Button(
-            onClick = {
-                Toast.makeText(context, "Sesion Cerrada", Toast.LENGTH_SHORT).show()
-                // redirijir  navController.navigate("PantallaInicioRolResidente")
-            },
+            onClick = { showDialog = true },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(50.dp),
+                .height(56.dp),
             colors = ButtonDefaults.buttonColors(containerColor = DoradoElegante)
         ) {
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("Cerrar Sseion ", color = AzulOscuro, fontWeight = FontWeight.Bold)
+            Text("Cerrar Sesión", color = AzulOscuro, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+        }
+
+        if (showDialog) {
+            AlertDialog(
+                onDismissRequest = { showDialog = false },
+                title = { Text("Confirmación") },
+                text = { Text("¿Estás seguro de que deseas cerrar sesión?") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        showDialog = false
+                        usuarioViewModel.logout()
+                        navController.navigate("PantallaSeleccionRol") {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
+                        }
+                    }) {
+                        Text("Sí")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDialog = false }) {
+                        Text("Cancelar")
+                    }
+                },
+                containerColor = AzulOscuro
+            )
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CampoPerfil(label: String, valor: String, onValueChange: (String) -> Unit) {
+fun CampoPerfil(label: String, valor: String, enabled: Boolean) {
     OutlinedTextField(
         value = valor,
-        onValueChange = onValueChange,
+        onValueChange = {},
+        enabled = enabled,
         label = { Text(label, color = Color.LightGray) },
         modifier = Modifier
             .fillMaxWidth()
@@ -110,11 +156,14 @@ fun CampoPerfil(label: String, valor: String, onValueChange: (String) -> Unit) {
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = DoradoElegante,
             unfocusedBorderColor = GrisClaro,
+            disabledBorderColor = GrisClaro,
             cursorColor = DoradoElegante,
             focusedLabelColor = GrisClaro,
             unfocusedLabelColor = GrisClaro,
+            disabledLabelColor = GrisClaro,
             focusedTextColor = Color.White,
-            unfocusedTextColor = Color.White
+            unfocusedTextColor = Color.White,
+            disabledTextColor = Color.White
         )
     )
 }

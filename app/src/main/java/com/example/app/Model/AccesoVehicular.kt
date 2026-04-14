@@ -13,6 +13,9 @@ data class AccesoVehicular(
 
     @SerializedName("apartamento")
     val apartamento: String,
+    
+    @SerializedName("codigoQr")
+    val codigoQr: String? = null,
 
     @SerializedName("visitante")
     val visitante: Visitante? = null,

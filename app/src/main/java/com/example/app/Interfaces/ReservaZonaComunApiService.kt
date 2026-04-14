@@ -14,7 +14,7 @@ interface ReservaZonaComunApiService {
     @GET("/api/reservas/{id}")
     suspend fun obtenerReserva(@Path("id") id: Long): ReservaZonaComun
 
-    @POST("/api/reservas")
+    @POST("/api/reservas/crear")
     suspend fun guardarReserva(@Body reserva: ReservaZonaComun): ReservaZonaComun
 
     @DELETE("/api/reservas/{id}")

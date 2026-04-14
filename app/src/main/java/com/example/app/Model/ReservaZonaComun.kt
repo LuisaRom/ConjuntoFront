@@ -16,6 +16,9 @@ data class ReservaZonaComun(
 
     @SerializedName("horaFin")
     val horaFin: String,       // Formato "HH:mm"
+    
+    @SerializedName("serviciosAdicionales")
+    val serviciosAdicionales: String? = null,
 
     @SerializedName("usuario")
     val usuario: Usuario?=null
