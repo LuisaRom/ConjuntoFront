@@ -33,6 +33,7 @@ fun PantallaCrearUsuario(
     var email by remember { mutableStateOf("") }
     var telefono by remember { mutableStateOf("") }
     var rolSeleccionado by remember { mutableStateOf("RESIDENTE") }
+    var usuario by remember { mutableStateOf("") }
     var torre by remember { mutableStateOf("") }
     var apartamento by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -41,7 +42,10 @@ fun PantallaCrearUsuario(
     var errorEmail by remember { mutableStateOf<String?>(null) }
     var errorTelefono by remember { mutableStateOf<String?>(null) }
     var errorRol by remember { mutableStateOf<String?>(null) }
+    var errorUsuario by remember { mutableStateOf<String?>(null) }
+    var errorTorre by remember { mutableStateOf<String?>(null) }
     var errorApartamento by remember { mutableStateOf<String?>(null) }
+    var errorPassword by remember { mutableStateOf<String?>(null) }
     var errorGeneral by remember { mutableStateOf<String?>(null) }
 
     val isLoading by usuarioViewModel.isLoading.collectAsState()
@@ -64,7 +68,10 @@ fun PantallaCrearUsuario(
         errorEmail = null
         errorTelefono = null
         errorRol = null
+        errorUsuario = null
+        errorTorre = null
         errorApartamento = null
+        errorPassword = null
         errorGeneral = null
         
         var esValido = true
@@ -92,7 +99,21 @@ fun PantallaCrearUsuario(
             esValido = false
         }
         
-        // Apartamento obligatorio si es RESIDENTE
+        if (usuario.isBlank()) {
+            errorUsuario = "El usuario es obligatorio"
+            esValido = false
+        }
+
+        if (password.isBlank()) {
+            errorPassword = "La contraseña es obligatoria"
+            esValido = false
+        }
+
+        if (rolSeleccionado == "RESIDENTE" && torre.isBlank()) {
+            errorTorre = "La torre es obligatoria para residentes"
+            esValido = false
+        }
+
         if (rolSeleccionado == "RESIDENTE" && apartamento.isBlank()) {
             errorApartamento = "El apartamento es obligatorio para residentes"
             esValido = false
@@ -107,24 +128,16 @@ fun PantallaCrearUsuario(
             return
         }
         
-        // Generar nombre de usuario desde el email si no se proporciona password
-        val usuarioNombre = email.split("@")[0]
-        val passwordFinal = if (password.isBlank()) {
-            // Generar password temporal o dejar vacío para que el backend lo genere
-            ""
-        } else {
-            password
-        }
-        
         val nuevoUsuario = Usuario(
             nombre = nombre,
             documento = "", // Se puede agregar campo de documento si es necesario
             telefono = telefono,
-            usuario = usuarioNombre,
-            password = passwordFinal,
+            email = email,
+            usuario = usuario,
+            password = password,
             rol = rolSeleccionado.uppercase(),
-            torre = torre.ifBlank { "" },
-            apartamento = apartamento.ifBlank { "" }
+            torre = if (rolSeleccionado == "RESIDENTE") torre else "",
+            apartamento = if (rolSeleccionado == "RESIDENTE") apartamento else ""
         )
         
         scope.launch {
@@ -138,6 +151,7 @@ fun PantallaCrearUsuario(
                 nombre = ""
                 email = ""
                 telefono = ""
+                usuario = ""
                 torre = ""
                 apartamento = ""
                 password = ""
@@ -293,9 +307,11 @@ fun PantallaCrearUsuario(
                 listOf("RESIDENTE", "CELADOR").forEach { rol ->
                     FilterChip(
                         selected = rolSeleccionado == rol,
-                        onClick = { 
+                        onClick = {
                             rolSeleccionado = rol
                             errorRol = null
+                            errorTorre = null
+                            errorApartamento = null
                         },
                         label = { Text(rol) },
                         colors = FilterChipDefaults.filterChipColors(
@@ -317,37 +333,18 @@ fun PantallaCrearUsuario(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Campo Torre
+            // Campo Usuario
             OutlinedTextField(
-                value = torre,
-                onValueChange = { torre = it },
-                label = { Text("Torre (opcional)", color = GrisClaro) },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White,
-                    focusedBorderColor = DoradoElegante,
-                    unfocusedBorderColor = GrisClaro,
-                    focusedLabelColor = GrisClaro,
-                    unfocusedLabelColor = GrisClaro
-                )
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Campo Apartamento (obligatorio para RESIDENTE)
-            OutlinedTextField(
-                value = apartamento,
+                value = usuario,
                 onValueChange = { 
-                    apartamento = it
-                    errorApartamento = null
+                    usuario = it
+                    errorUsuario = null
                 },
-                label = { Text("Apartamento ${if (rolSeleccionado == "RESIDENTE") "*" else "(opcional)"}", color = GrisClaro) },
+                label = { Text("Usuario *", color = GrisClaro) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                isError = errorApartamento != null,
-                supportingText = errorApartamento?.let { { Text(it, color = Color.Red) } },
+                isError = errorUsuario != null,
+                supportingText = errorUsuario?.let { { Text(it, color = Color.Red) } },
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = Color.White,
                     unfocusedTextColor = Color.White,
@@ -360,14 +357,67 @@ fun PantallaCrearUsuario(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Campo Password (opcional)
+            if (rolSeleccionado == "RESIDENTE") {
+                OutlinedTextField(
+                    value = torre,
+                    onValueChange = {
+                        torre = it
+                        errorTorre = null
+                    },
+                    label = { Text("Torre *", color = GrisClaro) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    isError = errorTorre != null,
+                    supportingText = errorTorre?.let { { Text(it, color = Color.Red) } },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        focusedBorderColor = DoradoElegante,
+                        unfocusedBorderColor = GrisClaro,
+                        focusedLabelColor = GrisClaro,
+                        unfocusedLabelColor = GrisClaro
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = apartamento,
+                    onValueChange = {
+                        apartamento = it
+                        errorApartamento = null
+                    },
+                    label = { Text("Apartamento *", color = GrisClaro) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    isError = errorApartamento != null,
+                    supportingText = errorApartamento?.let { { Text(it, color = Color.Red) } },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        focusedBorderColor = DoradoElegante,
+                        unfocusedBorderColor = GrisClaro,
+                        focusedLabelColor = GrisClaro,
+                        unfocusedLabelColor = GrisClaro
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            // Campo Password (obligatoria para ambos roles)
             OutlinedTextField(
                 value = password,
-                onValueChange = { password = it },
-                label = { Text("Password (opcional)", color = GrisClaro) },
+                onValueChange = {
+                    password = it
+                    errorPassword = null
+                },
+                label = { Text("Contraseña *", color = GrisClaro) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                isError = errorPassword != null,
+                supportingText = errorPassword?.let { { Text(it, color = Color.Red) } },
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = Color.White,
                     unfocusedTextColor = Color.White,

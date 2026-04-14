@@ -12,6 +12,10 @@ class QuejaRepository @Inject constructor(
         return api.obtenerQuejas()
     }
 
+    suspend fun obtenerPorCategoria(categoria: String): List<Queja> {
+        return api.obtenerQuejasPorCategoria(categoria)
+    }
+
     suspend fun obtenerPorId(id: Long): Queja {
         return api.obtenerQueja(id)
     }
@@ -22,5 +26,9 @@ class QuejaRepository @Inject constructor(
 
     suspend fun eliminar(id: Long) {
         api.eliminarQueja(id)
+    }
+
+    suspend fun finalizar(id: Long): Queja {
+        return api.finalizarQueja(id)
     }
 }

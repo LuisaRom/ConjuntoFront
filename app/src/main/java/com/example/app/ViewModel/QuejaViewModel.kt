@@ -45,6 +45,21 @@ class QuejaViewModel @Inject constructor(
         }
     }
 
+    fun obtenerPorCategoria(categoria: String) = viewModelScope.launch {
+        _isLoading.value = true
+        _error.value = null
+        try {
+            val lista = withContext(Dispatchers.IO) {
+                repository.obtenerPorCategoria(categoria)
+            }
+            _quejas.value = lista
+        } catch (e: Exception) {
+            _error.value = "Error al obtener quejas por categoría: ${e.message}"
+        } finally {
+            _isLoading.value = false
+        }
+    }
+
     fun guardar(queja: Queja) = viewModelScope.launch {
         _isLoading.value = true
         _error.value = null
@@ -107,6 +122,21 @@ class QuejaViewModel @Inject constructor(
             _error.value = "Error al actualizar estado: ${e.message}"
         } finally {
             _isLoading.value = false
+        }
+    }
+
+    fun finalizarQueja(id: Long, onSuccess: (() -> Unit)? = null) = viewModelScope.launch {
+        _error.value = null
+        try {
+            val quejaFinalizada = withContext(Dispatchers.IO) {
+                repository.finalizar(id)
+            }
+            _quejas.value = _quejas.value.map { actual ->
+                if (actual.id == id) quejaFinalizada else actual
+            }
+            onSuccess?.invoke()
+        } catch (e: Exception) {
+            _error.value = "Error al finalizar queja: ${e.message}"
         }
     }
 

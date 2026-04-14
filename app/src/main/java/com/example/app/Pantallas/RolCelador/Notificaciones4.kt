@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -66,17 +67,29 @@ fun PantallaNotificacionesCelador(navController: NavController) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
                 Button(
                     onClick = { selectedTab = "Mensajes"
                             navController.navigate("PantallaMensajesCelador")
             },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(44.dp),
                     shape = RoundedCornerShape(50),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (selectedTab == "Mensajes") DoradoElegante else GrisClaro
                     )
                 ) {
-                    Text("Mensajes", color = AzulOscuro)
+                    Text(
+                        "Mensajes",
+                        color = AzulOscuro,
+                        fontSize = 12.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
 
                 Button(
@@ -84,12 +97,21 @@ fun PantallaNotificacionesCelador(navController: NavController) {
                         selectedTab = "Paqueteria"
                         navController.navigate("PantallaPaqueteriaCelador")
                     },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(44.dp),
                     shape = RoundedCornerShape(50),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (selectedTab == "Paqueteria") DoradoElegante else GrisClaro
                     )
                 ) {
-                    Text("Paqueteria", color = AzulOscuro)
+                    Text(
+                        "Paquetería",
+                        color = AzulOscuro,
+                        fontSize = 11.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
 
                 Button(
@@ -97,12 +119,21 @@ fun PantallaNotificacionesCelador(navController: NavController) {
                         selectedTab = "Recibos"
                         navController.navigate("PantallaRecibosCelador")
                     },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(44.dp),
                     shape = RoundedCornerShape(50),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (selectedTab == "Recibos") DoradoElegante else GrisClaro
                     )
                 ) {
-                    Text("Recibos", color = AzulOscuro)
+                    Text(
+                        "Recibos",
+                        color = AzulOscuro,
+                        fontSize = 12.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
             }
         }

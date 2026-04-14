@@ -15,6 +15,9 @@ data class Usuario(
     @SerializedName("telefono")
     val telefono: String,
 
+    @SerializedName("email")
+    val email: String = "",
+
     @SerializedName("usuario")
     val usuario: String,
 

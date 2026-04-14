@@ -20,6 +20,9 @@ interface UsuarioApiService {
     @POST("api/usuarios")
     suspend fun guardarUsuario(@Body usuario: Usuario): Usuario
 
+    @POST("api/usuarios/crear")
+    suspend fun crearUsuario(@Body usuario: Usuario): Usuario
+
     @DELETE("api/usuarios/{id}")
     suspend fun eliminarUsuario(@Path("id") id: Long)
 

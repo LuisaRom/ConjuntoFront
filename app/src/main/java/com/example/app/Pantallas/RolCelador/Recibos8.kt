@@ -73,6 +73,11 @@ fun PantallaRecibosCelador(
     var enelNotificado by remember { mutableStateOf(false) }
     var vantiNotificado by remember { mutableStateOf(false) }
     var epzNotificado by remember { mutableStateOf(false) }
+
+    // Evita envíos duplicados por taps repetidos.
+    var enelEnviando by remember { mutableStateOf(false) }
+    var vantiEnviando by remember { mutableStateOf(false) }
+    var epzEnviando by remember { mutableStateOf(false) }
     
     // Cargar usuarios al iniciar
     LaunchedEffect(Unit) {
@@ -136,12 +141,14 @@ fun PantallaRecibosCelador(
             },
             onEnviarNotificaciones = {
                 scope.launch {
+                    if (enelEnviando) return@launch
+                    enelEnviando = true
                     try {
                         val destinatarios = if (enelTodosSeleccionado) {
                             residentes
                         } else {
                             residentes.filter { it.id in enelSeleccionados }
-                        }
+                        }.distinctBy { it.id }
                         
                         if (destinatarios.isEmpty()) {
                             Toast.makeText(context, "Por favor selecciona al menos un residente", Toast.LENGTH_SHORT).show()
@@ -173,8 +180,8 @@ fun PantallaRecibosCelador(
                                     // Guardar la notificación usando el ViewModel en un try-catch para evitar crashes
                                     try {
                                         notificacionViewModel.guardar(notificacion)
-                                        // Esperar más tiempo entre cada envío para evitar timeouts
-                                        delay(1500)
+                                        // Pequeña separación para estabilidad sin volver lento el envío.
+                                        delay(350)
                                         enviadas++
                                         android.util.Log.d("Recibos", "=== NOTIFICACIÓN ENEL GUARDADA EXITOSAMENTE ===")
                                         android.util.Log.d("Recibos", "Notificación enviada a ${residente.nombre} (ID: ${residente.id})")
@@ -201,10 +208,13 @@ fun PantallaRecibosCelador(
                     } catch (e: Exception) {
                         android.util.Log.e("Recibos", "Error al enviar notificaciones de ENEL", e)
                         Toast.makeText(context, "Error al enviar notificaciones: ${e.message}", Toast.LENGTH_LONG).show()
+                    } finally {
+                        enelEnviando = false
                     }
                 }
             },
-            tieneNotificacion = enelNotificado
+            tieneNotificacion = enelNotificado,
+            enviando = enelEnviando
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -241,12 +251,14 @@ fun PantallaRecibosCelador(
             },
             onEnviarNotificaciones = {
                 scope.launch {
+                    if (vantiEnviando) return@launch
+                    vantiEnviando = true
                     try {
                         val destinatarios = if (vantiTodosSeleccionado) {
                             residentes
                         } else {
                             residentes.filter { it.id in vantiSeleccionados }
-                        }
+                        }.distinctBy { it.id }
                         
                         if (destinatarios.isEmpty()) {
                             Toast.makeText(context, "Por favor selecciona al menos un residente", Toast.LENGTH_SHORT).show()
@@ -278,8 +290,8 @@ fun PantallaRecibosCelador(
                                     // Guardar la notificación usando el ViewModel en un try-catch para evitar crashes
                                     try {
                                         notificacionViewModel.guardar(notificacion)
-                                        // Esperar más tiempo entre cada envío para evitar timeouts
-                                        delay(1500)
+                                        // Pequeña separación para estabilidad sin volver lento el envío.
+                                        delay(350)
                                         enviadas++
                                         android.util.Log.d("Recibos", "=== NOTIFICACIÓN VANTI GUARDADA EXITOSAMENTE ===")
                                         android.util.Log.d("Recibos", "Notificación enviada a ${residente.nombre} (ID: ${residente.id})")
@@ -297,19 +309,19 @@ fun PantallaRecibosCelador(
                             }
                         }
                         
-                        // Esperar un momento para asegurar que todas las notificaciones se guardaron
-                        kotlinx.coroutines.delay(500)
-                        
                         vantiNotificado = true
                         android.util.Log.d("Recibos", "Total notificaciones de VANTI enviadas: $enviadas")
                         Toast.makeText(context, "Notificaciones enviadas a $enviadas residente(s)", Toast.LENGTH_SHORT).show()
                     } catch (e: Exception) {
                         android.util.Log.e("Recibos", "Error al enviar notificaciones de VANTI", e)
                         Toast.makeText(context, "Error al enviar notificaciones: ${e.message}", Toast.LENGTH_LONG).show()
+                    } finally {
+                        vantiEnviando = false
                     }
                 }
             },
-            tieneNotificacion = vantiNotificado
+            tieneNotificacion = vantiNotificado,
+            enviando = vantiEnviando
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -346,12 +358,14 @@ fun PantallaRecibosCelador(
             },
             onEnviarNotificaciones = {
                 scope.launch {
+                    if (epzEnviando) return@launch
+                    epzEnviando = true
                     try {
                         val destinatarios = if (epzTodosSeleccionado) {
                             residentes
                         } else {
                             residentes.filter { it.id in epzSeleccionados }
-                        }
+                        }.distinctBy { it.id }
                         
                         if (destinatarios.isEmpty()) {
                             Toast.makeText(context, "Por favor selecciona al menos un residente", Toast.LENGTH_SHORT).show()
@@ -383,8 +397,8 @@ fun PantallaRecibosCelador(
                                     // Guardar la notificación usando el ViewModel en un try-catch para evitar crashes
                                     try {
                                         notificacionViewModel.guardar(notificacion)
-                                        // Esperar más tiempo entre cada envío para evitar timeouts
-                                        delay(1500)
+                                        // Pequeña separación para estabilidad sin volver lento el envío.
+                                        delay(350)
                                         enviadas++
                                         android.util.Log.d("Recibos", "=== NOTIFICACIÓN EPZ GUARDADA EXITOSAMENTE ===")
                                         android.util.Log.d("Recibos", "Notificación enviada a ${residente.nombre} (ID: ${residente.id})")
@@ -402,19 +416,19 @@ fun PantallaRecibosCelador(
                             }
                         }
                         
-                        // Esperar un momento para asegurar que todas las notificaciones se guardaron
-                        kotlinx.coroutines.delay(500)
-                        
                         epzNotificado = true
                         android.util.Log.d("Recibos", "Total notificaciones de EPZ enviadas: $enviadas")
                         Toast.makeText(context, "Notificaciones enviadas a $enviadas residente(s)", Toast.LENGTH_SHORT).show()
                     } catch (e: Exception) {
                         android.util.Log.e("Recibos", "Error al enviar notificaciones de EPZ", e)
                         Toast.makeText(context, "Error al enviar notificaciones: ${e.message}", Toast.LENGTH_LONG).show()
+                    } finally {
+                        epzEnviando = false
                     }
                 }
             },
-            tieneNotificacion = epzNotificado
+            tieneNotificacion = epzNotificado,
+            enviando = epzEnviando
         )
     }
 }
@@ -431,7 +445,8 @@ fun ReciboItemExpandible(
     onSeleccionarResidente: (Long) -> Unit,
     onSeleccionarTodos: () -> Unit,
     onEnviarNotificaciones: () -> Unit,
-    tieneNotificacion: Boolean
+    tieneNotificacion: Boolean,
+    enviando: Boolean
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -597,10 +612,12 @@ fun ReciboItemExpandible(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(48.dp),
-                    enabled = haySeleccionados
+                    enabled = haySeleccionados && !enviando
                 ) {
                     Text(
-                        text = if (haySeleccionados) {
+                        text = if (enviando) {
+                            "Enviando..."
+                        } else if (haySeleccionados) {
                             "Enviar Notificaciones (${if (todosSeleccionado) residentes.size else seleccionados.size})"
                         } else {
                             "Selecciona residentes"

@@ -6,6 +6,7 @@ import com.example.app.Interfaces.UsuarioApiService
 import com.example.app.Model.Usuario
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import retrofit2.HttpException
 import javax.inject.Inject
 
 class UsuarioRepository @Inject constructor() {
@@ -22,7 +23,16 @@ class UsuarioRepository @Inject constructor() {
     }
 
     suspend fun guardar(usuario: Usuario): Usuario {
-        return api.guardarUsuario(usuario)
+        return try {
+            api.crearUsuario(usuario)
+        } catch (e: HttpException) {
+            // Compatibilidad con versiones del backend que aún usan /api/usuarios.
+            if (e.code() == 404 || e.code() == 405) {
+                api.guardarUsuario(usuario)
+            } else {
+                throw e
+            }
+        }
     }
 
     suspend fun eliminar(id: Long) {
