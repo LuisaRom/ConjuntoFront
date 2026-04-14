@@ -1,6 +1,7 @@
 package com.example.app.Interfaces.RetrofitClient
 
 import com.example.app.Interfaces.AccesoPeatonalApiService
+import com.example.app.Interfaces.AccesoAdminApiService
 import com.example.app.Interfaces.AccesoVehicularApiService
 import com.example.app.Interfaces.MascotaApiService
 import com.example.app.Interfaces.NotificacionApiService
@@ -40,6 +41,7 @@ object RetrofitClient {
     val usuarioApiService: UsuarioApiService = retrofit.create(UsuarioApiService::class.java)
 
     // Servicios de acceso
+    val accesoAdminApiService: AccesoAdminApiService = retrofit.create(AccesoAdminApiService::class.java)
     val accesoPeatonalApiService: AccesoPeatonalApiService = retrofit.create(AccesoPeatonalApiService::class.java)
     val accesoVehicularApiService: AccesoVehicularApiService = retrofit.create(AccesoVehicularApiService::class.java)
     val visitanteApiService: VisitanteApiService = retrofit.create(VisitanteApiService::class.java)

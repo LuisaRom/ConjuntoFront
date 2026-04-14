@@ -28,6 +28,12 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideAccesoAdminApiService(): AccesoAdminApiService {
+        return RetrofitClient.accesoAdminApiService
+    }
+
+    @Provides
+    @Singleton
     fun provideAccesoVehicularApiService(): AccesoVehicularApiService {
         return RetrofitClient.accesoVehicularApiService
     }
@@ -96,6 +102,12 @@ object AppModule {
     fun provideAccesoVehicularRepository(
         api: AccesoVehicularApiService
     ): AccesoVehicularRepository = AccesoVehicularRepository(api)
+
+    @Provides
+    @Singleton
+    fun provideAccesoAdminRepository(
+        api: AccesoAdminApiService
+    ): AccesoAdminRepository = AccesoAdminRepository(api)
 
     @Provides
     @Singleton

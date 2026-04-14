@@ -71,6 +71,24 @@ class NotificacionViewModel @Inject constructor(
         }
     }
 
+    fun obtenerTodosSilencioso() = viewModelScope.launch {
+        try {
+            val lista = withContext(Dispatchers.IO) {
+                repository.obtenerTodos()
+            }
+            val listaValida = lista.filter { it.esValida() }
+
+            // Evita emitir cambios innecesarios cuando el contenido es idéntico.
+            if (_notificaciones.value != listaValida) {
+                _notificaciones.value = listaValida
+            }
+            _notificacionesNoLeidas.value = listaValida.size
+        } catch (e: Exception) {
+            android.util.Log.e("NotificacionViewModel", "Error en refresco silencioso", e)
+            // Mantener datos actuales para evitar parpadeo de la UI.
+        }
+    }
+
     fun guardar(notificacion: Notificacion) = viewModelScope.launch {
         _isLoading.value = true
         _error.value = null

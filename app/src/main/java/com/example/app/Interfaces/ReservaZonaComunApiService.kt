@@ -8,7 +8,7 @@ import retrofit2.http.POST
 import retrofit2.http.Path
 
 interface ReservaZonaComunApiService {
-    @GET("/api/reservas")
+    @GET("/api/reservas/todas")
     suspend fun obtenerReservas(): List<ReservaZonaComun>
 
     @GET("/api/reservas/{id}")

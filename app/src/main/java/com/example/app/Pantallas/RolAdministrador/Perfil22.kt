@@ -43,6 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.runtime.LaunchedEffect
 import com.example.app.ui.theme.AzulOscuro
@@ -61,19 +62,17 @@ fun PantallaPerfil(navController: NavController, usuarioViewModel: UsuarioViewMo
 
     val usuarioActual by usuarioViewModel.usuarioActual.collectAsState()
     val usuarios by usuarioViewModel.usuarios.collectAsState()
-
-    var nombre by remember { mutableStateOf(usuarioActual?.nombre ?: "") }
-    var usuario by remember { mutableStateOf(usuarioActual?.usuario ?: "") }
-    var contrasena by remember { mutableStateOf(usuarioActual?.password ?: "") }
+    val usuarioPerfil = remember(usuarioActual, usuarios) {
+        val actual = usuarioActual
+        if (actual?.id != null) {
+            usuarios.find { it.id == actual.id } ?: actual
+        } else {
+            actual
+        }
+    }
 
     LaunchedEffect(Unit) {
         usuarioViewModel.obtenerTodos()
-    }
-
-    LaunchedEffect(usuarioActual) {
-        nombre = usuarioActual?.nombre ?: ""
-        usuario = usuarioActual?.usuario ?: ""
-        contrasena = usuarioActual?.password ?: ""
     }
 
     Scaffold(
@@ -112,9 +111,13 @@ fun PantallaPerfil(navController: NavController, usuarioViewModel: UsuarioViewMo
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            CampoPerfil("Nombre", nombre) { nombre = it }
-            CampoPerfil("Usuario", usuario) { usuario = it }
-            CampoPerfil("Contraseña", contrasena) { contrasena = it }
+            CampoPerfil("Nombre", usuarioPerfil?.nombre ?: "", enabled = false)
+            CampoPerfil("Usuario", usuarioPerfil?.usuario ?: "", enabled = false)
+            CampoPerfil(
+                "Contraseña",
+                if (usuarioPerfil?.password.isNullOrBlank()) "" else "********",
+                enabled = false
+            )
 
             Spacer(modifier = Modifier.height(32.dp))
             Text("Usuarios", color = Color.White, fontWeight = FontWeight.Bold)
@@ -127,10 +130,10 @@ fun PantallaPerfil(navController: NavController, usuarioViewModel: UsuarioViewMo
                 onClick = { showDialog = true },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp),
+                    .height(62.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = DoradoElegante)
             ) {
-                Text("Cerrar Sesión", color = Color.White)
+                Text("Cerrar Sesión", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
             }
 
             if (showDialog) {
@@ -146,7 +149,10 @@ fun PantallaPerfil(navController: NavController, usuarioViewModel: UsuarioViewMo
                                 snackbarHostState.showSnackbar("Sesión cerrada correctamente.")
                                 kotlinx.coroutines.delay(500)
                                 navController.navigate("PantallaSeleccionRol") {
-                                    popUpTo("PantallaSeleccionRol") { inclusive = true }
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        inclusive = true
+                                    }
+                                    launchSingleTop = true
                                 }
                             }
                         }) {
@@ -164,12 +170,12 @@ fun PantallaPerfil(navController: NavController, usuarioViewModel: UsuarioViewMo
         }
     }
 }
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CampoPerfil(label: String, valor: String, onValueChange: (String) -> Unit) {
+fun CampoPerfil(label: String, valor: String, enabled: Boolean) {
     OutlinedTextField(
         value = valor,
-        onValueChange = onValueChange,
+        onValueChange = {},
+        enabled = enabled,
         label = { Text(label, color = Color.LightGray) },
         modifier = Modifier
             .fillMaxWidth()
@@ -178,14 +184,18 @@ fun CampoPerfil(label: String, valor: String, onValueChange: (String) -> Unit) {
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = DoradoElegante,
             unfocusedBorderColor = GrisClaro,
+            disabledBorderColor = GrisClaro,
             cursorColor = DoradoElegante,
             focusedLabelColor = GrisClaro,
             unfocusedLabelColor = GrisClaro,
+            disabledLabelColor = GrisClaro,
             focusedTextColor = Color.White,
-            unfocusedTextColor = Color.White
+            unfocusedTextColor = Color.White,
+            disabledTextColor = Color.White
         )
     )
 }
+
 @Composable
 fun InfoPerfil(titulo: String, valor: String) {
     Column(modifier = Modifier.padding(vertical = 4.dp)) {
