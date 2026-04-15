@@ -1,6 +1,7 @@
 package com.example.app.Interfaces
 
 import com.example.app.DTO.LoginRequest
+import com.example.app.DTO.LoginResponse
 import com.example.app.Model.Usuario
 import retrofit2.Response
 import retrofit2.http.Body
@@ -27,6 +28,6 @@ interface UsuarioApiService {
     suspend fun eliminarUsuario(@Path("id") id: Long)
 
     @POST("api/usuarios/login")
-    suspend fun login(@Body body: LoginRequest): Response<Usuario>
+    suspend fun login(@Body body: LoginRequest): Response<LoginResponse>
 }
 

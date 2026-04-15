@@ -108,6 +108,7 @@ dependencies {
     // QR (ok)
     implementation("com.google.zxing:core:3.5.2")
     implementation("com.journeyapps:zxing-android-embedded:4.3.0")
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
     // Tests
     testImplementation(libs.junit)

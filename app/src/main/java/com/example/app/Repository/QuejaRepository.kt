@@ -21,7 +21,8 @@ class QuejaRepository @Inject constructor(
     }
 
     suspend fun guardar(queja: Queja): Queja {
-        return api.guardarQueja(queja)
+        // El backend obtiene el usuario desde JWT, no desde payload.
+        return api.guardarQueja(queja.copy(usuario = null))
     }
 
     suspend fun eliminar(id: Long) {

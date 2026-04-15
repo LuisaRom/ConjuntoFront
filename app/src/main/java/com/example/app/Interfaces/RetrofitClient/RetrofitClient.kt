@@ -1,5 +1,6 @@
 package com.example.app.Interfaces.RetrofitClient
 
+import com.example.app.Auth.AuthManager
 import com.example.app.Interfaces.AccesoPeatonalApiService
 import com.example.app.Interfaces.AccesoAdminApiService
 import com.example.app.Interfaces.AccesoVehicularApiService
@@ -13,6 +14,7 @@ import com.example.app.Interfaces.UsuarioApiService
 import com.example.app.Interfaces.VehiculoResidenteApiService
 import com.example.app.Interfaces.VisitanteApiService
 import okhttp3.OkHttpClient
+import okhttp3.Request
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -22,10 +24,38 @@ object RetrofitClient {
 
     private const val BASE_URL = "https://conjuntoback.onrender.com/"
 
+    private fun shouldSkipAuth(path: String): Boolean {
+        return path.contains("/api/usuarios/login") ||
+            path.contains("/swagger") ||
+            path.contains("/v3/api-docs")
+    }
+
     private val okHttpClient = OkHttpClient.Builder()
         .connectTimeout(30, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
         .writeTimeout(30, TimeUnit.SECONDS)
+        .addInterceptor { chain ->
+            val original = chain.request()
+            val path = original.url.encodedPath
+            val token = AuthManager.getToken()
+
+            val request: Request = if (
+                token.isNullOrBlank() || shouldSkipAuth(path)
+            ) {
+                original
+            } else {
+                original.newBuilder()
+                    .addHeader("Authorization", "Bearer $token")
+                    .build()
+            }
+
+            val response = chain.proceed(request)
+            when (response.code) {
+                401 -> AuthManager.handleUnauthorized()
+                403 -> AuthManager.handleForbidden()
+            }
+            response
+        }
         .addInterceptor(HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
         })

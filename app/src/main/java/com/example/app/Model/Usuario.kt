@@ -7,31 +7,31 @@ data class Usuario(
     val id: Long? = null,
 
     @SerializedName("nombre")
-    val nombre: String,
+    val nombre: String = "",
 
     @SerializedName("documento")
-    val documento: String,
+    val documento: String = "",
 
     @SerializedName("telefono")
-    val telefono: String,
+    val telefono: String = "",
 
     @SerializedName("email")
     val email: String = "",
 
     @SerializedName("usuario")
-    val usuario: String,
+    val usuario: String = "",
 
     @SerializedName("password")
-    val password: String,
+    val password: String = "",
 
     @SerializedName("rol")
-    val rol: String,
+    val rol: String = "",
 
     @SerializedName("torre")
-    val torre: String,
+    val torre: String = "",
 
     @SerializedName("apartamento")
-    val apartamento: String
+    val apartamento: String = ""
 ){
     enum class Rol {
         ADMINISTRADOR, CELADOR, RESIDENTE

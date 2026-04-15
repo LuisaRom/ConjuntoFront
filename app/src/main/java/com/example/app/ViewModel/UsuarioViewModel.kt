@@ -2,6 +2,7 @@ package com.example.app.ViewModel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.app.Auth.AuthManager
 import com.example.app.Model.Usuario
 import com.example.app.Repository.UsuarioRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -31,6 +32,10 @@ class UsuarioViewModel @Inject constructor(
     private val _rolSeleccionado = MutableStateFlow<String?>(null)
     val rolSeleccionado: StateFlow<String?> = _rolSeleccionado.asStateFlow()
 
+    init {
+        _usuarioActual.value = AuthManager.getUser()
+    }
+
     fun seleccionarRol(rol: String) {
         _rolSeleccionado.value = rol
         clearError()
@@ -59,10 +64,17 @@ class UsuarioViewModel @Inject constructor(
     }
 
     fun logout() {
+        AuthManager.logout()
         _usuarioActual.value = null
         _error.value = null
         _rolSeleccionado.value = null
     }
+
+    fun getToken(): String? = AuthManager.getToken()
+
+    fun getUser(): Usuario? = AuthManager.getUser()
+
+    fun isAuthenticated(): Boolean = AuthManager.isAuthenticated()
 
     fun obtenerTodos() = viewModelScope.launch {
         _isLoading.value = true

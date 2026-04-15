@@ -15,7 +15,7 @@ interface MascotaApiService {
     @GET("/api/mascotas/{id}")
     suspend fun obtenerMascota(@Path("id") id: Long): Mascota
 
-    @POST("/api/mascotas")
+    @POST("/api/mascotas/crear")
     suspend fun guardarMascota(@Body mascota: Mascota): Mascota
 
     @DELETE("/api/mascotas/{id}")

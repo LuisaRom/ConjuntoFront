@@ -21,7 +21,7 @@ interface QuejaApiService {
     @GET("/api/quejas/{id}")
     suspend fun obtenerQueja(@Path("id") id: Long): Queja
 
-    @POST("/api/quejas")
+    @POST("/api/quejas/crear")
     suspend fun guardarQueja(@Body queja: Queja): Queja
 
     @DELETE("/api/quejas/{id}")

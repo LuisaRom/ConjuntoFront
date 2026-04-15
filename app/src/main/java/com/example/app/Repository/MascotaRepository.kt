@@ -17,7 +17,8 @@ class MascotaRepository @Inject constructor(
     }
 
     suspend fun guardar(mascota: Mascota): Mascota {
-        return api.guardarMascota(mascota)
+        // El backend obtiene el usuario autenticado desde el token.
+        return api.guardarMascota(mascota.copy(usuario = null))
     }
 
     suspend fun eliminar(id: Long) {
