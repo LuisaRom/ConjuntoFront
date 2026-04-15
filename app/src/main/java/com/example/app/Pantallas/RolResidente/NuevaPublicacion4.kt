@@ -14,11 +14,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -307,7 +307,7 @@ fun PantallaNuevaPublicacion(
             ) {
                 IconButton(onClick = { navController.popBackStack() }) {
                     Icon(
-                        imageVector = Icons.Default.ArrowBack,
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Volver",
                         tint = Color.White
                     )
@@ -529,11 +529,12 @@ fun PantallaNuevaPublicacion(
                         mensajeExito = null
                     } else {
                         mensajeError = null
-                        // Formato de fecha compatible con LocalDateTime del backend (ISO 8601)
+                        // Formato de fecha ISO 8601 compatible con backend
                         // El backend puede parsear automáticamente este formato
-                        val fechaActual = java.time.LocalDateTime.now().format(
-                            java.time.format.DateTimeFormatter.ISO_DATE_TIME
-                        )
+                        val fechaActual = SimpleDateFormat(
+                            "yyyy-MM-dd'T'HH:mm:ss",
+                            Locale.getDefault()
+                        ).format(Date())
                         
                         // Convertir lista de usuarios etiquetados a JSON
                         val usuariosEtiquetadosJson = if (usuariosEtiquetados.isNotEmpty()) {

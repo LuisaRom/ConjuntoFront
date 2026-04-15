@@ -2,6 +2,7 @@ package com.example.app.Pantallas.RolCelador
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -17,10 +18,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.filled.ReportProblem
-import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -51,6 +52,7 @@ import com.example.app.ui.theme.AzulOscuro
 import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun PantallaQuejasCelador(
     navController: NavController,
@@ -80,7 +82,7 @@ fun PantallaQuejasCelador(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
-                imageVector = Icons.Default.ArrowBack,
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = "Volver",
                 tint = GrisClaro,
                 modifier = Modifier.clickable {
@@ -227,7 +229,7 @@ fun QuejaItem(queja: Queja, icono: ImageVector) {
 
 private fun iconoPorCategoria(categoria: String): ImageVector {
     return when (categoria.trim().lowercase()) {
-        "ruido" -> Icons.Default.VolumeUp
+        "ruido" -> Icons.AutoMirrored.Filled.VolumeUp
         "mascota" -> Icons.Default.Pets
         "violencia" -> Icons.Default.ReportProblem
         else -> Icons.Default.ReportProblem

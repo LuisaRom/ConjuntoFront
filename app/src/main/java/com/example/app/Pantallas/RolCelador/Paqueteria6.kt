@@ -19,7 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckBox
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.Add
@@ -52,8 +52,8 @@ import com.example.app.ViewModel.PaqueteriaViewModel
 import com.example.app.ui.theme.AzulOscuro
 import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @Composable
 fun PantallaPaqueteriaCelador(
@@ -81,7 +81,7 @@ fun PantallaPaqueteriaCelador(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
-                imageVector = Icons.Default.ArrowBack,
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = "Volver",
                 tint = GrisClaro,
                 modifier = Modifier.clickable { navController.popBackStack() }
@@ -385,10 +385,16 @@ fun PaqueteCardCompleto(
 fun formatearFechaPaquete(fechaISO: String?): String {
     if (fechaISO.isNullOrBlank()) return "No disponible"
     return try {
-        val formatter = DateTimeFormatter.ISO_DATE_TIME
-        val fecha = LocalDateTime.parse(fechaISO, formatter)
-        val formatterSalida = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
-        fecha.format(formatterSalida)
+        val formatosEntrada = listOf(
+            "yyyy-MM-dd'T'HH:mm:ss.SSS",
+            "yyyy-MM-dd'T'HH:mm:ss"
+        )
+        val fecha = formatosEntrada.firstNotNullOfOrNull { patron ->
+            runCatching {
+                SimpleDateFormat(patron, Locale.getDefault()).parse(fechaISO)
+            }.getOrNull()
+        } ?: return fechaISO
+        SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(fecha)
     } catch (e: Exception) {
         fechaISO
     }

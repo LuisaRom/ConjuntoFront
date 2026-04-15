@@ -14,7 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -51,10 +51,9 @@ import com.example.app.ViewModel.UsuarioViewModel
 import com.example.app.ui.theme.AzulOscuro
 import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
-import java.time.DayOfWeek
-import java.time.LocalDate
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
 import java.util.Locale
 import kotlinx.coroutines.launch
 
@@ -102,7 +101,7 @@ fun PantallaReservaPiscina(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
-                imageVector = Icons.Default.ArrowBack,
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = "Volver",
                 tint = GrisClaro,
                 modifier = Modifier.clickable { navController.popBackStack() }
@@ -176,7 +175,7 @@ fun PantallaReservaPiscina(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        CampoAcceso("Número de Personas", numPersonas) { numPersonas = it }
+        CampoReservaPiscina("Número de Personas", numPersonas) { numPersonas = it }
 
         Spacer(modifier = Modifier.height(32.dp))
 
@@ -238,8 +237,7 @@ fun PantallaReservaPiscina(
                 Button(onClick = {
                     val millis = state.selectedDateMillis
                     if (millis != null) {
-                        val localDate = millisToLocalDate(millis)
-                        fecha = localDate.format(DateTimeFormatter.ISO_DATE)
+                        fecha = millisToFechaIsoPiscina(millis)
                         horarioSeleccionado = ""
                     }
                     showDatePicker = false
@@ -262,7 +260,7 @@ fun PantallaReservaPiscina(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun CampoAcceso(label: String, valor: String, onChange: (String) -> Unit) {
+private fun CampoReservaPiscina(label: String, valor: String, onChange: (String) -> Unit) {
     Column(modifier = Modifier.padding(vertical = 4.dp)) {
         Text(text = label, color = Color.LightGray, fontSize = 12.sp)
         OutlinedTextField(
@@ -307,16 +305,7 @@ private fun construirRangosDisponiblesPiscina(
     fechaIso: String,
     reservas: List<ReservaZonaComun>
 ): List<String> {
-    val fecha = runCatching { LocalDate.parse(fechaIso) }.getOrNull() ?: return emptyList()
-    val dia = fecha.dayOfWeek
-    if (dia !in setOf(
-            DayOfWeek.WEDNESDAY,
-            DayOfWeek.THURSDAY,
-            DayOfWeek.FRIDAY,
-            DayOfWeek.SATURDAY,
-            DayOfWeek.SUNDAY
-        )
-    ) {
+    if (!esDiaPermitidoPiscina(fechaIso)) {
         return emptyList()
     }
 
@@ -346,8 +335,27 @@ private fun construirRangosDisponiblesPiscina(
     return rangos
 }
 
-private fun millisToLocalDate(millis: Long): LocalDate {
-    return java.time.Instant.ofEpochMilli(millis)
-        .atZone(ZoneId.systemDefault())
-        .toLocalDate()
+private fun millisToFechaIsoPiscina(millis: Long): String {
+    return try {
+        SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(millis))
+    } catch (e: Exception) {
+        ""
+    }
+}
+
+private fun esDiaPermitidoPiscina(fechaIso: String): Boolean {
+    return try {
+        val fecha = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(fechaIso) ?: return false
+        val calendar = Calendar.getInstance().apply { time = fecha }
+        when (calendar.get(Calendar.DAY_OF_WEEK)) {
+            Calendar.WEDNESDAY,
+            Calendar.THURSDAY,
+            Calendar.FRIDAY,
+            Calendar.SATURDAY,
+            Calendar.SUNDAY -> true
+            else -> false
+        }
+    } catch (e: Exception) {
+        false
+    }
 }

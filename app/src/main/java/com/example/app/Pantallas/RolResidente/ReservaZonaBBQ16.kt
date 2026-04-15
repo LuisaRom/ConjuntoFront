@@ -14,7 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DatePicker
@@ -52,10 +52,10 @@ import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
 import com.example.app.ViewModel.ReservaZonaComunViewModel
 import com.example.app.ViewModel.UsuarioViewModel
-import java.time.DayOfWeek
-import java.time.LocalDate
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -125,7 +125,7 @@ fun PantallaReservaZonaBBQ(
         // Encabezado
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
-                imageVector = Icons.Default.ArrowBack,
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = "Volver",
                 tint = GrisClaro,
                 modifier = Modifier.clickable { navController.popBackStack() }
@@ -184,7 +184,7 @@ fun PantallaReservaZonaBBQ(
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedHorario) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .menuAnchor(),
+                    .menuAnchor(androidx.compose.material3.MenuAnchorType.PrimaryNotEditable, true),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = Color.White,
                     unfocusedTextColor = Color.White,
@@ -226,7 +226,7 @@ fun PantallaReservaZonaBBQ(
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedSillas) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .menuAnchor(),
+                    .menuAnchor(androidx.compose.material3.MenuAnchorType.PrimaryNotEditable, true),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = Color.White,
                     unfocusedTextColor = Color.White,
@@ -264,7 +264,7 @@ fun PantallaReservaZonaBBQ(
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedMesas) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .menuAnchor(),
+                    .menuAnchor(androidx.compose.material3.MenuAnchorType.PrimaryNotEditable, true),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = Color.White,
                     unfocusedTextColor = Color.White,
@@ -314,12 +314,12 @@ fun PantallaReservaZonaBBQ(
                     Toast.makeText(context, "Selecciona una fecha", Toast.LENGTH_SHORT).show()
                     return@Button
                 }
-                val fechaLocal = runCatching { LocalDate.parse(fecha) }.getOrNull()
-                if (fechaLocal == null || fechaLocal.dayOfWeek !in setOf(
-                        DayOfWeek.THURSDAY,
-                        DayOfWeek.FRIDAY,
-                        DayOfWeek.SATURDAY,
-                        DayOfWeek.SUNDAY
+                val diaSemana = obtenerDiaSemana(fecha)
+                if (diaSemana == null || diaSemana !in setOf(
+                        Calendar.THURSDAY,
+                        Calendar.FRIDAY,
+                        Calendar.SATURDAY,
+                        Calendar.SUNDAY
                     )
                 ) {
                     Toast.makeText(context, "Zona BBQ solo disponible jueves-domingo", Toast.LENGTH_SHORT).show()
@@ -372,20 +372,32 @@ fun PantallaReservaZonaBBQ(
     }
 
     if (showDatePicker) {
-        val today = remember { LocalDate.now() }
+        val today = remember { Calendar.getInstance().timeInMillis }
         val state = androidx.compose.material3.rememberDatePickerState(
             selectableDates = object : SelectableDates {
                 override fun isSelectableDate(utcTimeMillis: Long): Boolean {
-                    val date = java.time.Instant.ofEpochMilli(utcTimeMillis)
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDate()
-                    val diaValido = date.dayOfWeek in setOf(
-                        DayOfWeek.THURSDAY,
-                        DayOfWeek.FRIDAY,
-                        DayOfWeek.SATURDAY,
-                        DayOfWeek.SUNDAY
+                    val calendar = Calendar.getInstance().apply { timeInMillis = utcTimeMillis }
+                    val diaValido = calendar.get(Calendar.DAY_OF_WEEK) in setOf(
+                        Calendar.THURSDAY,
+                        Calendar.FRIDAY,
+                        Calendar.SATURDAY,
+                        Calendar.SUNDAY
                     )
-                    return diaValido && !date.isBefore(today)
+                    val inicioDelDia = Calendar.getInstance().apply {
+                        timeInMillis = utcTimeMillis
+                        set(Calendar.HOUR_OF_DAY, 0)
+                        set(Calendar.MINUTE, 0)
+                        set(Calendar.SECOND, 0)
+                        set(Calendar.MILLISECOND, 0)
+                    }.timeInMillis
+                    val hoyInicio = Calendar.getInstance().apply {
+                        timeInMillis = today
+                        set(Calendar.HOUR_OF_DAY, 0)
+                        set(Calendar.MINUTE, 0)
+                        set(Calendar.SECOND, 0)
+                        set(Calendar.MILLISECOND, 0)
+                    }.timeInMillis
+                    return diaValido && inicioDelDia >= hoyInicio
                 }
             }
         )
@@ -395,7 +407,7 @@ fun PantallaReservaZonaBBQ(
                 Button(onClick = {
                     val millis = state.selectedDateMillis
                     if (millis != null) {
-                        fecha = millisToLocalDateBbq(millis).format(DateTimeFormatter.ISO_DATE)
+                        fecha = millisToFechaIsoBbq(millis)
                     }
                     showDatePicker = false
                 }) { Text("Aceptar") }
@@ -445,8 +457,19 @@ private fun construirRangosBbq(): List<String> {
     return rangos
 }
 
-private fun millisToLocalDateBbq(millis: Long): LocalDate {
-    return java.time.Instant.ofEpochMilli(millis)
-        .atZone(ZoneId.systemDefault())
-        .toLocalDate()
+private fun millisToFechaIsoBbq(millis: Long): String {
+    return try {
+        SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(millis))
+    } catch (e: Exception) {
+        ""
+    }
+}
+
+private fun obtenerDiaSemana(fechaIso: String): Int? {
+    return try {
+        val date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(fechaIso) ?: return null
+        Calendar.getInstance().apply { time = date }.get(Calendar.DAY_OF_WEEK)
+    } catch (e: Exception) {
+        null
+    }
 }

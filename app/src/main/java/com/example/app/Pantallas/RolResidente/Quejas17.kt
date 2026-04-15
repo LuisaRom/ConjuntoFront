@@ -6,7 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,9 +24,9 @@ import com.example.app.ViewModel.UsuarioViewModel
 import com.example.app.ui.theme.AzulOscuro
 import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
-import java.time.LocalDate
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,7 +70,7 @@ fun PantallaQuejasResidente(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
-                imageVector = Icons.Default.ArrowBack,
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = "Volver",
                 tint = GrisClaro,
                 modifier = Modifier.clickable {
@@ -178,7 +178,7 @@ fun PantallaQuejasResidente(
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .menuAnchor(),
+                    .menuAnchor(androidx.compose.material3.MenuAnchorType.PrimaryNotEditable, true),
                 colors = OutlinedTextFieldDefaults.colors(
                     unfocusedContainerColor = AzulOscuro,
                     focusedBorderColor = DoradoElegante,
@@ -311,10 +311,11 @@ fun PantallaQuejasResidente(
             confirmButton = {
                 Button(onClick = {
                     state.selectedDateMillis?.let { millis ->
-                        fecha = java.time.Instant.ofEpochMilli(millis)
-                            .atZone(ZoneId.systemDefault())
-                            .toLocalDate()
-                            .format(DateTimeFormatter.ISO_DATE)
+                        fecha = try {
+                            SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(millis))
+                        } catch (e: Exception) {
+                            ""
+                        }
                     }
                     showDatePicker = false
                 }) { Text("Aceptar") }

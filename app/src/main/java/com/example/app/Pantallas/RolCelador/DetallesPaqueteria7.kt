@@ -7,7 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
@@ -29,9 +29,10 @@ import com.example.app.ViewModel.UsuarioViewModel
 import com.example.app.ui.theme.AzulOscuro
 import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import android.util.Log
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -116,7 +117,10 @@ fun PantallaDetallesPaqueteriaCelador(
         }
         
         // Crear el objeto Paqueteria con usuario completo
-        val fechaActual = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)
+        val fechaActual = SimpleDateFormat(
+            "yyyy-MM-dd'T'HH:mm:ss",
+            Locale.getDefault()
+        ).format(Date())
         
         // Usar el usuario completo para el paquete (el backend debería poder manejarlo)
         val paquete = Paqueteria(
@@ -166,7 +170,7 @@ fun PantallaDetallesPaqueteriaCelador(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
-                imageVector = Icons.Default.ArrowBack,
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = "Volver",
                 tint = Color.White,
                 modifier = Modifier.clickable { navController.popBackStack() }
@@ -199,7 +203,7 @@ fun PantallaDetallesPaqueteriaCelador(
                 onValueChange = {},
                 modifier = Modifier
                     .fillMaxWidth()
-                    .menuAnchor()
+                    .menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
                     .padding(vertical = 4.dp),
                 label = { Text("Selecciona el residente", color = Color.White) },
                 placeholder = { Text("Buscar residente...", color = GrisClaro) },
@@ -309,7 +313,7 @@ fun PantallaDetallesPaqueteriaCelador(
                 onValueChange = {},
                 modifier = Modifier
                     .fillMaxWidth()
-                    .menuAnchor()
+                    .menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
                     .padding(vertical = 4.dp),
                 label = { Text("Selecciona la transportadora", color = Color.White) },
                 placeholder = { Text("Buscar transportadora...", color = GrisClaro) },

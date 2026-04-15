@@ -12,7 +12,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Receipt
@@ -39,8 +39,9 @@ import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun PantallaRecibosCelador(
@@ -96,7 +97,7 @@ fun PantallaRecibosCelador(
         // Botón volver
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
-                imageVector = Icons.Default.ArrowBack,
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = "Volver",
                 tint = GrisClaro,
                 modifier = Modifier.clickable {
@@ -156,7 +157,10 @@ fun PantallaRecibosCelador(
                         }
                         
                         android.util.Log.d("Recibos", "Enviando notificaciones de ENEL a ${destinatarios.size} residente(s)")
-                        val fechaActual = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)
+                        val fechaActual = SimpleDateFormat(
+                            "yyyy-MM-dd'T'HH:mm:ss",
+                            Locale.getDefault()
+                        ).format(Date())
                         var enviadas = 0
                         
                         // Enviar notificaciones de forma secuencial para evitar saturar el servidor
@@ -266,7 +270,10 @@ fun PantallaRecibosCelador(
                         }
                         
                         android.util.Log.d("Recibos", "Enviando notificaciones de VANTI a ${destinatarios.size} residente(s)")
-                        val fechaActual = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)
+                        val fechaActual = SimpleDateFormat(
+                            "yyyy-MM-dd'T'HH:mm:ss",
+                            Locale.getDefault()
+                        ).format(Date())
                         var enviadas = 0
                         
                         // Enviar notificaciones de forma secuencial para evitar saturar el servidor
@@ -373,7 +380,10 @@ fun PantallaRecibosCelador(
                         }
                         
                         android.util.Log.d("Recibos", "Enviando notificaciones de EPZ a ${destinatarios.size} residente(s)")
-                        val fechaActual = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)
+                        val fechaActual = SimpleDateFormat(
+                            "yyyy-MM-dd'T'HH:mm:ss",
+                            Locale.getDefault()
+                        ).format(Date())
                         var enviadas = 0
                         
                         // Enviar notificaciones de forma secuencial para evitar saturar el servidor
@@ -535,7 +545,7 @@ fun ReciboItemExpandible(
                     )
                 }
                 
-                Divider(color = GrisClaro.copy(alpha = 0.3f), thickness = 1.dp)
+                HorizontalDivider(color = GrisClaro.copy(alpha = 0.3f), thickness = 1.dp)
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 // Lista de residentes con scroll

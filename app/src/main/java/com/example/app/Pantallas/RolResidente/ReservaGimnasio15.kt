@@ -14,7 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -51,10 +51,10 @@ import com.example.app.ViewModel.UsuarioViewModel
 import com.example.app.ui.theme.AzulOscuro
 import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
-import java.time.DayOfWeek
-import java.time.LocalDate
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -97,7 +97,7 @@ fun PantallaReservaGimnasio(
         // Encabezado
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
-                imageVector = Icons.Default.ArrowBack,
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = "Volver",
                 tint = GrisClaro,
                 modifier = Modifier.clickable { navController.popBackStack() }
@@ -232,7 +232,7 @@ fun PantallaReservaGimnasio(
                 Button(onClick = {
                     val millis = state.selectedDateMillis
                     if (millis != null) {
-                        fecha = millisToLocalDateGimnasio(millis).format(DateTimeFormatter.ISO_DATE)
+                        fecha = millisToFechaIsoGimnasio(millis)
                         horarioSeleccionado = ""
                     }
                     showDatePicker = false
@@ -277,17 +277,21 @@ private fun construirRangosDisponiblesGimnasio(
     fechaIso: String,
     reservas: List<ReservaZonaComun>
 ): List<String> {
-    val fecha = runCatching { LocalDate.parse(fechaIso) }.getOrNull() ?: return emptyList()
-    val dia = fecha.dayOfWeek
-    if (dia !in setOf(
-            DayOfWeek.MONDAY,
-            DayOfWeek.TUESDAY,
-            DayOfWeek.WEDNESDAY,
-            DayOfWeek.THURSDAY,
-            DayOfWeek.FRIDAY,
-            DayOfWeek.SATURDAY
-        )
-    ) return emptyList()
+    val calendar = Calendar.getInstance()
+    val parsed = runCatching {
+        SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(fechaIso)
+    }.getOrNull() ?: return emptyList()
+    calendar.time = parsed
+    val dia = calendar.get(Calendar.DAY_OF_WEEK)
+    val diasPermitidos = setOf(
+        Calendar.MONDAY,
+        Calendar.TUESDAY,
+        Calendar.WEDNESDAY,
+        Calendar.THURSDAY,
+        Calendar.FRIDAY,
+        Calendar.SATURDAY
+    )
+    if (dia !in diasPermitidos) return emptyList()
 
     val reservasGimnasioDelDia = reservas.filter {
         it.zonaComun.equals("gimnasio", ignoreCase = true) && it.fechaReserva == fechaIso
@@ -313,8 +317,10 @@ private fun construirRangosDisponiblesGimnasio(
     return rangos
 }
 
-private fun millisToLocalDateGimnasio(millis: Long): LocalDate {
-    return java.time.Instant.ofEpochMilli(millis)
-        .atZone(ZoneId.systemDefault())
-        .toLocalDate()
+private fun millisToFechaIsoGimnasio(millis: Long): String {
+    return try {
+        SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(millis))
+    } catch (e: Exception) {
+        ""
+    }
 }

@@ -14,7 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Icon
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -42,8 +42,8 @@ import com.example.app.ui.theme.AzulOscuro
 import com.example.app.ui.theme.GrisClaro
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 
 @Composable
@@ -53,7 +53,9 @@ fun PantallaAccesoPeatonalCelador(
 ) {
     val accesos by accesoPeatonalViewModel.accesosPeatonales.collectAsState()
     val isLoading by accesoPeatonalViewModel.isLoading.collectAsState()
-    val hoyIso = remember { LocalDate.now().format(DateTimeFormatter.ISO_DATE) }
+    val hoyIso = remember {
+        SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+    }
     val accesosDelDia = remember(accesos, hoyIso) {
         accesos.filter { it.horaAutorizada?.startsWith(hoyIso) == true }
     }
@@ -97,7 +99,7 @@ fun PantallaAccesoPeatonalCelador(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    imageVector = Icons.Default.ArrowBack,
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Regresar",
                     tint = GrisClaro,
                     modifier = Modifier.clickable {

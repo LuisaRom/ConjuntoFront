@@ -18,7 +18,7 @@ import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -307,7 +307,7 @@ fun PantallaCreacionPublicacionAdmin(
             ) {
                 IconButton(onClick = { navController.popBackStack() }) {
                     Icon(
-                        imageVector = Icons.Default.ArrowBack,
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Volver",
                         tint = Color.White
                     )
@@ -529,11 +529,11 @@ fun PantallaCreacionPublicacionAdmin(
                         mensajeExito = null
                     } else {
                         mensajeError = null
-                        // Formato de fecha compatible con LocalDateTime del backend (ISO 8601)
-                        // El backend puede parsear automáticamente este formato
-                        val fechaActual = java.time.LocalDateTime.now().format(
-                            java.time.format.DateTimeFormatter.ISO_DATE_TIME
-                        )
+                        // Formato ISO compatible con backend y minSdk 24
+                        val fechaActual = SimpleDateFormat(
+                            "yyyy-MM-dd'T'HH:mm:ss",
+                            Locale.getDefault()
+                        ).format(Date())
                         
                         // Convertir lista de usuarios etiquetados a JSON
                         val usuariosEtiquetadosJson = if (usuariosEtiquetados.isNotEmpty()) {

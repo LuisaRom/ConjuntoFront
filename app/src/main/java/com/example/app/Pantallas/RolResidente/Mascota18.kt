@@ -11,7 +11,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -93,7 +93,7 @@ fun PantallaMascotasResidente(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    imageVector = Icons.Default.ArrowBack,
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Volver",
                     tint = GrisClaro,
                     modifier = Modifier.clickable { navController.popBackStack() }
@@ -176,7 +176,7 @@ fun PantallaMascotasResidente(
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expandedTipo) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .menuAnchor(),
+                            .menuAnchor(androidx.compose.material3.MenuAnchorType.PrimaryNotEditable, true),
                         colors = camposDark()
                     )
                     ExposedDropdownMenu(
