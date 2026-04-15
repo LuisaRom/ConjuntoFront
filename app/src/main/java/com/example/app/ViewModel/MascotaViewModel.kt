@@ -45,7 +45,7 @@ class MascotaViewModel @Inject constructor(
         }
     }
 
-    fun guardar(mascota: Mascota) = viewModelScope.launch {
+    fun guardar(mascota: Mascota, onSuccess: (() -> Unit)? = null) = viewModelScope.launch {
         _isLoading.value = true
         _error.value = null
         try {
@@ -53,6 +53,7 @@ class MascotaViewModel @Inject constructor(
                 repository.guardar(mascota)
             }
             obtenerTodos()
+            onSuccess?.invoke()
         } catch (e: Exception) {
             _error.value = "Error al guardar mascota: ${e.message}"
         } finally {

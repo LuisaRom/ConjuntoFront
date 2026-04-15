@@ -42,6 +42,8 @@ import com.example.app.ViewModel.UsuarioViewModel
 import com.example.app.ui.theme.AzulOscuro
 import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.qrcode.QRCodeWriter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -144,7 +146,8 @@ fun PantallaPagos(
                         id = id,
                         fecha = "$fechaActual - $mesActual",
                         monto = monto,
-                        totalServiciosAdicionales = totalServiciosAdicionales
+                        totalServiciosAdicionales = totalServiciosAdicionales,
+                        concepto = "Pago Administración"
                     )
                     if (resultado != null) {
                         val nombreArchivo = resultado.split("/").lastOrNull() ?: "Recibo.pdf"
@@ -226,7 +229,8 @@ suspend fun generarPDF(
     id: String,
     fecha: String,
     monto: String,
-    totalServiciosAdicionales: String
+    totalServiciosAdicionales: String,
+    concepto: String
 ): String? = withContext(Dispatchers.IO) {
     var pdfDocument: PdfDocument? = null
     var fileOutputStream: FileOutputStream? = null
@@ -239,6 +243,18 @@ suspend fun generarPDF(
         val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create() // A4 size (72 DPI)
         val page = pdfDocument.startPage(pageInfo)
         val canvas = page.canvas
+
+        // Marca de agua
+        val paintWatermark = android.graphics.Paint().apply {
+            color = android.graphics.Color.argb(40, 60, 60, 60)
+            textSize = 52f
+            typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT_BOLD, android.graphics.Typeface.BOLD)
+            textAlign = android.graphics.Paint.Align.CENTER
+        }
+        canvas.save()
+        canvas.rotate(-30f, pageInfo.pageWidth / 2f, pageInfo.pageHeight / 2f)
+        canvas.drawText("Hacienda San Rafael", pageInfo.pageWidth / 2f, pageInfo.pageHeight / 2f, paintWatermark)
+        canvas.restore()
         
         // Configurar pintura
         val paint = android.graphics.Paint()
@@ -257,10 +273,19 @@ suspend fun generarPDF(
         paintLabel.typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD)
         
         var yPos = 80f
-        
+
+        // Logo en encabezado
+        try {
+            val logoBitmapOriginal = android.graphics.BitmapFactory.decodeResource(context.resources, R.drawable.conjunto)
+            val logoBitmap = android.graphics.Bitmap.createScaledBitmap(logoBitmapOriginal, 72, 72, true)
+            canvas.drawBitmap(logoBitmap, 50f, 35f, null)
+        } catch (e: Exception) {
+            android.util.Log.w("PDF", "No se pudo cargar logo para PDF: ${e.message}")
+        }
+
         // Título
-        canvas.drawText("RECIBO DE PAGO - ADMINISTRACIÓN", 100f, yPos, paintTitle)
-        yPos += 60f
+        canvas.drawText("RECIBO DE PAGO - ADMINISTRACIÓN", 140f, yPos, paintTitle)
+        yPos += 70f
         
         // Línea separadora
         canvas.drawLine(50f, yPos, 545f, yPos, paint)
@@ -300,6 +325,10 @@ suspend fun generarPDF(
         canvas.drawText("Servicios Adicionales:", 50f, yPos, paintLabel)
         canvas.drawText(totalServiciosAdicionales, 250f, yPos, paintMonto)
         yPos += 60f
+
+        canvas.drawText("Concepto:", 50f, yPos, paintLabel)
+        canvas.drawText(concepto, 250f, yPos, paint)
+        yPos += 50f
         
         // Línea separadora final
         canvas.drawLine(50f, yPos, 545f, yPos, paint)
@@ -315,6 +344,26 @@ suspend fun generarPDF(
         canvas.drawText("Este es un comprobante de pago generado automáticamente.", 50f, yPos, paint)
         yPos += 30f
         canvas.drawText("Por favor, conserve este documento como comprobante.", 50f, yPos, paint)
+
+        // QR con información del pago
+        val torre = torreApartamento.split("-").getOrNull(0)?.trim().orEmpty()
+        val apto = torreApartamento.split("-").getOrNull(1)?.trim().orEmpty()
+        val qrPayload = listOf(
+            "residente=$nombre",
+            "apartamento=$apto",
+            "torre=$torre",
+            "monto=$monto",
+            "fecha=$fecha",
+            "concepto=$concepto"
+        ).joinToString("|")
+        try {
+            val qrBitmap = generarQrBitmapParaPdf(qrPayload, 170)
+            canvas.drawBitmap(qrBitmap, 370f, 620f, null)
+            paint.textSize = 10f
+            canvas.drawText("QR de validación de pago", 375f, 805f, paint)
+        } catch (e: Exception) {
+            android.util.Log.e("PDF", "Error generando QR para PDF: ${e.message}", e)
+        }
         
         pdfDocument.finishPage(page)
         
@@ -385,4 +434,19 @@ suspend fun generarPDF(
         
         null
     }
+}
+
+private fun generarQrBitmapParaPdf(contenido: String, size: Int): android.graphics.Bitmap {
+    val bitMatrix = QRCodeWriter().encode(contenido, BarcodeFormat.QR_CODE, size, size)
+    val bitmap = android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.RGB_565)
+    for (x in 0 until size) {
+        for (y in 0 until size) {
+            bitmap.setPixel(
+                x,
+                y,
+                if (bitMatrix.get(x, y)) android.graphics.Color.BLACK else android.graphics.Color.WHITE
+            )
+        }
+    }
+    return bitmap
 }
