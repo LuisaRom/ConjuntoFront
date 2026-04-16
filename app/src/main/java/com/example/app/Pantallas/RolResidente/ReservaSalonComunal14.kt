@@ -68,13 +68,14 @@ fun PantallaReservaSalonComunal(
     val isLoading by reservaZonaComunViewModel.isLoading.collectAsState()
 
     var fecha by remember { mutableStateOf("") }
-    var horario by remember { mutableStateOf("") }
+    var horaInicio by remember { mutableStateOf("") }
+    var horaFin by remember { mutableStateOf("") }
     var showDatePicker by remember { mutableStateOf(false) }
 
-    var expandedHorario by remember { mutableStateOf(false) }
-    val horariosDisponibles = remember {
-        construirRangosSalonComunal()
-    }
+    var expandedHoraInicio by remember { mutableStateOf(false) }
+    var expandedHoraFin by remember { mutableStateOf(false) }
+    val horasInicioDisponibles = remember { construirHorasSalonComunalInicio() }
+    val horasFinDisponibles = remember(horaInicio) { construirHorasSalonComunalFin(horaInicio) }
 
     var sillasSeleccion by remember { mutableStateOf("No") }
     var mesasSeleccion by remember { mutableStateOf("No") }
@@ -141,14 +142,6 @@ fun PantallaReservaSalonComunal(
             onValueChange = {},
             readOnly = true,
             label = { Text("Fecha", color = GrisClaro) },
-            trailingIcon = {
-                Text(
-                    text = "Calendario",
-                    color = DoradoElegante,
-                    fontSize = 12.sp,
-                    modifier = Modifier.clickable { showDatePicker = true }
-                )
-            },
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable { showDatePicker = true },
@@ -165,15 +158,15 @@ fun PantallaReservaSalonComunal(
         Spacer(modifier = Modifier.height(8.dp))
 
         ExposedDropdownMenuBox(
-            expanded = expandedHorario,
-            onExpandedChange = { expandedHorario = !expandedHorario }
+            expanded = expandedHoraInicio,
+            onExpandedChange = { expandedHoraInicio = !expandedHoraInicio }
         ) {
             OutlinedTextField(
-                value = horario,
+                value = horaInicio,
                 onValueChange = {},
                 readOnly = true,
-                label = { Text("Horario (mínimo 5 horas)") },
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedHorario) },
+                label = { Text("Hora inicio (08:00 - 21:00)") },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedHoraInicio) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .menuAnchor(androidx.compose.material3.MenuAnchorType.PrimaryNotEditable, true),
@@ -187,15 +180,56 @@ fun PantallaReservaSalonComunal(
                 )
             )
             ExposedDropdownMenu(
-                expanded = expandedHorario,
-                onDismissRequest = { expandedHorario = false }
+                expanded = expandedHoraInicio,
+                onDismissRequest = { expandedHoraInicio = false }
             ) {
-                horariosDisponibles.forEach { opcion ->
+                horasInicioDisponibles.forEach { opcion ->
                     DropdownMenuItem(
                         text = { Text(opcion) },
                         onClick = {
-                            horario = opcion
-                            expandedHorario = false
+                            horaInicio = opcion
+                            horaFin = ""
+                            expandedHoraInicio = false
+                        }
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        ExposedDropdownMenuBox(
+            expanded = expandedHoraFin,
+            onExpandedChange = { expandedHoraFin = !expandedHoraFin }
+        ) {
+            OutlinedTextField(
+                value = horaFin,
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Hora fin (máximo 22:00)") },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedHoraFin) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .menuAnchor(androidx.compose.material3.MenuAnchorType.PrimaryNotEditable, true),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    focusedBorderColor = DoradoElegante,
+                    unfocusedBorderColor = GrisClaro,
+                    focusedLabelColor = GrisClaro,
+                    unfocusedLabelColor = GrisClaro
+                )
+            )
+            ExposedDropdownMenu(
+                expanded = expandedHoraFin,
+                onDismissRequest = { expandedHoraFin = false }
+            ) {
+                horasFinDisponibles.forEach { opcion ->
+                    DropdownMenuItem(
+                        text = { Text(opcion) },
+                        onClick = {
+                            horaFin = opcion
+                            expandedHoraFin = false
                         }
                     )
                 }
@@ -336,7 +370,6 @@ fun PantallaReservaSalonComunal(
 
         Button(
             onClick = {
-                val rango = horario.split("-").map { it.trim() }
                 if (usuarioActual?.id == null) {
                     Toast.makeText(context, "No hay sesión activa", Toast.LENGTH_SHORT).show()
                     return@Button
@@ -345,15 +378,19 @@ fun PantallaReservaSalonComunal(
                     Toast.makeText(context, "Selecciona una fecha", Toast.LENGTH_SHORT).show()
                     return@Button
                 }
-                if (rango.size != 2) {
-                    Toast.makeText(context, "Selecciona un horario válido", Toast.LENGTH_SHORT).show()
+                if (horaInicio.isBlank() || horaFin.isBlank()) {
+                    Toast.makeText(context, "Selecciona hora inicio y hora fin", Toast.LENGTH_SHORT).show()
+                    return@Button
+                }
+                if (!esRangoHorarioValidoSalon(horaInicio, horaFin)) {
+                    Toast.makeText(context, "El rango horario seleccionado no es válido", Toast.LENGTH_SHORT).show()
                     return@Button
                 }
                 val reserva = ReservaZonaComun(
                     zonaComun = "salon comunal",
                     fechaReserva = fecha,
-                    horaInicio = rango[0],
-                    horaFin = rango[1],
+                    horaInicio = horaInicio,
+                    horaFin = horaFin,
                     serviciosAdicionales = serviciosAdicionales,
                     usuario = usuarioActual
                 )
@@ -431,16 +468,27 @@ private fun CampoSoloLecturaSalon(label: String, valor: String) {
     }
 }
 
-private fun construirRangosSalonComunal(): List<String> {
-    val rangos = mutableListOf<String>()
-    for (inicio in 8 until 22) {
-        for (duracion in 5..14) {
-            val fin = inicio + duracion
-            if (fin > 22) continue
-            rangos.add("%02d:00 - %02d:00".format(inicio, fin))
-        }
+private fun construirHorasSalonComunalInicio(): List<String> {
+    val horas = mutableListOf<String>()
+    for (inicio in 8..21) {
+        horas.add("%02d:00".format(inicio))
     }
-    return rangos
+    return horas
+}
+
+private fun construirHorasSalonComunalFin(horaInicio: String): List<String> {
+    val inicio = horaInicio.substringBefore(":").toIntOrNull() ?: return emptyList()
+    val horas = mutableListOf<String>()
+    for (fin in (inicio + 1)..22) {
+        horas.add("%02d:00".format(fin))
+    }
+    return horas
+}
+
+private fun esRangoHorarioValidoSalon(horaInicio: String, horaFin: String): Boolean {
+    val inicio = horaInicio.substringBefore(":").toIntOrNull() ?: return false
+    val fin = horaFin.substringBefore(":").toIntOrNull() ?: return false
+    return inicio in 8..21 && fin in 9..22 && fin > inicio
 }
 
 private fun millisToFechaIsoSalon(millis: Long): String {

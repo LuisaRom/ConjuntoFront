@@ -1,7 +1,9 @@
 package com.example.app.Pantallas.RolResidente
 
+import android.app.DatePickerDialog
 import android.graphics.Bitmap
-import android.graphics.Color as AndroidColor
+import android.graphics.BitmapFactory
+import android.util.Base64
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -29,9 +31,8 @@ import com.example.app.ViewModel.UsuarioViewModel
 import com.example.app.ui.theme.AzulOscuro
 import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
-import com.google.zxing.BarcodeFormat
-import com.google.zxing.qrcode.QRCodeWriter
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
@@ -46,14 +47,15 @@ fun PantallaAccesoVehicularResidente(
     val usuarioActual by usuarioViewModel.usuarioActual.collectAsState()
     val isLoading by accesoVehicularViewModel.isLoading.collectAsState()
     val error by accesoVehicularViewModel.error.collectAsState()
+    val ultimoAccesoGuardado by accesoVehicularViewModel.ultimoAccesoGuardado.collectAsState()
+    val accesoSeleccionado by accesoVehicularViewModel.accesoSeleccionado.collectAsState()
 
-    var torreApto by remember { mutableStateOf("") }
+    var torre by remember { mutableStateOf("") }
+    var apartamento by remember { mutableStateOf("") }
     var fecha by remember { mutableStateOf("") }
-    var horario by remember { mutableStateOf("") }
     var tipoVehiculo by remember { mutableStateOf("") }
     var placa by remember { mutableStateOf("") }
     var quienIngresa by remember { mutableStateOf("") }
-    var quienAutoriza by remember { mutableStateOf("") }
     var qrBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var accesoGuardado by remember { mutableStateOf<AccesoVehicular?>(null) }
 
@@ -64,6 +66,35 @@ fun PantallaAccesoVehicularResidente(
         error?.let {
             Toast.makeText(context, it, Toast.LENGTH_LONG).show()
             accesoVehicularViewModel.clearError()
+        }
+    }
+
+    LaunchedEffect(usuarioActual?.id, usuarioActual?.torre, usuarioActual?.apartamento) {
+        torre = usuarioActual?.torre.orEmpty()
+        apartamento = usuarioActual?.apartamento.orEmpty()
+    }
+
+    LaunchedEffect(ultimoAccesoGuardado?.id, ultimoAccesoGuardado?.codigoQr) {
+        ultimoAccesoGuardado?.let {
+            accesoGuardado = it
+            qrBitmap = null
+            Toast.makeText(context, "Acceso vehicular creado", Toast.LENGTH_SHORT).show()
+            accesoVehicularViewModel.clearUltimoAccesoGuardado()
+        }
+    }
+
+    LaunchedEffect(accesoSeleccionado?.id, accesoSeleccionado?.qrBase64, accesoSeleccionado?.qrDataUrl) {
+        accesoSeleccionado?.let { acceso ->
+            val qrDesdeBackend = extraerBitmapQr(acceso)
+            if (qrDesdeBackend != null) {
+                qrBitmap = qrDesdeBackend
+            } else {
+                Toast.makeText(
+                    context,
+                    "El endpoint no devolvió un QR válido (qrBase64/qrDataUrl)",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
         }
     }
 
@@ -87,9 +118,13 @@ fun PantallaAccesoVehicularResidente(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        CampoAcceso("Torre - Apartamento", torreApto) { torreApto = it }
-        CampoAcceso("Fecha", fecha) { fecha = it }
-        CampoAcceso("Horario", horario) { horario = it }
+        CampoAcceso("Torre", torre, enabled = false)
+        CampoAcceso("Apartamento", apartamento, enabled = false)
+        CampoFechaConCalendario(
+            label = "Fecha",
+            valor = fecha,
+            onDateSelected = { fecha = it }
+        )
 
         Text("Tipo de Vehículo", color = Color.White)
 
@@ -133,43 +168,28 @@ fun PantallaAccesoVehicularResidente(
         Spacer(modifier = Modifier.height(8.dp))
         CampoAcceso("Placa", placa) { placa = it }
         CampoAcceso("¿Quién ingresa?", quienIngresa) { quienIngresa = it }
-        CampoAcceso("¿Quién autoriza?", quienAutoriza) {
-            quienAutoriza = it
-            torreApto = if (torreApto.isBlank() && usuarioActual != null) {
-                "${usuarioActual?.torre ?: ""}-${usuarioActual?.apartamento ?: ""}"
-            } else torreApto
-        }
 
         Spacer(modifier = Modifier.height(32.dp))
 
         Button(
             onClick = {
-                if (placa.isBlank() || torreApto.isBlank() || quienIngresa.isBlank()) {
+                if (placa.isBlank() || torre.isBlank() || apartamento.isBlank() || quienIngresa.isBlank()) {
                     Toast.makeText(context, "Completa los campos obligatorios", Toast.LENGTH_SHORT).show()
                     return@Button
                 }
-                val partes = torreApto.split("-", " ").filter { it.isNotBlank() }
-                val torre = partes.firstOrNull() ?: (usuarioActual?.torre ?: "")
-                val apto = partes.getOrNull(1) ?: (usuarioActual?.apartamento ?: "")
                 val codigoUnico = "VEH-${System.currentTimeMillis()}-${placa.uppercase()}"
 
                 val acceso = AccesoVehicular(
                     placaVehiculo = placa.uppercase(),
                     torre = torre,
-                    apartamento = apto,
+                    apartamento = apartamento,
                     codigoQr = codigoUnico,
                     autorizadoPor = usuarioActual,
-                    horaAutorizada = SimpleDateFormat(
-                        "yyyy-MM-dd'T'HH:mm:ss",
-                        Locale.getDefault()
-                    ).format(Date()),
+                    horaAutorizada = fecha.toIsoDateTimeOrNow(),
                     horaEntrada = null,
                     horaSalida = null
                 )
                 accesoVehicularViewModel.guardarAccesoVehicular(acceso)
-                accesoGuardado = acceso
-                qrBitmap = null
-                Toast.makeText(context, "Acceso vehicular creado", Toast.LENGTH_SHORT).show()
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -189,13 +209,22 @@ fun PantallaAccesoVehicularResidente(
             Button(
                 onClick = {
                     val acceso = accesoGuardado ?: return@Button
-                    val payload = construirPayloadQrVehicular(acceso, tipoVehiculo, quienIngresa, quienAutoriza)
-                    qrBitmap = generarCodigoQRVehicular(payload)
+                    val accesoId = acceso.id
+                    if (accesoId == null) {
+                        Toast.makeText(context, "No se pudo obtener el id del acceso", Toast.LENGTH_SHORT).show()
+                        return@Button
+                    }
+                    accesoVehicularViewModel.obtenerAccesoVehicular(accesoId)
                 },
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Black)
+                colors = ButtonDefaults.buttonColors(containerColor = DoradoElegante),
+                enabled = !isLoading
             ) {
-                Text("Generar QR", color = Color.White)
+                Text(
+                    text = if (isLoading) "Consultando..." else "Generar QR",
+                    color = AzulOscuro,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
 
@@ -221,56 +250,108 @@ fun PantallaAccesoVehicularResidente(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CampoAcceso(label: String, valor: String, onChange: (String) -> Unit) {
+fun CampoAcceso(
+    label: String,
+    valor: String,
+    enabled: Boolean = true,
+    onChange: (String) -> Unit = {}
+) {
     Column(modifier = Modifier.padding(vertical = 4.dp)) {
         Text(text = label, color = Color.LightGray, fontSize = 12.sp)
         OutlinedTextField(
             value = valor,
-            onValueChange = onChange,
+            onValueChange = { if (enabled) onChange(it) },
             modifier = Modifier.fillMaxWidth(),
+            enabled = enabled,
+            readOnly = !enabled,
             singleLine = true,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = DoradoElegante,
                 unfocusedBorderColor = GrisClaro,
+                disabledBorderColor = GrisClaro,
                 cursorColor = DoradoElegante,
                 focusedLabelColor = GrisClaro,
                 unfocusedLabelColor = GrisClaro,
                 focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White
+                unfocusedTextColor = Color.White,
+                disabledTextColor = Color.White
             )
         )
     }
 }
 
-private fun construirPayloadQrVehicular(
-    acceso: AccesoVehicular,
-    tipoVehiculo: String,
-    quienIngresa: String,
-    quienAutoriza: String
-): String {
-    return listOf(
-        "tipo=VEHICULAR",
-        "codigo=${acceso.codigoQr ?: ""}",
-        "placa=${acceso.placaVehiculo}",
-        "torre=${acceso.torre}",
-        "apartamento=${acceso.apartamento}",
-        "vehiculo=$tipoVehiculo",
-        "ingresa=$quienIngresa",
-        "autoriza=$quienAutoriza",
-        "fecha=${acceso.horaAutorizada ?: ""}"
-    ).joinToString("|")
+@Composable
+private fun CampoFechaConCalendario(
+    label: String,
+    valor: String,
+    onDateSelected: (String) -> Unit
+) {
+    val context = LocalContext.current
+    val calendar = remember { Calendar.getInstance() }
+
+    Column(modifier = Modifier.padding(vertical = 4.dp)) {
+        Text(text = label, color = Color.LightGray, fontSize = 12.sp)
+        OutlinedTextField(
+            value = valor,
+            onValueChange = {},
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                    DatePickerDialog(
+                        context,
+                        { _, year, month, dayOfMonth ->
+                            val fechaSeleccionada = String.format(
+                                Locale.getDefault(),
+                                "%02d/%02d/%04d",
+                                dayOfMonth,
+                                month + 1,
+                                year
+                            )
+                            onDateSelected(fechaSeleccionada)
+                        },
+                        calendar.get(Calendar.YEAR),
+                        calendar.get(Calendar.MONTH),
+                        calendar.get(Calendar.DAY_OF_MONTH)
+                    ).show()
+                },
+            readOnly = true,
+            singleLine = true,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = DoradoElegante,
+                unfocusedBorderColor = GrisClaro,
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White,
+                cursorColor = DoradoElegante
+            )
+        )
+    }
 }
 
-fun generarCodigoQRVehicular(texto: String): Bitmap {
-    val size = 512
-    val qrCodeWriter = QRCodeWriter()
-    val bitMatrix = qrCodeWriter.encode(texto, BarcodeFormat.QR_CODE, size, size)
-    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.RGB_565)
-    for (x in 0 until size) {
-        for (y in 0 until size) {
-            val color = if (bitMatrix.get(x, y)) AndroidColor.BLACK else AndroidColor.WHITE
-            bitmap.setPixel(x, y, color)
-        }
+private fun String.toIsoDateTimeOrNow(): String {
+    if (isBlank()) {
+        return SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).format(Date())
     }
-    return bitmap
+    return try {
+        val parsedDate = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).parse(this)
+        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).format(parsedDate ?: Date())
+    } catch (_: Exception) {
+        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).format(Date())
+    }
+}
+
+private fun extraerBitmapQr(acceso: AccesoVehicular): Bitmap? {
+    val base64Raw = when {
+        !acceso.qrDataUrl.isNullOrBlank() && acceso.qrDataUrl.contains(",") ->
+            acceso.qrDataUrl.substringAfter(",")
+        !acceso.qrBase64.isNullOrBlank() ->
+            acceso.qrBase64
+        else -> null
+    } ?: return null
+
+    return try {
+        val bytes = Base64.decode(base64Raw, Base64.DEFAULT)
+        BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+    } catch (_: IllegalArgumentException) {
+        null
+    }
 }

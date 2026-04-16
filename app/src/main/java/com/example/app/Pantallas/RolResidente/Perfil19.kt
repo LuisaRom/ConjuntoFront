@@ -3,6 +3,7 @@ package com.example.app.Pantallas.RolResidente
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Person
@@ -96,7 +97,7 @@ fun PantallaPerfilResidente(
 
         CampoPerfil("Nombre", usuarioPerfil?.nombre ?: "", enabled = false)
         CampoPerfil("Usuario", usuarioPerfil?.usuario ?: "", enabled = false)
-        CampoPerfil("Contraseña", if (usuarioPerfil?.password.isNullOrBlank()) "" else "********", enabled = false)
+        CampoPerfilTexto("Contraseña", if (usuarioPerfil?.password.isNullOrBlank()) "" else "****")
         CampoPerfil("Rol", rolVisual, enabled = false)
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -166,4 +167,20 @@ fun CampoPerfil(label: String, valor: String, enabled: Boolean) {
             disabledTextColor = Color.White
         )
     )
+}
+
+@Composable
+fun CampoPerfilTexto(label: String, valor: String) {
+    Column(modifier = Modifier.padding(vertical = 4.dp)) {
+        Text(text = label, color = Color.LightGray, fontSize = 12.sp)
+        Text(
+            text = valor,
+            color = Color.White,
+            fontSize = 16.sp,
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(6.dp))
+                .padding(12.dp)
+        )
+    }
 }

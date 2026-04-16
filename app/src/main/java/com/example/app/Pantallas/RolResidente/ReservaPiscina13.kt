@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
@@ -98,6 +100,7 @@ fun PantallaReservaPiscina(
             .fillMaxSize()
             .background(AzulOscuro)
             .padding(16.dp)
+            .verticalScroll(rememberScrollState())
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
@@ -121,14 +124,6 @@ fun PantallaReservaPiscina(
             onValueChange = {},
             readOnly = true,
             label = { Text("Fecha", color = GrisClaro) },
-            trailingIcon = {
-                Text(
-                    text = "Calendario",
-                    color = DoradoElegante,
-                    fontSize = 12.sp,
-                    modifier = Modifier.clickable { showDatePicker = true }
-                )
-            },
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable { showDatePicker = true },
@@ -144,6 +139,11 @@ fun PantallaReservaPiscina(
 
         Spacer(modifier = Modifier.height(12.dp))
         Text("Horarios disponibles", color = GrisClaro, fontSize = 14.sp)
+        Text(
+            "Disponible: fondo claro | Seleccionado: dorado",
+            color = Color.LightGray,
+            fontSize = 12.sp
+        )
         Spacer(modifier = Modifier.height(6.dp))
         if (fecha.isBlank()) {
             Text("Selecciona una fecha para ver rangos.", color = Color.LightGray, fontSize = 12.sp)
@@ -164,6 +164,8 @@ fun PantallaReservaPiscina(
                             { Icon(Icons.Default.Check, contentDescription = null, tint = AzulOscuro) }
                         } else null,
                         colors = FilterChipDefaults.filterChipColors(
+                            containerColor = GrisClaro.copy(alpha = 0.28f),
+                            labelColor = Color.White,
                             selectedContainerColor = DoradoElegante,
                             selectedLabelColor = AzulOscuro
                         ),

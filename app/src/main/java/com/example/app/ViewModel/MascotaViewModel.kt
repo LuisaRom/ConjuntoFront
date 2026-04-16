@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
@@ -52,6 +53,24 @@ class MascotaViewModel @Inject constructor(
             val mascotaGuardada = withContext(Dispatchers.IO) {
                 repository.guardar(mascota)
             }
+            _mascotas.value = listOf(mascotaGuardada) + _mascotas.value.filterNot { it.id == mascotaGuardada.id }
+            obtenerTodos()
+            onSuccess?.invoke()
+        } catch (e: Exception) {
+            _error.value = "Error al guardar mascota: ${e.message}"
+        } finally {
+            _isLoading.value = false
+        }
+    }
+
+    fun guardarConFoto(mascota: Mascota, fotoFile: File, onSuccess: (() -> Unit)? = null) = viewModelScope.launch {
+        _isLoading.value = true
+        _error.value = null
+        try {
+            val mascotaGuardada = withContext(Dispatchers.IO) {
+                repository.guardarConFoto(mascota, fotoFile)
+            }
+            _mascotas.value = listOf(mascotaGuardada) + _mascotas.value.filterNot { it.id == mascotaGuardada.id }
             obtenerTodos()
             onSuccess?.invoke()
         } catch (e: Exception) {

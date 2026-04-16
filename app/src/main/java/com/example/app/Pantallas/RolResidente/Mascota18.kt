@@ -30,7 +30,7 @@ import com.example.app.ViewModel.UsuarioViewModel
 import com.example.app.ui.theme.AzulOscuro
 import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
-import kotlinx.coroutines.launch
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,7 +44,6 @@ fun PantallaMascotasResidente(
     val isLoading by mascotaViewModel.isLoading.collectAsState()
     val error by mascotaViewModel.error.collectAsState()
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     var showSheet by remember { mutableStateOf(false) }
@@ -145,12 +144,12 @@ fun PantallaMascotasResidente(
 
                 Button(
                     onClick = { seleccionarFotoLauncher.launch("image/*") },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
+                    colors = ButtonDefaults.buttonColors(containerColor = DoradoElegante),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
                         text = if (fotoUri == null) "Subir foto" else "Foto seleccionada",
-                        color = Color.White
+                        color = AzulOscuro
                     )
                 }
 
@@ -224,14 +223,14 @@ fun PantallaMascotasResidente(
                             Toast.makeText(context, "Completa todos los campos requeridos", Toast.LENGTH_SHORT).show()
                             return@Button
                         }
+                        if (fotoUri != null && fotoUri?.startsWith("content://") != true) {
+                            Toast.makeText(context, "Formato de imagen no válido", Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
                         val razaPayload = buildString {
                             append(descripcion.trim())
                             append(" | Vacunación: ")
                             append(if (vacunacionCompleta) "Sí" else "No")
-                            if (!fotoUri.isNullOrBlank()) {
-                                append(" | Foto: ")
-                                append(fotoUri)
-                            }
                         }
                         val mascota = Mascota(
                             nombre = nombre.trim(),
@@ -239,19 +238,24 @@ fun PantallaMascotasResidente(
                             raza = razaPayload,
                             usuario = usuarioActual
                         )
-                        mascotaViewModel.guardar(mascota) {
-                            scope.launch {
-                                showSheet = false
-                                nombre = ""
-                                tipo = ""
-                                descripcion = ""
-                                vacunacionCompleta = false
-                                fotoUri = null
-                                navController.navigate("PantallaMenuResidente") {
-                                    popUpTo("PantallaMenuResidente") { inclusive = false }
-                                    launchSingleTop = true
-                                }
-                            }
+                        val fotoFile = fotoUri?.let { guardarUriComoArchivoTemporal(context, it) }
+                        val onSuccess = {
+                            showSheet = false
+                            nombre = ""
+                            tipo = ""
+                            descripcion = ""
+                            vacunacionCompleta = false
+                            fotoUri = null
+                            Toast.makeText(context, "Publicación creada con éxito", Toast.LENGTH_SHORT).show()
+                        }
+                        if (fotoUri != null && fotoFile == null) {
+                            Toast.makeText(context, "No se pudo procesar la imagen seleccionada", Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
+                        if (fotoFile != null) {
+                            mascotaViewModel.guardarConFoto(mascota, fotoFile, onSuccess)
+                        } else {
+                            mascotaViewModel.guardar(mascota, onSuccess)
                         }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = DoradoElegante),
@@ -304,3 +308,22 @@ private fun camposDark() = OutlinedTextFieldDefaults.colors(
     focusedTextColor = Color.White,
     unfocusedTextColor = Color.White
 )
+
+private fun guardarUriComoArchivoTemporal(
+    context: android.content.Context,
+    uriString: String
+): File? {
+    return try {
+        val uri = android.net.Uri.parse(uriString)
+        val input = context.contentResolver.openInputStream(uri) ?: return null
+        val file = File.createTempFile("mascota_", ".jpg", context.cacheDir)
+        input.use { inputStream ->
+            file.outputStream().use { outputStream ->
+                inputStream.copyTo(outputStream)
+            }
+        }
+        file
+    } catch (_: Exception) {
+        null
+    }
+}

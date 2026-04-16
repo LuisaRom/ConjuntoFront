@@ -30,6 +30,9 @@ class AccesoPeatonalViewModel @Inject constructor(
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
+    private val _ultimoAccesoGuardado = MutableStateFlow<AccesoPeatonal?>(null)
+    val ultimoAccesoGuardado: StateFlow<AccesoPeatonal?> = _ultimoAccesoGuardado.asStateFlow()
+
     fun obtenerAccesosPeatonales() {
         viewModelScope.launch {
             _isLoading.value = true
@@ -72,8 +75,10 @@ class AccesoPeatonalViewModel @Inject constructor(
                 val accesoGuardado = withContext(Dispatchers.IO) {
                     repository.guardarAccesoPeatonal(accesoPeatonal)
                 }
+                _ultimoAccesoGuardado.value = accesoGuardado
                 obtenerAccesosPeatonales() // Refrescar lista
             } catch (e: Exception) {
+                _ultimoAccesoGuardado.value = null
                 _error.value = "Error al guardar acceso: ${e.message}"
             } finally {
                 _isLoading.value = false
@@ -100,5 +105,9 @@ class AccesoPeatonalViewModel @Inject constructor(
 
     fun clearError() {
         _error.value = null
+    }
+
+    fun clearUltimoAccesoGuardado() {
+        _ultimoAccesoGuardado.value = null
     }
 }

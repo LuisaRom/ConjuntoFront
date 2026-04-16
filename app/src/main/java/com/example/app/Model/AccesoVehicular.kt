@@ -17,6 +17,12 @@ data class AccesoVehicular(
     @SerializedName("codigoQr")
     val codigoQr: String? = null,
 
+    @SerializedName("qrBase64")
+    val qrBase64: String? = null,
+
+    @SerializedName("qrDataUrl")
+    val qrDataUrl: String? = null,
+
     @SerializedName("visitante")
     val visitante: Visitante? = null,
 

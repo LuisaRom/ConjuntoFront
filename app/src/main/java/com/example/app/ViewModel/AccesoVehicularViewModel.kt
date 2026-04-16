@@ -30,6 +30,9 @@ class AccesoVehicularViewModel @Inject constructor(
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
+    private val _ultimoAccesoGuardado = MutableStateFlow<AccesoVehicular?>(null)
+    val ultimoAccesoGuardado: StateFlow<AccesoVehicular?> = _ultimoAccesoGuardado.asStateFlow()
+
     fun obtenerAccesosVehiculares() {
         viewModelScope.launch {
             _isLoading.value = true
@@ -72,8 +75,10 @@ class AccesoVehicularViewModel @Inject constructor(
                 val accesoGuardado = withContext(Dispatchers.IO) {
                     repository.guardar(accesoVehicular)
                 }
+                _ultimoAccesoGuardado.value = accesoGuardado
                 obtenerAccesosVehiculares() // Refrescar lista
             } catch (e: Exception) {
+                _ultimoAccesoGuardado.value = null
                 _error.value = "Error al guardar acceso: ${e.message}"
             } finally {
                 _isLoading.value = false
@@ -100,5 +105,9 @@ class AccesoVehicularViewModel @Inject constructor(
 
     fun clearError() {
         _error.value = null
+    }
+
+    fun clearUltimoAccesoGuardado() {
+        _ultimoAccesoGuardado.value = null
     }
 }
