@@ -2,6 +2,7 @@ package com.example.app.Pantallas.RolCelador
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -86,9 +88,7 @@ fun PantallaNotificacionesCelador(navController: NavController) {
                     Text(
                         "Mensajes",
                         color = AzulOscuro,
-                        fontSize = 12.sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        fontSize = 12.sp
                     )
                 }
 
@@ -108,9 +108,7 @@ fun PantallaNotificacionesCelador(navController: NavController) {
                     Text(
                         "Paquetería",
                         color = AzulOscuro,
-                        fontSize = 11.sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        fontSize = 12.sp
                     )
                 }
 
@@ -130,9 +128,7 @@ fun PantallaNotificacionesCelador(navController: NavController) {
                     Text(
                         "Recibos",
                         color = AzulOscuro,
-                        fontSize = 12.sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        fontSize = 12.sp
                     )
                 }
             }

@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -38,6 +39,7 @@ import androidx.navigation.NavController
 import com.example.app.Model.AccesoVehicular
 import com.example.app.ViewModel.AccesoVehicularViewModel
 import com.example.app.ui.theme.AzulOscuro
+import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
@@ -157,12 +159,18 @@ fun PantallaAccesoVehicularCelador(
                     }
                     qrLauncher.launch(options)
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
+                colors = ButtonDefaults.buttonColors(containerColor = DoradoElegante),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp)
             ) {
-                Text("Escanear QR", color = Color.White)
+                Icon(
+                    imageVector = Icons.Default.CameraAlt,
+                    contentDescription = "Escanear QR",
+                    tint = AzulOscuro
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Escanear QR", color = AzulOscuro)
             }
 
             if (isLoading) {

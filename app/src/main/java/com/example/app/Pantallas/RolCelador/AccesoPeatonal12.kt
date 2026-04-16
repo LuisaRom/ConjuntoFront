@@ -21,6 +21,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -39,6 +40,7 @@ import androidx.navigation.NavController
 import com.example.app.Model.AccesoPeatonal
 import com.example.app.ViewModel.AccesoPeatonalViewModel
 import com.example.app.ui.theme.AzulOscuro
+import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
@@ -162,12 +164,18 @@ fun PantallaAccesoPeatonalCelador(
                     }
                     qrLauncher.launch(options)
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
+                colors = ButtonDefaults.buttonColors(containerColor = DoradoElegante),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp)
             ) {
-                Text("Escanear QR", color = Color.White)
+                Icon(
+                    imageVector = Icons.Default.CameraAlt,
+                    contentDescription = "Escanear QR",
+                    tint = AzulOscuro
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Escanear QR", color = AzulOscuro)
             }
 
             if (isLoading) {

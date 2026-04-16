@@ -326,7 +326,12 @@ private fun construirRangosDisponiblesPiscina(
                 val inicioTxt = "%02d:00".format(horaInicio)
                 val finTxt = "%02d:00".format(horaFin)
                 val estaDisponible = reservasPiscinaDelDia.none { reserva ->
-                    !(reserva.horaFin <= inicioTxt || reserva.horaInicio >= finTxt)
+                    hayCruceHorario(
+                        inicioTxt,
+                        finTxt,
+                        reserva.horaInicio,
+                        reserva.horaFin
+                    )
                 }
                 if (estaDisponible) {
                     rangos.add("$inicioTxt - $finTxt")
@@ -334,7 +339,7 @@ private fun construirRangosDisponiblesPiscina(
             }
         }
     }
-    return rangos
+    return rangos.distinct()
 }
 
 private fun millisToFechaIsoPiscina(millis: Long): String {
@@ -360,4 +365,25 @@ private fun esDiaPermitidoPiscina(fechaIso: String): Boolean {
     } catch (e: Exception) {
         false
     }
+}
+
+private fun hayCruceHorario(
+    inicioNuevo: String,
+    finNuevo: String,
+    inicioExistente: String,
+    finExistente: String
+): Boolean {
+    val nuevoInicioMin = inicioNuevo.toMinutesOrNull() ?: return false
+    val nuevoFinMin = finNuevo.toMinutesOrNull() ?: return false
+    val existenteInicioMin = inicioExistente.toMinutesOrNull() ?: return false
+    val existenteFinMin = finExistente.toMinutesOrNull() ?: return false
+    return nuevoInicioMin < existenteFinMin && nuevoFinMin > existenteInicioMin
+}
+
+private fun String.toMinutesOrNull(): Int? {
+    val partes = split(":")
+    if (partes.size != 2) return null
+    val horas = partes[0].toIntOrNull() ?: return null
+    val minutos = partes[1].toIntOrNull() ?: return null
+    return horas * 60 + minutos
 }

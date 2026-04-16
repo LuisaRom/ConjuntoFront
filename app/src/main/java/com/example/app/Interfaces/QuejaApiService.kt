@@ -8,15 +8,24 @@ import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
+import okhttp3.ResponseBody
 
 interface QuejaApiService {
     @GET("/api/quejas/todas")
     suspend fun obtenerQuejas(): List<Queja>
 
     @GET("/api/quejas/todas")
+    suspend fun obtenerQuejasRaw(): ResponseBody
+
+    @GET("/api/quejas/todas")
     suspend fun obtenerQuejasPorCategoria(
         @Query("categoria") categoria: String
     ): List<Queja>
+
+    @GET("/api/quejas/todas")
+    suspend fun obtenerQuejasPorCategoriaRaw(
+        @Query("categoria") categoria: String
+    ): ResponseBody
 
     @GET("/api/quejas/{id}")
     suspend fun obtenerQueja(@Path("id") id: Long): Queja

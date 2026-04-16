@@ -2,6 +2,7 @@ package com.example.app.Pantallas.RolCelador
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,30 +13,60 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material3.Icon
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.app.Model.AccesoPeatonal
+import com.example.app.Model.AccesoVehicular
+import com.example.app.ViewModel.AccesoPeatonalViewModel
+import com.example.app.ViewModel.AccesoVehicularViewModel
 import com.example.app.ui.theme.AzulOscuro
 import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
 
 @Composable
-fun PantallaAccesosCelador(navController: NavController) {
-    val accesosVehiculares = emptyList<String>()  // Lista vacía
-    val accesosPeatonales = emptyList<String>()   // Lista vacía
+fun PantallaAccesosCelador(
+    navController: NavController,
+    accesoVehicularViewModel: AccesoVehicularViewModel = hiltViewModel(),
+    accesoPeatonalViewModel: AccesoPeatonalViewModel = hiltViewModel()
+) {
+    val accesosVehiculares by accesoVehicularViewModel.accesosVehiculares.collectAsState()
+    val accesosPeatonales by accesoPeatonalViewModel.accesosPeatonales.collectAsState()
+    var vehicularSeleccionado by remember { mutableStateOf<AccesoVehicular?>(null) }
+    var peatonalSeleccionado by remember { mutableStateOf<AccesoPeatonal?>(null) }
+
+    LaunchedEffect(Unit) {
+        accesoVehicularViewModel.obtenerAccesosVehiculares()
+        accesoPeatonalViewModel.obtenerAccesosPeatonales()
+    }
 
     Column(
         modifier = Modifier
@@ -60,67 +91,125 @@ fun PantallaAccesosCelador(navController: NavController) {
 
         Spacer(modifier = Modifier.height(24.dp))
 
-
-        Text("Acceso Vehicular", color = Color.White, style = MaterialTheme.typography.titleMedium)
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                imageVector = Icons.Default.DirectionsCar,
-                contentDescription = null,
-                tint = DoradoElegante,
-                modifier = Modifier.size(35.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("${accesosVehiculares.size} accesos", color = Color.LightGray, fontSize = 12.sp)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Acceso Vehicular", color = Color.White, style = MaterialTheme.typography.titleMedium)
+            IconButton(onClick = { navController.navigate("PantallaAccesoVehicularCelador") }) {
+                Icon(Icons.Default.CameraAlt, contentDescription = "Escanear vehicular", tint = DoradoElegante)
+            }
         }
-
+        Text("${accesosVehiculares.size} accesos", color = Color.LightGray, fontSize = 12.sp)
         Spacer(modifier = Modifier.height(8.dp))
         if (accesosVehiculares.isEmpty()) {
             Text("No hay accesos creados", color = Color.Gray, fontSize = 14.sp)
         } else {
-            accesosVehiculares.forEach { acceso ->
-                AccesoItem(acceso) {
-                    navController.navigate("PantallaAccesoVehicularCelador")
+            LazyColumn(modifier = Modifier.height(150.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(accesosVehiculares, key = { it.id ?: it.hashCode().toLong() }) { acceso ->
+                    AccesoItem(
+                        titulo = "Placa ${acceso.placaVehiculo} - Torre ${acceso.torre} Apt ${acceso.apartamento}",
+                        subtitulo = "Residente: ${acceso.autorizadoPor?.nombre ?: acceso.autorizadoPor?.usuario ?: "-"}"
+                    ) { vehicularSeleccionado = acceso }
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
-        Text("Acceso Peatonal", color = Color.White, style = MaterialTheme.typography.titleMedium)
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.DirectionsWalk,
-                contentDescription = null,
-                tint = DoradoElegante,
-                modifier = Modifier.size(25.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("${accesosPeatonales.size} accesos", color = Color.LightGray, fontSize = 12.sp)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Acceso Peatonal", color = Color.White, style = MaterialTheme.typography.titleMedium)
+            IconButton(onClick = { navController.navigate("PantallaAccesoPeatonalCelador") }) {
+                Icon(Icons.Default.CameraAlt, contentDescription = "Escanear peatonal", tint = DoradoElegante)
+            }
         }
-
+        Text("${accesosPeatonales.size} accesos", color = Color.LightGray, fontSize = 12.sp)
         Spacer(modifier = Modifier.height(8.dp))
         if (accesosPeatonales.isEmpty()) {
             Text("No hay accesos creados", color = Color.Gray, fontSize = 14.sp)
         } else {
-            accesosPeatonales.forEach { acceso ->
-                AccesoItem(acceso) {
-                    navController.navigate("PantallaAccesoPeatonalCelador")
+            LazyColumn(modifier = Modifier.height(150.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(accesosPeatonales, key = { it.id ?: it.hashCode().toLong() }) { acceso ->
+                    AccesoItem(
+                        titulo = "${acceso.nombreVisitante} - Torre ${acceso.torre} Apt ${acceso.apartamento}",
+                        subtitulo = "Residente: ${acceso.autorizadoPor?.nombre ?: acceso.autorizadoPor?.usuario ?: "-"}"
+                    ) { peatonalSeleccionado = acceso }
                 }
             }
         }
     }
+
+    vehicularSeleccionado?.let { acceso ->
+        AlertDialog(
+            onDismissRequest = { vehicularSeleccionado = null },
+            title = {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text("Acceso Vehicular", color = Color.White)
+                    Text("X", color = DoradoElegante, modifier = Modifier.clickable { vehicularSeleccionado = null })
+                }
+            },
+            text = {
+                Column {
+                    Text("Placa: ${acceso.placaVehiculo}", color = Color.White)
+                    Text("Torre/Apto: ${acceso.torre} - ${acceso.apartamento}", color = Color.White)
+                    Text("Fecha: ${acceso.horaAutorizada ?: "-"}", color = Color.White)
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { vehicularSeleccionado = null },
+                    colors = ButtonDefaults.buttonColors(containerColor = DoradoElegante)
+                ) { Text("Cerrar", color = AzulOscuro, fontWeight = FontWeight.Bold) }
+            },
+            containerColor = AzulOscuro
+        )
+    }
+
+    peatonalSeleccionado?.let { acceso ->
+        AlertDialog(
+            onDismissRequest = { peatonalSeleccionado = null },
+            title = {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text("Acceso Peatonal", color = Color.White)
+                    Text("X", color = DoradoElegante, modifier = Modifier.clickable { peatonalSeleccionado = null })
+                }
+            },
+            text = {
+                Column {
+                    Text("Visitante: ${acceso.nombreVisitante}", color = Color.White)
+                    Text("Torre/Apto: ${acceso.torre} - ${acceso.apartamento}", color = Color.White)
+                    Text("Código QR: ${acceso.codigoQr}", color = Color.White)
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { peatonalSeleccionado = null },
+                    colors = ButtonDefaults.buttonColors(containerColor = DoradoElegante)
+                ) { Text("Cerrar", color = AzulOscuro, fontWeight = FontWeight.Bold) }
+            },
+            containerColor = AzulOscuro
+        )
+    }
 }
 
 @Composable
-fun AccesoItem(titulo: String, onClick: () -> Unit) {
+fun AccesoItem(titulo: String, subtitulo: String, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
             .background(Color.White.copy(alpha = 0.08f))
             .clickable(onClick = onClick)
-            .padding(16.dp)
+            .padding(12.dp)
     ) {
-        Text(text = titulo, color = GrisClaro)
+        Column {
+            Text(text = titulo, color = Color.White, fontSize = 13.sp)
+            Text(text = subtitulo, color = GrisClaro, fontSize = 12.sp)
+        }
     }
 }

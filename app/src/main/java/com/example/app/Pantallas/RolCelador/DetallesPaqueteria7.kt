@@ -49,7 +49,6 @@ fun PantallaDetallesPaqueteriaCelador(
     var torreApto by remember { mutableStateOf("") }
     var numeroPaquete by remember { mutableStateOf("") }
     var transportadora by remember { mutableStateOf("") }
-    var nombreRemitente by remember { mutableStateOf("") }
     
     // Estados para los menús desplegables
     var expandedResidente by remember { mutableStateOf(false) }
@@ -83,7 +82,6 @@ fun PantallaDetallesPaqueteriaCelador(
             } else {
                 ""
             }
-            nombreRemitente = residente.nombre ?: ""
         }
     }
     
@@ -148,7 +146,6 @@ fun PantallaDetallesPaqueteriaCelador(
                 torreApto = ""
                 transportadora = ""
                 numeroPaquete = ""
-                nombreRemitente = ""
                 
                 // Esperar un momento antes de volver para que se vea el mensaje
                 kotlinx.coroutines.delay(500)
@@ -366,13 +363,6 @@ fun PantallaDetallesPaqueteriaCelador(
 
         Spacer(modifier = Modifier.height(8.dp))
         
-        // Campo Nombre del Remitente (opcional, se autocompleta)
-        CampoTexto(
-            label = "Nombre Remitente (opcional)",
-            valor = nombreRemitente,
-            onValueChange = { nombreRemitente = it }
-        )
-
         Spacer(modifier = Modifier.height(24.dp))
         
         // Botón Enviar

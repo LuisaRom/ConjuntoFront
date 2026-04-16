@@ -1,6 +1,7 @@
 package com.example.app.Pantallas.RolCelador
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,6 +27,9 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
@@ -61,6 +65,7 @@ fun PantallaReservasCelador(
     val isLoading by reservaZonaComunViewModel.isLoading.collectAsState()
     val error by reservaZonaComunViewModel.error.collectAsState()
     var filtroTipo by remember { mutableStateOf("Todas") }
+    var reservaSeleccionada by remember { mutableStateOf<ReservaZonaComun?>(null) }
 
     LaunchedEffect(Unit) {
         reservaZonaComunViewModel.obtenerTodos()
@@ -156,7 +161,8 @@ fun PantallaReservasCelador(
                 ) { reserva ->
                     ReservaCardSoloLectura(
                         reserva = reserva,
-                        icono = iconoPorTipo(reserva.zonaComun)
+                        icono = iconoPorTipo(reserva.zonaComun),
+                        onClick = { reservaSeleccionada = reserva }
                     )
                 }
             }
@@ -171,16 +177,51 @@ fun PantallaReservasCelador(
             )
         }
     }
+
+    reservaSeleccionada?.let { reserva ->
+        AlertDialog(
+            onDismissRequest = { reservaSeleccionada = null },
+            title = {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween) {
+                    Text("Detalle Reserva", color = Color.White)
+                    Text("X", color = DoradoElegante, modifier = Modifier.clickable { reservaSeleccionada = null })
+                }
+            },
+            text = {
+                Column {
+                    Text("Zona: ${normalizarTipoReserva(reserva.zonaComun)}", color = Color.White)
+                    Text("Fecha: ${reserva.fechaReserva}", color = Color.White)
+                    Text("Horario: ${reserva.horaInicio} - ${reserva.horaFin}", color = Color.White)
+                    Text("Usuario: ${reserva.usuario?.nombre ?: reserva.usuario?.usuario ?: "-"}", color = Color.White)
+                    Text("Torre/Apt: ${reserva.usuario?.torre ?: "-"} - ${reserva.usuario?.apartamento ?: "-"}", color = Color.White)
+                    if (!reserva.serviciosAdicionales.isNullOrBlank()) {
+                        Text("Servicios: ${reserva.serviciosAdicionales}", color = Color.White)
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { reservaSeleccionada = null },
+                    colors = ButtonDefaults.buttonColors(containerColor = DoradoElegante)
+                ) {
+                    Text("Cerrar", color = AzulOscuro, fontWeight = FontWeight.Bold)
+                }
+            },
+            containerColor = AzulOscuro
+        )
+    }
 }
 
 @Composable
 private fun ReservaCardSoloLectura(
     reserva: ReservaZonaComun,
-    icono: ImageVector
+    icono: ImageVector,
+    onClick: () -> Unit
 ) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable { onClick() }
             .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(8.dp))
             .padding(12.dp)
     ) {

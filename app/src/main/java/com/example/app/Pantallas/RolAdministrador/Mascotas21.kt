@@ -1,6 +1,8 @@
 package com.example.app.Pantallas.RolAdministrador
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -114,6 +116,11 @@ fun PantallaMascotas(
             }
         } else {
             Column(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                ) {
                 mascotas.forEach { mascota ->
                     PublicacionMascotaItem(
                         mascota = mascota,
@@ -121,6 +128,7 @@ fun PantallaMascotas(
                     )
                     Spacer(modifier = Modifier.height(10.dp))
                 }
+            }
             }
 
             error?.let {

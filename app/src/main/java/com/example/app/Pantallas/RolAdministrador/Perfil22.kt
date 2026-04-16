@@ -1,6 +1,7 @@
 package com.example.app.Pantallas.RolAdministrador
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Person
@@ -32,7 +34,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
@@ -51,13 +52,11 @@ import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
 import com.example.app.ui.theme.GrisOscuro
 import com.example.app.ViewModel.UsuarioViewModel
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaPerfil(navController: NavController, usuarioViewModel: UsuarioViewModel = hiltViewModel()) {
     val snackbarHostState = remember { SnackbarHostState() }
-    val coroutineScope = rememberCoroutineScope()
     var showDialog by remember { mutableStateOf(false) }
 
     val usuarioActual by usuarioViewModel.usuarioActual.collectAsState()
@@ -95,6 +94,7 @@ fun PantallaPerfil(navController: NavController, usuarioViewModel: UsuarioViewMo
                 .padding(innerPadding)
                 .padding(16.dp)
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
         ) {
             Icon(
                 imageVector = Icons.Default.Person,
@@ -144,15 +144,11 @@ fun PantallaPerfil(navController: NavController, usuarioViewModel: UsuarioViewMo
                         TextButton(onClick = {
                             showDialog = false
                             usuarioViewModel.logout()
-                            coroutineScope.launch {
-                                snackbarHostState.showSnackbar("Sesión cerrada correctamente.")
-                                kotlinx.coroutines.delay(500)
-                                navController.navigate("PantallaSeleccionRol") {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        inclusive = true
-                                    }
-                                    launchSingleTop = true
-                                }
+                        navController.navigate("PantallaSeleccionRol") {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
                             }
                         }) {
                             Text("Sí")

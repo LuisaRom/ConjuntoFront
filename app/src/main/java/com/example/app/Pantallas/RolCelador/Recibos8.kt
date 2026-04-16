@@ -53,7 +53,7 @@ fun PantallaRecibosCelador(
     val scope = rememberCoroutineScope()
     
     val usuarios by usuarioViewModel.usuarios.collectAsState()
-    val residentes = usuarios.filter { it.rol?.uppercase() == "RESIDENTE" }
+    val usuariosDestino = usuarios
     
     // Estados para controlar qué recibos están expandidos
     var enelExpanded by remember { mutableStateOf(false) }
@@ -116,7 +116,7 @@ fun PantallaRecibosCelador(
             nombreRecibo = "ENEL",
             expanded = enelExpanded,
             onExpandClick = { enelExpanded = !enelExpanded },
-            residentes = residentes,
+            residentes = usuariosDestino,
             seleccionados = enelSeleccionados,
             todosSeleccionado = enelTodosSeleccionado,
             onSeleccionarResidente = { id ->
@@ -135,7 +135,7 @@ fun PantallaRecibosCelador(
             onSeleccionarTodos = {
                 enelTodosSeleccionado = !enelTodosSeleccionado
                 if (enelTodosSeleccionado) {
-                    enelSeleccionados = residentes.mapNotNull { it.id }.toSet()
+                    enelSeleccionados = usuariosDestino.mapNotNull { it.id }.toSet()
                 } else {
                     enelSeleccionados = emptySet()
                 }
@@ -146,9 +146,9 @@ fun PantallaRecibosCelador(
                     enelEnviando = true
                     try {
                         val destinatarios = if (enelTodosSeleccionado) {
-                            residentes
+                            usuariosDestino
                         } else {
-                            residentes.filter { it.id in enelSeleccionados }
+                            usuariosDestino.filter { it.id in enelSeleccionados }
                         }.distinctBy { it.id }
                         
                         if (destinatarios.isEmpty()) {
@@ -156,7 +156,7 @@ fun PantallaRecibosCelador(
                             return@launch
                         }
                         
-                        android.util.Log.d("Recibos", "Enviando notificaciones de ENEL a ${destinatarios.size} residente(s)")
+                        android.util.Log.d("Recibos", "Enviando notificaciones de ENEL a ${destinatarios.size} usuario(s)")
                         val fechaActual = SimpleDateFormat(
                             "yyyy-MM-dd'T'HH:mm:ss",
                             Locale.getDefault()
@@ -208,7 +208,7 @@ fun PantallaRecibosCelador(
                         
                         enelNotificado = true
                         android.util.Log.d("Recibos", "Total notificaciones de ENEL enviadas: $enviadas")
-                        Toast.makeText(context, "Notificaciones enviadas a $enviadas residente(s)", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Notificaciones enviadas a $enviadas usuario(s)", Toast.LENGTH_SHORT).show()
                     } catch (e: Exception) {
                         android.util.Log.e("Recibos", "Error al enviar notificaciones de ENEL", e)
                         Toast.makeText(context, "Error al enviar notificaciones: ${e.message}", Toast.LENGTH_LONG).show()
@@ -229,7 +229,7 @@ fun PantallaRecibosCelador(
             nombreRecibo = "VANTI",
             expanded = vantiExpanded,
             onExpandClick = { vantiExpanded = !vantiExpanded },
-            residentes = residentes,
+            residentes = usuariosDestino,
             seleccionados = vantiSeleccionados,
             todosSeleccionado = vantiTodosSeleccionado,
             onSeleccionarResidente = { id ->
@@ -248,7 +248,7 @@ fun PantallaRecibosCelador(
             onSeleccionarTodos = {
                 vantiTodosSeleccionado = !vantiTodosSeleccionado
                 if (vantiTodosSeleccionado) {
-                    vantiSeleccionados = residentes.mapNotNull { it.id }.toSet()
+                    vantiSeleccionados = usuariosDestino.mapNotNull { it.id }.toSet()
                 } else {
                     vantiSeleccionados = emptySet()
                 }
@@ -259,9 +259,9 @@ fun PantallaRecibosCelador(
                     vantiEnviando = true
                     try {
                         val destinatarios = if (vantiTodosSeleccionado) {
-                            residentes
+                            usuariosDestino
                         } else {
-                            residentes.filter { it.id in vantiSeleccionados }
+                            usuariosDestino.filter { it.id in vantiSeleccionados }
                         }.distinctBy { it.id }
                         
                         if (destinatarios.isEmpty()) {
@@ -269,7 +269,7 @@ fun PantallaRecibosCelador(
                             return@launch
                         }
                         
-                        android.util.Log.d("Recibos", "Enviando notificaciones de VANTI a ${destinatarios.size} residente(s)")
+                        android.util.Log.d("Recibos", "Enviando notificaciones de VANTI a ${destinatarios.size} usuario(s)")
                         val fechaActual = SimpleDateFormat(
                             "yyyy-MM-dd'T'HH:mm:ss",
                             Locale.getDefault()
@@ -318,7 +318,7 @@ fun PantallaRecibosCelador(
                         
                         vantiNotificado = true
                         android.util.Log.d("Recibos", "Total notificaciones de VANTI enviadas: $enviadas")
-                        Toast.makeText(context, "Notificaciones enviadas a $enviadas residente(s)", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Notificaciones enviadas a $enviadas usuario(s)", Toast.LENGTH_SHORT).show()
                     } catch (e: Exception) {
                         android.util.Log.e("Recibos", "Error al enviar notificaciones de VANTI", e)
                         Toast.makeText(context, "Error al enviar notificaciones: ${e.message}", Toast.LENGTH_LONG).show()
@@ -339,7 +339,7 @@ fun PantallaRecibosCelador(
             nombreRecibo = "EPZ",
             expanded = epzExpanded,
             onExpandClick = { epzExpanded = !epzExpanded },
-            residentes = residentes,
+            residentes = usuariosDestino,
             seleccionados = epzSeleccionados,
             todosSeleccionado = epzTodosSeleccionado,
             onSeleccionarResidente = { id ->
@@ -358,7 +358,7 @@ fun PantallaRecibosCelador(
             onSeleccionarTodos = {
                 epzTodosSeleccionado = !epzTodosSeleccionado
                 if (epzTodosSeleccionado) {
-                    epzSeleccionados = residentes.mapNotNull { it.id }.toSet()
+                    epzSeleccionados = usuariosDestino.mapNotNull { it.id }.toSet()
                 } else {
                     epzSeleccionados = emptySet()
                 }
@@ -369,9 +369,9 @@ fun PantallaRecibosCelador(
                     epzEnviando = true
                     try {
                         val destinatarios = if (epzTodosSeleccionado) {
-                            residentes
+                            usuariosDestino
                         } else {
-                            residentes.filter { it.id in epzSeleccionados }
+                            usuariosDestino.filter { it.id in epzSeleccionados }
                         }.distinctBy { it.id }
                         
                         if (destinatarios.isEmpty()) {
@@ -379,7 +379,7 @@ fun PantallaRecibosCelador(
                             return@launch
                         }
                         
-                        android.util.Log.d("Recibos", "Enviando notificaciones de EPZ a ${destinatarios.size} residente(s)")
+                        android.util.Log.d("Recibos", "Enviando notificaciones de EPZ a ${destinatarios.size} usuario(s)")
                         val fechaActual = SimpleDateFormat(
                             "yyyy-MM-dd'T'HH:mm:ss",
                             Locale.getDefault()
@@ -428,7 +428,7 @@ fun PantallaRecibosCelador(
                         
                         epzNotificado = true
                         android.util.Log.d("Recibos", "Total notificaciones de EPZ enviadas: $enviadas")
-                        Toast.makeText(context, "Notificaciones enviadas a $enviadas residente(s)", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Notificaciones enviadas a $enviadas usuario(s)", Toast.LENGTH_SHORT).show()
                     } catch (e: Exception) {
                         android.util.Log.e("Recibos", "Error al enviar notificaciones de EPZ", e)
                         Toast.makeText(context, "Error al enviar notificaciones: ${e.message}", Toast.LENGTH_LONG).show()

@@ -3,9 +3,12 @@ package com.example.app.Pantallas.RolCelador
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -50,6 +53,7 @@ fun PantallaPerfilCelador(
         null, "" -> "SIN ROL"
         else -> "${usuarioPerfil?.rol} (usuario no celador)"
     }
+    var mostrarContrasena by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -95,9 +99,11 @@ fun PantallaPerfilCelador(
         Spacer(modifier = Modifier.height(24.dp))
 
         CampoPerfil("Nombre", usuarioPerfil?.nombre ?: "", enabled = false)
-        CampoPerfil("Usuario", usuarioPerfil?.usuario ?: "", enabled = false)
-        CampoPerfilTexto("Contraseña", if (usuarioPerfil?.password.isNullOrBlank()) "" else "****")
-        CampoPerfil("Rol", rolVisual, enabled = false)
+        CampoPasswordPerfil(
+            valor = if (usuarioPerfil?.password.isNullOrBlank()) "" else "****",
+            visible = mostrarContrasena,
+            onToggleVisible = { mostrarContrasena = !mostrarContrasena }
+        )
 
         Spacer(modifier = Modifier.height(32.dp))
 
@@ -181,5 +187,36 @@ fun CampoPerfilTexto(label: String, valor: String) {
                 .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(6.dp))
                 .padding(12.dp)
         )
+    }
+}
+
+@Composable
+fun CampoPasswordPerfil(
+    valor: String,
+    visible: Boolean,
+    onToggleVisible: () -> Unit
+) {
+    Column(modifier = Modifier.padding(vertical = 4.dp)) {
+        Text(text = "Contraseña", color = Color.LightGray, fontSize = 12.sp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(6.dp))
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = if (visible) valor else "****",
+                color = Color.White,
+                fontSize = 16.sp
+            )
+            Icon(
+                imageVector = if (visible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                contentDescription = "Mostrar/Ocultar contraseña",
+                tint = DoradoElegante,
+                modifier = Modifier.clickable { onToggleVisible() }
+            )
+        }
     }
 }

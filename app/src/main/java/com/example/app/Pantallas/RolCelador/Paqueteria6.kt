@@ -88,7 +88,7 @@ fun PantallaPaqueteriaCelador(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "Paqueteria",
+                text = "Paquetería",
                 style = MaterialTheme.typography.headlineSmall,
                 color = GrisClaro
             )

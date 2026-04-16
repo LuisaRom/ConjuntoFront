@@ -310,13 +310,18 @@ private fun construirRangosDisponiblesGimnasio(
                 val inicioTxt = "%02d:00".format(horaInicio)
                 val finTxt = "%02d:00".format(horaFin)
                 val disponible = reservasGimnasioDelDia.none { reserva ->
-                    !(reserva.horaFin <= inicioTxt || reserva.horaInicio >= finTxt)
+                    hayCruceHorarioGimnasio(
+                        inicioTxt,
+                        finTxt,
+                        reserva.horaInicio,
+                        reserva.horaFin
+                    )
                 }
                 if (disponible) rangos.add("$inicioTxt - $finTxt")
             }
         }
     }
-    return rangos
+    return rangos.distinct()
 }
 
 private fun millisToFechaIsoGimnasio(millis: Long): String {
@@ -325,4 +330,25 @@ private fun millisToFechaIsoGimnasio(millis: Long): String {
     } catch (e: Exception) {
         ""
     }
+}
+
+private fun hayCruceHorarioGimnasio(
+    inicioNuevo: String,
+    finNuevo: String,
+    inicioExistente: String,
+    finExistente: String
+): Boolean {
+    val nuevoInicioMin = inicioNuevo.toMinutesOrNullGimnasio() ?: return false
+    val nuevoFinMin = finNuevo.toMinutesOrNullGimnasio() ?: return false
+    val existenteInicioMin = inicioExistente.toMinutesOrNullGimnasio() ?: return false
+    val existenteFinMin = finExistente.toMinutesOrNullGimnasio() ?: return false
+    return nuevoInicioMin < existenteFinMin && nuevoFinMin > existenteInicioMin
+}
+
+private fun String.toMinutesOrNullGimnasio(): Int? {
+    val partes = split(":")
+    if (partes.size != 2) return null
+    val horas = partes[0].toIntOrNull() ?: return null
+    val minutos = partes[1].toIntOrNull() ?: return null
+    return horas * 60 + minutos
 }
