@@ -15,6 +15,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Button
@@ -69,6 +71,7 @@ fun PantallaPerfil(navController: NavController, usuarioViewModel: UsuarioViewMo
             actual
         }
     }
+    var mostrarContrasena by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         usuarioViewModel.obtenerTodos()
@@ -106,16 +109,19 @@ fun PantallaPerfil(navController: NavController, usuarioViewModel: UsuarioViewMo
                 tint = Color.White
             )
             Spacer(modifier = Modifier.height(8.dp))
-            Text("Usuario", color = Color.White, modifier = Modifier.align(Alignment.CenterHorizontally))
-            Text("Editar", color = DoradoElegante, fontSize = 12.sp, modifier = Modifier.align(Alignment.CenterHorizontally))
+            Text(
+                text = usuarioPerfil?.usuario ?: "Usuario",
+                color = Color.White,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
 
             CampoPerfil("Nombre", usuarioPerfil?.nombre ?: "", enabled = false)
-            CampoPerfil("Usuario", usuarioPerfil?.usuario ?: "", enabled = false)
-            CampoPerfilTexto(
-                "Contraseña",
-                if (usuarioPerfil?.password.isNullOrBlank()) "" else "****"
+            CampoPasswordPerfil(
+                valorReal = usuarioPerfil?.password.orEmpty(),
+                visible = mostrarContrasena,
+                onToggleVisible = { mostrarContrasena = !mostrarContrasena }
             )
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -204,6 +210,37 @@ fun CampoPerfilTexto(label: String, valor: String) {
                 .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(6.dp))
                 .padding(12.dp)
         )
+    }
+}
+
+@Composable
+fun CampoPasswordPerfil(
+    valorReal: String,
+    visible: Boolean,
+    onToggleVisible: () -> Unit
+) {
+    Column(modifier = Modifier.padding(vertical = 4.dp)) {
+        Text("Contraseña", color = Color.LightGray, fontSize = 12.sp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(6.dp))
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = if (visible) valorReal.ifBlank { "****" } else "****",
+                color = Color.White,
+                fontSize = 16.sp,
+                modifier = Modifier.weight(1f)
+            )
+            Icon(
+                imageVector = if (visible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                contentDescription = "Mostrar/Ocultar contraseña",
+                tint = DoradoElegante,
+                modifier = Modifier.clickable { onToggleVisible() }
+            )
+        }
     }
 }
 

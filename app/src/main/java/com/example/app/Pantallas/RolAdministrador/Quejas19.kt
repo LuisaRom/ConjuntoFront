@@ -63,15 +63,16 @@ fun PantallaQuejas(
         quejaViewModel.obtenerTodos()
     }
 
-    val categoriasDisponibles = remember(quejas) {
-        listOf("Todas") + quejas
-            .map { it.categoriaVisual() }
-            .distinct()
-            .sorted()
+    val categoriasBase = listOf("Ruido", "Mascota", "Violencia")
+    val categoriasDisponibles = remember { listOf("Todas") + categoriasBase }
+    val conteoPorCategoria = remember(quejas) {
+        categoriasBase.associateWith { categoria ->
+            quejas.count { normalizarCategoria(it.categoriaVisual()) == categoria }
+        }
     }
     val quejasFiltradas = remember(quejas, categoriaSeleccionada) {
         if (categoriaSeleccionada == "Todas") quejas
-        else quejas.filter { it.categoriaVisual() == categoriaSeleccionada }
+        else quejas.filter { normalizarCategoria(it.categoriaVisual()) == categoriaSeleccionada }
     }
 
     Column(
@@ -116,7 +117,14 @@ fun PantallaQuejas(
                 FilterChip(
                     selected = categoriaSeleccionada == categoria,
                     onClick = { categoriaSeleccionada = categoria },
-                    label = { Text(categoria) }
+                    label = {
+                        val texto = if (categoria == "Todas") {
+                            "Todas (${quejas.size})"
+                        } else {
+                            "$categoria (${conteoPorCategoria[categoria] ?: 0})"
+                        }
+                        Text(texto)
+                    }
                 )
             }
         }
@@ -184,6 +192,16 @@ fun PantallaQuejas(
             },
             containerColor = AzulOscuro
         )
+    }
+}
+
+private fun normalizarCategoria(categoria: String): String {
+    val valor = categoria.trim().lowercase()
+    return when {
+        valor.contains("ruido") -> "Ruido"
+        valor.contains("mascota") -> "Mascota"
+        valor.contains("violencia") -> "Violencia"
+        else -> categoria
     }
 }
 
