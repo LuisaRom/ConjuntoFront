@@ -27,6 +27,9 @@ class PagoAdministracionViewModel @Inject constructor(
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
+    private val _checkoutUrl = MutableStateFlow<String?>(null)
+    val checkoutUrl: StateFlow<String?> = _checkoutUrl.asStateFlow()
+
     fun obtenerTodos() = viewModelScope.launch {
         _isLoading.value = true
         _error.value = null
@@ -84,6 +87,25 @@ class PagoAdministracionViewModel @Inject constructor(
         } finally {
             _isLoading.value = false
         }
+    }
+
+    fun crearCheckoutAdministracion() = viewModelScope.launch {
+        _isLoading.value = true
+        _error.value = null
+        try {
+            val url = withContext(Dispatchers.IO) {
+                repository.crearCheckoutAdministracion()
+            }
+            _checkoutUrl.value = url
+        } catch (e: Exception) {
+            _error.value = "Error al iniciar checkout: ${e.message}"
+        } finally {
+            _isLoading.value = false
+        }
+    }
+
+    fun consumirCheckoutUrl() {
+        _checkoutUrl.value = null
     }
 
     fun clearError() {

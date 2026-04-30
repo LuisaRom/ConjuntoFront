@@ -1,6 +1,8 @@
 package com.example.app.Pantallas.RolResidente
 
 import android.graphics.pdf.PdfDocument
+import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -41,6 +43,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.app.R
 import com.example.app.ViewModel.UsuarioViewModel
+import com.example.app.ViewModel.PagoAdministracionViewModel
 import com.example.app.ui.theme.AzulOscuro
 import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
@@ -57,11 +60,13 @@ import java.util.*
 @Composable
 fun PantallaPagos(
     navController: NavController,
-    usuarioViewModel: UsuarioViewModel = hiltViewModel()
+    usuarioViewModel: UsuarioViewModel = hiltViewModel(),
+    pagoAdministracionViewModel: PagoAdministracionViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val usuarioActual by usuarioViewModel.usuarioActual.collectAsState()
+    val checkoutUrl by pagoAdministracionViewModel.checkoutUrl.collectAsState()
     var metodoSeleccionado by remember { mutableStateOf("EFECTIVO") }
     
     // Estado para los campos del formulario
@@ -92,13 +97,26 @@ fun PantallaPagos(
     
     // Monto por defecto
     val monto = remember { "200.000 COP" }
-    // Se incluirá en el PDF y en pago PSE cuando el flujo de reservas lo alimente.
+    // Se incluirá en el PDF y en pago en línea cuando el flujo de reservas lo alimente.
     val totalServiciosAdicionales = remember { "0 COP" }
     
     // Cargar usuario si no está disponible
     LaunchedEffect(Unit) {
         if (usuarioActual == null) {
             usuarioViewModel.obtenerTodos()
+        }
+    }
+
+    LaunchedEffect(checkoutUrl) {
+        val url = checkoutUrl ?: return@LaunchedEffect
+        try {
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+            context.startActivity(intent)
+            Toast.makeText(context, "Redirigiendo a Pago en línea...", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            Toast.makeText(context, "No se pudo abrir el checkout: ${e.message}", Toast.LENGTH_LONG).show()
+        } finally {
+            pagoAdministracionViewModel.consumirCheckoutUrl()
         }
     }
 
@@ -166,12 +184,12 @@ fun PantallaPagos(
             }
 
             MetodoPagoItem(
-                tipo = "EN LINEA",
-                seleccionado = metodoSeleccionado == "EN LINEA",
+                tipo = "Pago en línea",
+                seleccionado = metodoSeleccionado == "Pago en línea",
                 modifier = Modifier.weight(1f)
             ) {
-                metodoSeleccionado = "EN LINEA"
-                Toast.makeText(context, "Redirigiendo a PSE. Servicios adicionales: $totalServiciosAdicionales", Toast.LENGTH_SHORT).show()
+                metodoSeleccionado = "Pago en línea"
+                pagoAdministracionViewModel.crearCheckoutAdministracion()
             }
         }
     }

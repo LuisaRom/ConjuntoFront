@@ -24,7 +24,10 @@ data class Notificacion(
     val usuariosEtiquetados: String? = null  // JSON array de IDs de usuarios etiquetados
 ) {
     // Función helper para obtener mensaje seguro (renombrada para evitar conflicto con getter automático)
-    fun mensajeSeguro(): String = mensaje ?: ""
+    fun mensajeSeguro(): String {
+        val original = mensaje ?: ""
+        return original.replace("Pago PSE", "Pago en línea", ignoreCase = true)
+    }
     
     // Función helper para verificar si la notificación es válida
     fun esValida(): Boolean = (id != null) || (mensaje?.isNotBlank() == true)

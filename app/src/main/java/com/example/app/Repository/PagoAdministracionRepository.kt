@@ -20,6 +20,11 @@ class PagoAdministracionRepository @Inject constructor(
         return api.guardarPago(pagoAdministracion)
     }
 
+    suspend fun crearCheckoutAdministracion(): String {
+        val response = api.crearCheckoutAdministracion()
+        return response.checkoutUrl
+    }
+
     suspend fun eliminar(id: Long) {
         api.eliminarPago(id)
     }

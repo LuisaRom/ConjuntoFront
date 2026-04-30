@@ -1,6 +1,7 @@
 package com.example.app.Interfaces
 
 import com.example.app.Model.PagoAdministracion
+import com.example.app.Model.CheckoutAdministracionResponse
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -16,6 +17,9 @@ interface PagoAdministracionApiService {
 
     @POST("/api/pagos")
     suspend fun guardarPago(@Body pago: PagoAdministracion): PagoAdministracion
+
+    @POST("/api/pagos/checkout/administracion")
+    suspend fun crearCheckoutAdministracion(): CheckoutAdministracionResponse
 
     @DELETE("/api/pagos/{id}")
     suspend fun eliminarPago(@Path("id") id: Long)
