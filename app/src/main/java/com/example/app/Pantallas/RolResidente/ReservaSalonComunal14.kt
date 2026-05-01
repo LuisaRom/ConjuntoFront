@@ -132,6 +132,12 @@ fun PantallaReservaSalonComunal(
         }
 
         Spacer(modifier = Modifier.height(24.dp))
+        Text(
+            text = "Todos los dias | 8am-10pm | Minimo 5 horas",
+            color = GrisClaro,
+            fontSize = 13.sp
+        )
+        Spacer(modifier = Modifier.height(12.dp))
 
         CampoSoloLecturaSalon("Torre - Apartamento", torreApto)
 
@@ -384,6 +390,12 @@ fun PantallaReservaSalonComunal(
                 }
                 if (!esRangoHorarioValidoSalon(horaInicio, horaFin)) {
                     Toast.makeText(context, "El rango horario seleccionado no es válido", Toast.LENGTH_SHORT).show()
+                    return@Button
+                }
+                val horasRango = (horaFin.substringBefore(":").toIntOrNull() ?: 0) -
+                    (horaInicio.substringBefore(":").toIntOrNull() ?: 0)
+                if (horasRango < 5) {
+                    Toast.makeText(context, "La reserva del salón debe ser mínimo de 5 horas", Toast.LENGTH_SHORT).show()
                     return@Button
                 }
                 val reserva = ReservaZonaComun(

@@ -1,5 +1,6 @@
 package com.example.app.Pantallas.RolResidente
 
+import android.app.DatePickerDialog
 import android.graphics.Bitmap
 import android.graphics.Color as AndroidColor
 import android.widget.Toast
@@ -35,6 +36,7 @@ import com.google.zxing.qrcode.QRCodeWriter
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.Calendar
 
 @Composable
 fun PantallaAccesoPeatonalResidente(
@@ -50,6 +52,7 @@ fun PantallaAccesoPeatonalResidente(
     var nombreVisitante by remember { mutableStateOf("") }
     var torre by remember { mutableStateOf("") }
     var apartamento by remember { mutableStateOf("") }
+    var fecha by remember { mutableStateOf("") }
     var qrBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var accesoGuardado by remember { mutableStateOf<AccesoPeatonal?>(null) }
 
@@ -104,6 +107,11 @@ fun PantallaAccesoPeatonalResidente(
         CampoAccesoP("Nombre del Visitante", nombreVisitante) { nombreVisitante = it }
         CampoAccesoP("Torre", torre, enabled = false)
         CampoAccesoP("Apartamento", apartamento, enabled = false)
+        CampoFechaConCalendarioPeatonal(
+            label = "Fecha",
+            valor = fecha,
+            onDateSelected = { fecha = it }
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -124,7 +132,7 @@ fun PantallaAccesoPeatonalResidente(
                     apartamento = apartamento,
                     codigoQr = codigoQR,
                     autorizadoPor = usuarioActual,
-                    horaAutorizada = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).format(Date()),
+                    horaAutorizada = fecha.toIsoDateTimeOrNowPeatonal(),
                     horaEntrada = null,
                     horaSalida = null
                 )
@@ -190,6 +198,66 @@ fun PantallaAccesoPeatonalResidente(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun CampoFechaConCalendarioPeatonal(
+    label: String,
+    valor: String,
+    onDateSelected: (String) -> Unit
+) {
+    val context = LocalContext.current
+    val calendar = remember { Calendar.getInstance() }
+
+    Column(modifier = Modifier.padding(vertical = 4.dp)) {
+        Text(text = label, color = LightGray, fontSize = 12.sp)
+        OutlinedTextField(
+            value = valor,
+            onValueChange = {},
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                    DatePickerDialog(
+                        context,
+                        { _, year, month, dayOfMonth ->
+                            val fechaSeleccionada = String.format(
+                                Locale.getDefault(),
+                                "%02d/%02d/%04d",
+                                dayOfMonth,
+                                month + 1,
+                                year
+                            )
+                            onDateSelected(fechaSeleccionada)
+                        },
+                        calendar.get(Calendar.YEAR),
+                        calendar.get(Calendar.MONTH),
+                        calendar.get(Calendar.DAY_OF_MONTH)
+                    ).show()
+                },
+            readOnly = true,
+            singleLine = true,
+            textStyle = TextStyle(color = Color.White),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = DoradoElegante,
+                unfocusedBorderColor = GrisClaro,
+                disabledBorderColor = GrisClaro,
+                disabledTextColor = Color.White,
+                cursorColor = DoradoElegante
+            )
+        )
+    }
+}
+
+private fun String.toIsoDateTimeOrNowPeatonal(): String {
+    if (isBlank()) {
+        return SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).format(Date())
+    }
+    return try {
+        val parsedDate = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).parse(this)
+        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).format(parsedDate ?: Date())
+    } catch (_: Exception) {
+        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).format(Date())
     }
 }
 

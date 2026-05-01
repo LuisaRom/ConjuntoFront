@@ -46,12 +46,6 @@ fun PantallaPerfilResidente(
         }
     }
 
-    val rolVisual = when (usuarioPerfil?.rol?.uppercase()) {
-        "RESIDENTE" -> "RESIDENTE"
-        null, "" -> "SIN ROL"
-        else -> "${usuarioPerfil?.rol} (usuario no residente)"
-    }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -96,9 +90,6 @@ fun PantallaPerfilResidente(
         Spacer(modifier = Modifier.height(24.dp))
 
         CampoPerfil("Nombre", usuarioPerfil?.nombre ?: "", enabled = false)
-        CampoPerfil("Usuario", usuarioPerfil?.usuario ?: "", enabled = false)
-        CampoPerfilTexto("Contraseña", if (usuarioPerfil?.password.isNullOrBlank()) "" else "****")
-        CampoPerfil("Rol", rolVisual, enabled = false)
 
         Spacer(modifier = Modifier.height(32.dp))
 

@@ -21,8 +21,9 @@ class PagoAdministracionRepository @Inject constructor(
     }
 
     suspend fun crearCheckoutAdministracion(): String {
-        val response = api.crearCheckoutAdministracion()
-        return response.checkoutUrl
+        val response = api.iniciarPagoPse()
+        return response.redirectUrl ?: response.checkoutUrl
+        ?: throw IllegalStateException("El backend no devolvió redirectUrl/checkoutUrl")
     }
 
     suspend fun eliminar(id: Long) {

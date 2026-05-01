@@ -21,6 +21,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Pets
+import androidx.compose.material.icons.filled.RecordVoiceOver
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -79,6 +83,7 @@ fun PantallaQuejas(
         modifier = Modifier
             .fillMaxSize()
             .background(AzulOscuro)
+            .padding(16.dp)
     ) {
         SnackbarHost(hostState = snackbarHostState)
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -93,7 +98,7 @@ fun PantallaQuejas(
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "Quejas",
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.headlineMedium,
                 color = GrisClaro
             )
         }
@@ -223,6 +228,23 @@ fun QuejaItem(
                 color = Color.White,
                 fontWeight = FontWeight.SemiBold
             )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(top = 6.dp, bottom = 4.dp)
+            ) {
+                Icon(
+                    imageVector = iconoPorCategoria(queja.categoriaVisual()),
+                    contentDescription = "Tipo de queja",
+                    tint = DoradoElegante,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "Tipo: ${normalizarCategoria(queja.categoriaVisual())}",
+                    color = GrisClaro,
+                    fontSize = 12.sp
+                )
+            }
             Text(
                 text = "Estado: ${queja.estado}",
                 color = GrisClaro,
@@ -262,5 +284,13 @@ fun QuejaItem(
                 }
             }
         }
+    }
+}
+
+private fun iconoPorCategoria(categoria: String): ImageVector {
+    return when (normalizarCategoria(categoria)) {
+        "Ruido" -> Icons.Default.RecordVoiceOver
+        "Mascota" -> Icons.Default.Pets
+        else -> Icons.Default.Warning
     }
 }

@@ -23,6 +23,7 @@ import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -114,6 +115,12 @@ fun PantallaReservaGimnasio(
         }
 
         Spacer(modifier = Modifier.height(24.dp))
+        Text(
+            text = "Lunes a Sabado | 5am-10am y 3pm-8pm | Maximo 3 horas",
+            color = GrisClaro,
+            fontSize = 13.sp
+        )
+        Spacer(modifier = Modifier.height(12.dp))
 
         // Formulario
         CampoSoloLecturaGimnasio("Torre - Apartamento", torreApto)
@@ -227,7 +234,37 @@ fun PantallaReservaGimnasio(
     }
 
     if (showDatePicker) {
-        val state = androidx.compose.material3.rememberDatePickerState()
+        val today = remember { Calendar.getInstance().timeInMillis }
+        val state = androidx.compose.material3.rememberDatePickerState(
+            selectableDates = object : SelectableDates {
+                override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+                    val calendar = Calendar.getInstance().apply { timeInMillis = utcTimeMillis }
+                    val diaValido = calendar.get(Calendar.DAY_OF_WEEK) in setOf(
+                        Calendar.MONDAY,
+                        Calendar.TUESDAY,
+                        Calendar.WEDNESDAY,
+                        Calendar.THURSDAY,
+                        Calendar.FRIDAY,
+                        Calendar.SATURDAY
+                    )
+                    val inicioDelDia = Calendar.getInstance().apply {
+                        timeInMillis = utcTimeMillis
+                        set(Calendar.HOUR_OF_DAY, 0)
+                        set(Calendar.MINUTE, 0)
+                        set(Calendar.SECOND, 0)
+                        set(Calendar.MILLISECOND, 0)
+                    }.timeInMillis
+                    val hoyInicio = Calendar.getInstance().apply {
+                        timeInMillis = today
+                        set(Calendar.HOUR_OF_DAY, 0)
+                        set(Calendar.MINUTE, 0)
+                        set(Calendar.SECOND, 0)
+                        set(Calendar.MILLISECOND, 0)
+                    }.timeInMillis
+                    return diaValido && inicioDelDia >= hoyInicio
+                }
+            }
+        )
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {

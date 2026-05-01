@@ -140,6 +140,12 @@ fun PantallaReservaZonaBBQ(
         }
 
         Spacer(modifier = Modifier.height(24.dp))
+        Text(
+            text = "Jueves a Domingo | 10am-10pm | 1 reserva por dia por usuario",
+            color = GrisClaro,
+            fontSize = 13.sp
+        )
+        Spacer(modifier = Modifier.height(12.dp))
 
         CampoSoloLecturaBBQ("Torre - Apartamento", torreApto)
 

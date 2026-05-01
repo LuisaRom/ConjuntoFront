@@ -53,7 +53,13 @@ fun PantallaRecibosCelador(
     val scope = rememberCoroutineScope()
     
     val usuarios by usuarioViewModel.usuarios.collectAsState()
-    val usuariosDestino = usuarios
+    val residentes = remember(usuarios) {
+        usuarios.filter { it.rol.equals("RESIDENTE", ignoreCase = true) }
+    }
+    var residenteFiltroId by remember { mutableStateOf<Long?>(null) }
+    val usuariosDestino = remember(residentes, residenteFiltroId) {
+        if (residenteFiltroId == null) residentes else residentes.filter { it.id == residenteFiltroId }
+    }
     
     // Estados para controlar qué recibos están expandidos
     var enelExpanded by remember { mutableStateOf(false) }
@@ -109,6 +115,57 @@ fun PantallaRecibosCelador(
         }
 
         Spacer(modifier = Modifier.height(24.dp))
+
+        var expandirFiltroUsuarios by remember { mutableStateOf(false) }
+        ExposedDropdownMenuBox(
+            expanded = expandirFiltroUsuarios,
+            onExpandedChange = { expandirFiltroUsuarios = !expandirFiltroUsuarios }
+        ) {
+            val etiquetaSeleccion = residentes.firstOrNull { it.id == residenteFiltroId }?.let {
+                it.nombre.ifBlank { it.usuario }
+            } ?: "Todos"
+            OutlinedTextField(
+                value = etiquetaSeleccion,
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Filtrar residentes", color = GrisClaro) },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandirFiltroUsuarios) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .menuAnchor(androidx.compose.material3.MenuAnchorType.PrimaryNotEditable, true),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    focusedBorderColor = DoradoElegante,
+                    unfocusedBorderColor = GrisClaro,
+                    focusedLabelColor = GrisClaro,
+                    unfocusedLabelColor = GrisClaro
+                )
+            )
+            ExposedDropdownMenu(
+                expanded = expandirFiltroUsuarios,
+                onDismissRequest = { expandirFiltroUsuarios = false }
+            ) {
+                DropdownMenuItem(
+                    text = { Text("Todos") },
+                    onClick = {
+                        residenteFiltroId = null
+                        expandirFiltroUsuarios = false
+                    }
+                )
+                residentes.forEach { residente ->
+                    DropdownMenuItem(
+                        text = { Text(residente.nombre.ifBlank { residente.usuario }) },
+                        onClick = {
+                            residenteFiltroId = residente.id
+                            expandirFiltroUsuarios = false
+                        }
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Recibo ENEL
         ReciboItemExpandible(

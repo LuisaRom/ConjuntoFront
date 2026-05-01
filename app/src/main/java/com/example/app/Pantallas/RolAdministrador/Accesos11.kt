@@ -60,6 +60,7 @@ fun PantallaAccesos(
     val isLoading by accesoAdminViewModel.isLoading.collectAsState()
     val error by accesoAdminViewModel.error.collectAsState()
     var accesoAEliminar by remember { mutableStateOf<AccesoAdmin?>(null) }
+    var accesoDetalle by remember { mutableStateOf<AccesoAdmin?>(null) }
 
     LaunchedEffect(Unit) {
         accesoAdminViewModel.obtenerTodos()
@@ -110,7 +111,11 @@ fun PantallaAccesos(
         } else {
             LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f, fill = false)) {
                 items(accesosVehiculares, key = { it.id ?: it.hashCode().toLong() }) { acceso ->
-                    AccesoItem(acceso = acceso, onEliminar = { accesoAEliminar = acceso })
+                    AccesoItem(
+                        acceso = acceso,
+                        onEliminar = { accesoAEliminar = acceso },
+                        onVerDetalle = { accesoDetalle = acceso }
+                    )
                 }
             }
         }
@@ -135,7 +140,11 @@ fun PantallaAccesos(
         } else {
             LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f, fill = false)) {
                 items(accesosPeatonales, key = { it.id ?: it.hashCode().toLong() }) { acceso ->
-                    AccesoItem(acceso = acceso, onEliminar = { accesoAEliminar = acceso })
+                    AccesoItem(
+                        acceso = acceso,
+                        onEliminar = { accesoAEliminar = acceso },
+                        onVerDetalle = { accesoDetalle = acceso }
+                    )
                 }
             }
         }
@@ -174,16 +183,42 @@ fun PantallaAccesos(
             containerColor = AzulOscuro
         )
     }
+
+    accesoDetalle?.let { acceso ->
+        AlertDialog(
+            onDismissRequest = { accesoDetalle = null },
+            title = { Text("Detalle del acceso", color = Color.White) },
+            text = {
+                Column {
+                    Text("Tipo: ${acceso.tipoVisual()}", color = Color.White)
+                    Text("Visitante: ${acceso.nombreVisitante ?: "-"}", color = Color.White)
+                    Text("Placa: ${acceso.placaVehiculo ?: "-"}", color = Color.White)
+                    Text("Torre: ${acceso.torre ?: "-"}", color = Color.White)
+                    Text("Apartamento: ${acceso.apartamento ?: "-"}", color = Color.White)
+                    Text("Hora autorizada: ${acceso.horaAutorizada ?: "-"}", color = Color.White)
+                    Text("Hora entrada: ${acceso.horaEntrada ?: "-"}", color = Color.White)
+                    Text("Hora salida: ${acceso.horaSalida ?: "-"}", color = Color.White)
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { accesoDetalle = null }) {
+                    Text("Cerrar", color = DoradoElegante)
+                }
+            },
+            containerColor = AzulOscuro
+        )
+    }
 }
 
 @Composable
-fun AccesoItem(acceso: AccesoAdmin, onEliminar: () -> Unit) {
+fun AccesoItem(acceso: AccesoAdmin, onEliminar: () -> Unit, onVerDetalle: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
             .clip(RoundedCornerShape(10.dp))
-            .background(Color.White.copy(alpha = 0.08f)),
+            .background(Color.White.copy(alpha = 0.06f))
+            .clickable { onVerDetalle() },
         shape = RoundedCornerShape(10.dp)
     ) {
         Row(

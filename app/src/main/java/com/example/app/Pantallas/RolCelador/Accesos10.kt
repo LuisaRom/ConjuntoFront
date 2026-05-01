@@ -106,11 +106,14 @@ fun PantallaAccesosCelador(
         if (accesosVehiculares.isEmpty()) {
             Text("No hay accesos creados", color = Color.Gray, fontSize = 14.sp)
         } else {
-            LazyColumn(modifier = Modifier.height(150.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            LazyColumn(modifier = Modifier.height(170.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(accesosVehiculares, key = { it.id ?: it.hashCode().toLong() }) { acceso ->
+                    val nombreUsuario = acceso.autorizadoPor?.nombre ?: acceso.autorizadoPor?.usuario ?: "Sin nombre"
+                    val torre = acceso.autorizadoPor?.torre ?: acceso.torre ?: "-"
+                    val apto = acceso.autorizadoPor?.apartamento ?: acceso.apartamento ?: "-"
                     AccesoItem(
-                        titulo = "Placa ${acceso.placaVehiculo} - Torre ${acceso.torre} Apt ${acceso.apartamento}",
-                        subtitulo = "Residente: ${acceso.autorizadoPor?.nombre ?: acceso.autorizadoPor?.usuario ?: "-"}"
+                        titulo = nombreUsuario,
+                        subtitulo = "Torre $torre - Apt $apto"
                     ) { vehicularSeleccionado = acceso }
                 }
             }
@@ -133,11 +136,14 @@ fun PantallaAccesosCelador(
         if (accesosPeatonales.isEmpty()) {
             Text("No hay accesos creados", color = Color.Gray, fontSize = 14.sp)
         } else {
-            LazyColumn(modifier = Modifier.height(150.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            LazyColumn(modifier = Modifier.height(170.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(accesosPeatonales, key = { it.id ?: it.hashCode().toLong() }) { acceso ->
+                    val nombreUsuario = acceso.autorizadoPor?.nombre ?: acceso.autorizadoPor?.usuario ?: "Sin nombre"
+                    val torre = acceso.autorizadoPor?.torre ?: acceso.torre ?: "-"
+                    val apto = acceso.autorizadoPor?.apartamento ?: acceso.apartamento ?: "-"
                     AccesoItem(
-                        titulo = "${acceso.nombreVisitante} - Torre ${acceso.torre} Apt ${acceso.apartamento}",
-                        subtitulo = "Residente: ${acceso.autorizadoPor?.nombre ?: acceso.autorizadoPor?.usuario ?: "-"}"
+                        titulo = nombreUsuario,
+                        subtitulo = "Torre $torre - Apt $apto"
                     ) { peatonalSeleccionado = acceso }
                 }
             }
@@ -155,9 +161,13 @@ fun PantallaAccesosCelador(
             },
             text = {
                 Column {
+                    Text("Residente: ${acceso.autorizadoPor?.nombre ?: acceso.autorizadoPor?.usuario ?: "-"}", color = Color.White)
                     Text("Placa: ${acceso.placaVehiculo}", color = Color.White)
                     Text("Torre/Apto: ${acceso.torre} - ${acceso.apartamento}", color = Color.White)
+                    Text("Código QR: ${acceso.codigoQr ?: "-"}", color = Color.White)
                     Text("Fecha: ${acceso.horaAutorizada ?: "-"}", color = Color.White)
+                    Text("Hora entrada: ${acceso.horaEntrada ?: "-"}", color = Color.White)
+                    Text("Hora salida: ${acceso.horaSalida ?: "-"}", color = Color.White)
                 }
             },
             confirmButton = {
@@ -181,9 +191,13 @@ fun PantallaAccesosCelador(
             },
             text = {
                 Column {
+                    Text("Residente: ${acceso.autorizadoPor?.nombre ?: acceso.autorizadoPor?.usuario ?: "-"}", color = Color.White)
                     Text("Visitante: ${acceso.nombreVisitante}", color = Color.White)
                     Text("Torre/Apto: ${acceso.torre} - ${acceso.apartamento}", color = Color.White)
                     Text("Código QR: ${acceso.codigoQr}", color = Color.White)
+                    Text("Hora autorizada: ${acceso.horaAutorizada ?: "-"}", color = Color.White)
+                    Text("Hora entrada: ${acceso.horaEntrada ?: "-"}", color = Color.White)
+                    Text("Hora salida: ${acceso.horaSalida ?: "-"}", color = Color.White)
                 }
             },
             confirmButton = {
@@ -202,8 +216,9 @@ fun AccesoItem(titulo: String, subtitulo: String, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(vertical = 4.dp)
             .clip(RoundedCornerShape(10.dp))
-            .background(Color.White.copy(alpha = 0.08f))
+            .background(Color.White.copy(alpha = 0.06f))
             .clickable(onClick = onClick)
             .padding(12.dp)
     ) {

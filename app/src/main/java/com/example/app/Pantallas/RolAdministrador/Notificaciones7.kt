@@ -1,8 +1,8 @@
 package com.example.app.Pantallas.RolAdministrador
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -33,14 +33,24 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.app.Pantallas.RolAdministrador.PantallaPagos
+import com.example.app.ViewModel.UsuarioViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.app.ui.theme.AzulOscuro
 import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
 
 @Composable
-fun PantallaNotificaciones(navController: NavController) {
+fun PantallaNotificaciones(
+    navController: NavController,
+    usuarioViewModel: UsuarioViewModel = hiltViewModel()
+) {
     var selectedTab by remember { mutableStateOf("Mensajes") }
     var searchQuery by remember { mutableStateOf("") }
+    val usuarios by usuarioViewModel.usuarios.collectAsState()
+
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        usuarioViewModel.obtenerTodos()
+    }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -50,7 +60,6 @@ fun PantallaNotificaciones(navController: NavController) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp)
-                .verticalScroll(rememberScrollState())
         ) {
 
             Row(
@@ -114,13 +123,49 @@ fun PantallaNotificaciones(navController: NavController) {
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                Text(
-                    text = "Sin mensajes. Usa el buscador para iniciar una conversación.",
-                    color = GrisClaro,
-                    style = MaterialTheme.typography.bodyLarge
-                )
+                val celadores = usuarios.filter {
+                    it.rol.equals("CELADOR", ignoreCase = true)
+                }.filter {
+                    val nombre = it.nombre.ifBlank { it.usuario }
+                    nombre.contains(searchQuery, ignoreCase = true)
+                }
+
+                if (celadores.isEmpty()) {
+                    Text(
+                        text = "No hay celadores disponibles para chatear.",
+                        color = GrisClaro,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                } else {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        items(celadores, key = { it.id ?: it.usuario.hashCode().toLong() }) { celador ->
+                            val nombre = celador.nombre.ifBlank { celador.usuario }
+                            val torreApto = "Torre ${celador.torre.ifBlank { "-" }} - Apt ${celador.apartamento.ifBlank { "-" }}"
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { navController.navigate("PantallaMensajes/$nombre") },
+                                colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.06f)),
+                                shape = RoundedCornerShape(10.dp)
+                            ) {
+                                Column(modifier = Modifier.padding(12.dp)) {
+                                    Text(nombre, color = Color.White)
+                                    Text(torreApto, color = GrisClaro)
+                                }
+                            }
+                        }
+                    }
+                }
             } else {
-                PantallaPagos(navController)
+                runCatching { PantallaPagos(navController) }
+                    .onFailure {
+                        Text(
+                            text = "No fue posible abrir pagos en este momento.",
+                            color = Color(0xFFFFB4AB)
+                        )
+                    }
             }
         }
     }

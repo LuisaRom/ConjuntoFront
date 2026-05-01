@@ -13,6 +13,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import javax.inject.Inject
+import retrofit2.HttpException
 
 @HiltViewModel
 class MascotaViewModel @Inject constructor(
@@ -57,7 +58,11 @@ class MascotaViewModel @Inject constructor(
             obtenerTodos()
             onSuccess?.invoke()
         } catch (e: Exception) {
-            _error.value = "Error al guardar mascota: ${e.message}"
+            android.util.Log.e("MascotaViewModel", "Error al guardar mascota", e)
+            _error.value = when (e) {
+                is HttpException -> "Error HTTP ${e.code()} al guardar mascota"
+                else -> "Error al guardar mascota: ${e.message}"
+            }
         } finally {
             _isLoading.value = false
         }
@@ -74,7 +79,17 @@ class MascotaViewModel @Inject constructor(
             obtenerTodos()
             onSuccess?.invoke()
         } catch (e: Exception) {
-            _error.value = "Error al guardar mascota: ${e.message}"
+            android.util.Log.e("MascotaViewModel", "Error al guardar mascota con foto", e)
+            _error.value = when (e) {
+                is HttpException -> {
+                    if (e.code() == 400) {
+                        "No se pudo crear la mascota (400). Verifica imagen y campos requeridos."
+                    } else {
+                        "Error HTTP ${e.code()} al guardar mascota con foto"
+                    }
+                }
+                else -> "Error al guardar mascota con foto: ${e.message}"
+            }
         } finally {
             _isLoading.value = false
         }

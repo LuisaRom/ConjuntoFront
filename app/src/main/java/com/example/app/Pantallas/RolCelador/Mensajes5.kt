@@ -53,7 +53,7 @@ fun PantallaMensajesCelador(
     val usuariosMensajeria = remember(usuarios, busqueda) {
         usuarios.filter { usuario ->
             val rol = usuario.rol.uppercase()
-            rol == "CELADOR" || rol == "ADMINISTRADOR" || rol == "ADMIN"
+            rol == "ADMINISTRADOR" || rol == "ADMIN"
         }.filter { usuario ->
             val nombre = usuario.nombre.ifBlank { usuario.usuario }
             nombre.contains(busqueda, ignoreCase = true)
@@ -118,6 +118,7 @@ fun PantallaMensajesCelador(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .clickable { navController.navigate("PantallaMensajes/$nombre") }
                             .padding(vertical = 8.dp)
                             .background(Color.White.copy(alpha = 0.06f))
                             .padding(12.dp)

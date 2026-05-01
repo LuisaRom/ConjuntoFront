@@ -111,8 +111,13 @@ fun PantallaPagos(
         val url = checkoutUrl ?: return@LaunchedEffect
         try {
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-            context.startActivity(intent)
-            Toast.makeText(context, "Redirigiendo a Pago en línea...", Toast.LENGTH_SHORT).show()
+            val canOpen = intent.resolveActivity(context.packageManager) != null
+            if (canOpen) {
+                context.startActivity(intent)
+                Toast.makeText(context, "Redirigiendo a Pago en línea...", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(context, "No se encontró una app para abrir el enlace de pago.", Toast.LENGTH_LONG).show()
+            }
         } catch (e: Exception) {
             Toast.makeText(context, "No se pudo abrir el checkout: ${e.message}", Toast.LENGTH_LONG).show()
         } finally {

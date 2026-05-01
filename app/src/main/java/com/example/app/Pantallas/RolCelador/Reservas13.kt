@@ -5,7 +5,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -23,7 +21,6 @@ import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.OutdoorGrill
 import androidx.compose.material.icons.filled.Pool
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -64,31 +61,16 @@ fun PantallaReservasCelador(
     val reservas by reservaZonaComunViewModel.reservas.collectAsState()
     val isLoading by reservaZonaComunViewModel.isLoading.collectAsState()
     val error by reservaZonaComunViewModel.error.collectAsState()
-    var filtroTipo by remember { mutableStateOf("Todas") }
     var reservaSeleccionada by remember { mutableStateOf<ReservaZonaComun?>(null) }
 
     LaunchedEffect(Unit) {
         reservaZonaComunViewModel.obtenerTodos()
     }
 
-    val tiposDisponibles = remember(reservas) {
-        listOf("Todas") + reservas
-            .map { normalizarTipoReserva(it.zonaComun) }
-            .distinct()
-            .sorted()
-    }
-
-    val reservasFiltradas = remember(reservas, filtroTipo) {
-        val base = if (filtroTipo == "Todas") {
-            reservas
-        } else {
-            reservas.filter { normalizarTipoReserva(it.zonaComun) == filtroTipo }
-        }
-        base.sortedWith(
-            compareByDescending<ReservaZonaComun> { it.fechaReserva }
-                .thenByDescending { it.horaInicio }
-        )
-    }
+    val reservasPiscina = reservas.filter { normalizarTipoReserva(it.zonaComun) == "Piscina" }
+    val reservasSalon = reservas.filter { normalizarTipoReserva(it.zonaComun) == "Salón Comunal" }
+    val reservasGimnasio = reservas.filter { normalizarTipoReserva(it.zonaComun) == "Gimnasio" }
+    val reservasBbq = reservas.filter { normalizarTipoReserva(it.zonaComun) == "Zona BBQ" }
 
     Column(
         modifier = Modifier
@@ -110,7 +92,7 @@ fun PantallaReservasCelador(
             }
             Text(
                 text = "Reservas",
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.headlineMedium,
                 color = GrisClaro,
                 modifier = Modifier.padding(start = 8.dp)
             )
@@ -118,53 +100,48 @@ fun PantallaReservasCelador(
 
         HorizontalDivider(color = Color.White.copy(alpha = 0.2f), thickness = 1.dp)
 
-        Spacer(modifier = Modifier.height(12.dp))
-
-        FlowRow(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            maxItemsInEachRow = 3
-        ) {
-            tiposDisponibles.forEach { tipo ->
-                FilterChip(
-                    selected = filtroTipo == tipo,
-                    onClick = { filtroTipo = tipo },
-                    label = { Text(tipo) },
-                    modifier = Modifier.padding(end = 8.dp, bottom = 8.dp)
-                )
-            }
-        }
-
         if (isLoading && reservas.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = DoradoElegante)
             }
-        } else if (reservasFiltradas.isEmpty()) {
+        } else if (reservas.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
-                    text = "No hay reservas para el filtro seleccionado.",
+                    text = "No hay reservas registradas.",
                     color = Color.Gray,
                     fontSize = 14.sp
                 )
             }
         } else {
-            LazyColumn(
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(10.dp)
+                    .padding(horizontal = 16.dp)
             ) {
-                items(
-                    items = reservasFiltradas,
-                    key = { it.id ?: it.hashCode().toLong() }
-                ) { reserva ->
-                    ReservaCardSoloLectura(
-                        reserva = reserva,
-                        icono = iconoPorTipo(reserva.zonaComun),
-                        onClick = { reservaSeleccionada = reserva }
-                    )
-                }
+                ReservaCategoriaCelador(
+                    titulo = "Piscina",
+                    icono = Icons.Default.Pool,
+                    reservas = reservasPiscina,
+                    onClick = { reservaSeleccionada = it }
+                )
+                ReservaCategoriaCelador(
+                    titulo = "Salón Comunal",
+                    icono = Icons.Default.Home,
+                    reservas = reservasSalon,
+                    onClick = { reservaSeleccionada = it }
+                )
+                ReservaCategoriaCelador(
+                    titulo = "Gimnasio",
+                    icono = Icons.Default.FitnessCenter,
+                    reservas = reservasGimnasio,
+                    onClick = { reservaSeleccionada = it }
+                )
+                ReservaCategoriaCelador(
+                    titulo = "Zona BBQ",
+                    icono = Icons.Default.OutdoorGrill,
+                    reservas = reservasBbq,
+                    onClick = { reservaSeleccionada = it }
+                )
             }
         }
 
@@ -213,56 +190,70 @@ fun PantallaReservasCelador(
 }
 
 @Composable
-private fun ReservaCardSoloLectura(
-    reserva: ReservaZonaComun,
+private fun ReservaCategoriaCelador(
+    titulo: String,
     icono: ImageVector,
-    onClick: () -> Unit
+    reservas: List<ReservaZonaComun>,
+    onClick: (ReservaZonaComun) -> Unit
 ) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() }
-            .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(8.dp))
-            .padding(12.dp)
-    ) {
-        Column {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = icono,
-                    contentDescription = reserva.zonaComun,
-                    tint = DoradoElegante,
-                    modifier = Modifier.size(28.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = normalizarTipoReserva(reserva.zonaComun),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = Color.White,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
+    Column(modifier = Modifier.padding(vertical = 10.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = icono,
+                contentDescription = titulo,
+                tint = DoradoElegante,
+                modifier = Modifier.size(35.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = titulo,
+                style = MaterialTheme.typography.titleMedium,
+                color = Color.White,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+        Text(
+            text = "${reservas.size} Reservas",
+            color = Color.LightGray,
+            fontSize = 12.sp,
+            modifier = Modifier.padding(start = 43.dp, top = 2.dp)
+        )
 
-            Spacer(modifier = Modifier.height(6.dp))
+        if (reservas.isEmpty()) {
             Text(
-                text = "Fecha: ${reserva.fechaReserva}",
-                color = GrisClaro,
-                fontSize = 13.sp
+                text = "No hay reservas creadas",
+                color = Color.Gray,
+                fontSize = 13.sp,
+                modifier = Modifier.padding(start = 43.dp, top = 6.dp)
             )
-            Text(
-                text = "Horario: ${reserva.horaInicio} - ${reserva.horaFin}",
-                color = GrisClaro,
-                fontSize = 13.sp
-            )
-            Text(
-                text = "Usuario: ${reserva.usuario?.nombre ?: reserva.usuario?.usuario ?: "Sin usuario"}",
-                color = GrisClaro,
-                fontSize = 13.sp
-            )
-            Text(
-                text = "Torre/Apto: ${reserva.usuario?.torre ?: "-"} / ${reserva.usuario?.apartamento ?: "-"}",
-                color = GrisClaro,
-                fontSize = 13.sp
-            )
+            return@Column
+        }
+
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(170.dp),
+            verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
+        ) {
+            items(reservas, key = { it.id ?: it.hashCode().toLong() }) { reserva ->
+                val nombreUsuario = reserva.usuario?.nombre ?: reserva.usuario?.usuario ?: "Sin usuario"
+                val torre = reserva.usuario?.torre ?: "-"
+                val apto = reserva.usuario?.apartamento ?: "-"
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp, horizontal = 8.dp)
+                        .clickable { onClick(reserva) }
+                        .background(Color.White.copy(alpha = 0.06f), RoundedCornerShape(8.dp))
+                        .padding(12.dp)
+                ) {
+                    Column {
+                        Text(nombreUsuario, color = Color.White, fontWeight = FontWeight.SemiBold)
+                        Text("Torre $torre - Apt $apto", color = GrisClaro, fontSize = 12.sp)
+                        Text("Fecha: ${reserva.fechaReserva} | ${reserva.horaInicio} - ${reserva.horaFin}", color = GrisClaro, fontSize = 12.sp)
+                    }
+                }
+            }
         }
     }
 }

@@ -18,8 +18,8 @@ interface PagoAdministracionApiService {
     @POST("/api/pagos")
     suspend fun guardarPago(@Body pago: PagoAdministracion): PagoAdministracion
 
-    @POST("/api/pagos/checkout/administracion")
-    suspend fun crearCheckoutAdministracion(): CheckoutAdministracionResponse
+    @POST("/api/pagos/iniciar-pse")
+    suspend fun iniciarPagoPse(): CheckoutAdministracionResponse
 
     @DELETE("/api/pagos/{id}")
     suspend fun eliminarPago(@Path("id") id: Long)

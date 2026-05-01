@@ -81,7 +81,7 @@ fun PantallaReservas(
             }
             Text(
                 text = "Reservas",
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.headlineMedium,
                 color = GrisClaro,
                 modifier = Modifier.padding(start = 8.dp)
             )
@@ -209,7 +209,7 @@ fun ReservaCategoria(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 4.dp, horizontal = 8.dp)
-                        .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(8.dp))
+                        .background(Color.White.copy(alpha = 0.06f), RoundedCornerShape(8.dp))
                         .padding(12.dp)
                 ) {
                     Row(
