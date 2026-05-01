@@ -15,12 +15,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -43,6 +41,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaRecibosCelador(
     navController: NavController,
@@ -132,7 +131,7 @@ fun PantallaRecibosCelador(
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandirFiltroUsuarios) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .menuAnchor(androidx.compose.material3.MenuAnchorType.PrimaryNotEditable, true),
+                    .menuAnchor(MenuAnchorType.PrimaryNotEditable, true),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = Color.White,
                     unfocusedTextColor = Color.White,
@@ -613,7 +612,8 @@ fun ReciboItemExpandible(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     items(residentes) { residente ->
-                        if (residente.id != null) {
+                        val residenteId = residente.id
+                        if (residenteId != null) {
                             val isChecked = todosSeleccionado || residente.id in seleccionados
                             Row(
                                 modifier = Modifier
@@ -622,9 +622,9 @@ fun ReciboItemExpandible(
                                         if (todosSeleccionado) {
                                             // Si "TODOS" está marcado, desmarcarlo y marcar solo este
                                             onSeleccionarTodos()
-                                            onSeleccionarResidente(residente.id!!)
+                                            onSeleccionarResidente(residenteId)
                                         } else {
-                                            onSeleccionarResidente(residente.id!!)
+                                            onSeleccionarResidente(residenteId)
                                         }
                                     }
                                     .padding(vertical = 6.dp),
@@ -636,9 +636,9 @@ fun ReciboItemExpandible(
                                         if (todosSeleccionado) {
                                             // Si "TODOS" está marcado, desmarcarlo y marcar solo este
                                             onSeleccionarTodos()
-                                            onSeleccionarResidente(residente.id!!)
+                                            onSeleccionarResidente(residenteId)
                                         } else {
-                                            onSeleccionarResidente(residente.id!!)
+                                            onSeleccionarResidente(residenteId)
                                         }
                                     },
                                     colors = CheckboxDefaults.colors(
@@ -649,13 +649,13 @@ fun ReciboItemExpandible(
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Column {
                                     Text(
-                                        text = residente.nombre ?: residente.usuario,
+                                        text = if (residente.nombre.isNotBlank()) residente.nombre else residente.usuario,
                                         color = Color.White,
                                         fontSize = 14.sp
                                     )
                                     if (!residente.torre.isNullOrBlank() || !residente.apartamento.isNullOrBlank()) {
                                         Text(
-                                            text = "Torre ${residente.torre ?: ""} - Apt ${residente.apartamento ?: ""}",
+                                            text = "Torre ${residente.torre} - Apt ${residente.apartamento}",
                                             color = GrisClaro,
                                             fontSize = 12.sp
                                         )
