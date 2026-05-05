@@ -153,12 +153,7 @@ fun PantallaAccesosCelador(
     vehicularSeleccionado?.let { acceso ->
         AlertDialog(
             onDismissRequest = { vehicularSeleccionado = null },
-            title = {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Acceso Vehicular", color = Color.White)
-                    Text("X", color = DoradoElegante, modifier = Modifier.clickable { vehicularSeleccionado = null })
-                }
-            },
+            title = { Text("Acceso Vehicular", color = Color.White) },
             text = {
                 Column {
                     Text("Residente: ${acceso.autorizadoPor?.nombre ?: acceso.autorizadoPor?.usuario ?: "-"}", color = Color.White)
@@ -166,8 +161,6 @@ fun PantallaAccesosCelador(
                     Text("Torre/Apto: ${acceso.torre} - ${acceso.apartamento}", color = Color.White)
                     Text("Código QR: ${acceso.codigoQr ?: "-"}", color = Color.White)
                     Text("Fecha: ${acceso.horaAutorizada ?: "-"}", color = Color.White)
-                    Text("Hora entrada: ${acceso.horaEntrada ?: "-"}", color = Color.White)
-                    Text("Hora salida: ${acceso.horaSalida ?: "-"}", color = Color.White)
                 }
             },
             confirmButton = {
@@ -183,12 +176,7 @@ fun PantallaAccesosCelador(
     peatonalSeleccionado?.let { acceso ->
         AlertDialog(
             onDismissRequest = { peatonalSeleccionado = null },
-            title = {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Acceso Peatonal", color = Color.White)
-                    Text("X", color = DoradoElegante, modifier = Modifier.clickable { peatonalSeleccionado = null })
-                }
-            },
+            title = { Text("Acceso Peatonal", color = Color.White) },
             text = {
                 Column {
                     Text("Residente: ${acceso.autorizadoPor?.nombre ?: acceso.autorizadoPor?.usuario ?: "-"}", color = Color.White)
@@ -196,8 +184,6 @@ fun PantallaAccesosCelador(
                     Text("Torre/Apto: ${acceso.torre} - ${acceso.apartamento}", color = Color.White)
                     Text("Código QR: ${acceso.codigoQr}", color = Color.White)
                     Text("Hora autorizada: ${acceso.horaAutorizada ?: "-"}", color = Color.White)
-                    Text("Hora entrada: ${acceso.horaEntrada ?: "-"}", color = Color.White)
-                    Text("Hora salida: ${acceso.horaSalida ?: "-"}", color = Color.White)
                 }
             },
             confirmButton = {

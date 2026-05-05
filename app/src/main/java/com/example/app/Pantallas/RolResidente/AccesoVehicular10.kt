@@ -13,6 +13,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -61,6 +62,11 @@ fun PantallaAccesoVehicularResidente(
 
     val opcionesVehiculo = listOf("Automóvil", "Camioneta", "Moto", "Eléctrico")
     var expanded by remember { mutableStateOf(false) }
+    val torreApartamento = remember(torre, apartamento) {
+        listOf(torre, apartamento)
+            .filter { it.isNotBlank() }
+            .joinToString(" - ")
+    }
 
     LaunchedEffect(error) {
         error?.let {
@@ -118,8 +124,7 @@ fun PantallaAccesoVehicularResidente(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        CampoAcceso("Torre", torre, enabled = false)
-        CampoAcceso("Apartamento", apartamento, enabled = false)
+        CampoAcceso("Torre - Apartamento", torreApartamento, enabled = false)
         CampoFechaConCalendario(
             label = "Fecha",
             valor = fecha,
@@ -173,8 +178,8 @@ fun PantallaAccesoVehicularResidente(
 
         Button(
             onClick = {
-                if (placa.isBlank() || torre.isBlank() || apartamento.isBlank() || quienIngresa.isBlank()) {
-                    Toast.makeText(context, "Completa los campos obligatorios", Toast.LENGTH_SHORT).show()
+                if (fecha.isBlank() || tipoVehiculo.isBlank() || placa.isBlank() || quienIngresa.isBlank()) {
+                    Toast.makeText(context, "Completa fecha, tipo de vehículo, placa y quién ingresa", Toast.LENGTH_SHORT).show()
                     return@Button
                 }
                 val codigoUnico = "VEH-${System.currentTimeMillis()}-${placa.uppercase()}"
@@ -293,10 +298,11 @@ private fun CampoFechaConCalendario(
         Text(text = label, color = Color.LightGray, fontSize = 12.sp)
         OutlinedTextField(
             value = valor,
-            onValueChange = {},
+            onValueChange = onDateSelected,
             modifier = Modifier
-                .fillMaxWidth()
-                .clickable {
+                .fillMaxWidth(),
+            trailingIcon = {
+                IconButton(onClick = {
                     DatePickerDialog(
                         context,
                         { _, year, month, dayOfMonth ->
@@ -313,8 +319,15 @@ private fun CampoFechaConCalendario(
                         calendar.get(Calendar.MONTH),
                         calendar.get(Calendar.DAY_OF_MONTH)
                     ).show()
-                },
-            readOnly = true,
+                }) {
+                    Icon(
+                        imageVector = Icons.Default.DateRange,
+                        contentDescription = "Abrir calendario",
+                        tint = GrisClaro
+                    )
+                }
+            },
+            readOnly = false,
             singleLine = true,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = DoradoElegante,

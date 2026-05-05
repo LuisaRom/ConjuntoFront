@@ -12,6 +12,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -55,6 +56,11 @@ fun PantallaAccesoPeatonalResidente(
     var fecha by remember { mutableStateOf("") }
     var qrBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var accesoGuardado by remember { mutableStateOf<AccesoPeatonal?>(null) }
+    val torreApartamento = remember(torre, apartamento) {
+        listOf(torre, apartamento)
+            .filter { it.isNotBlank() }
+            .joinToString(" - ")
+    }
 
     val context = LocalContext.current
 
@@ -104,9 +110,8 @@ fun PantallaAccesoPeatonalResidente(
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        CampoAccesoP("Torre - Apartamento", torreApartamento, enabled = false)
         CampoAccesoP("Nombre del Visitante", nombreVisitante) { nombreVisitante = it }
-        CampoAccesoP("Torre", torre, enabled = false)
-        CampoAccesoP("Apartamento", apartamento, enabled = false)
         CampoFechaConCalendarioPeatonal(
             label = "Fecha",
             valor = fecha,
@@ -117,7 +122,7 @@ fun PantallaAccesoPeatonalResidente(
 
         Button(
             onClick = {
-                if (nombreVisitante.isBlank() || torre.isBlank() || apartamento.isBlank()) {
+                if (nombreVisitante.isBlank() || torre.isBlank() || apartamento.isBlank() || fecha.isBlank()) {
                     Toast.makeText(context, "Por favor complete todos los campos", Toast.LENGTH_SHORT).show()
                     return@Button
                 }
@@ -214,10 +219,11 @@ private fun CampoFechaConCalendarioPeatonal(
         Text(text = label, color = LightGray, fontSize = 12.sp)
         OutlinedTextField(
             value = valor,
-            onValueChange = {},
+            onValueChange = onDateSelected,
             modifier = Modifier
-                .fillMaxWidth()
-                .clickable {
+                .fillMaxWidth(),
+            trailingIcon = {
+                IconButton(onClick = {
                     DatePickerDialog(
                         context,
                         { _, year, month, dayOfMonth ->
@@ -234,8 +240,15 @@ private fun CampoFechaConCalendarioPeatonal(
                         calendar.get(Calendar.MONTH),
                         calendar.get(Calendar.DAY_OF_MONTH)
                     ).show()
-                },
-            readOnly = true,
+                }) {
+                    Icon(
+                        imageVector = Icons.Default.DateRange,
+                        contentDescription = "Abrir calendario",
+                        tint = GrisClaro
+                    )
+                }
+            },
+            readOnly = false,
             singleLine = true,
             textStyle = TextStyle(color = Color.White),
             colors = OutlinedTextFieldDefaults.colors(

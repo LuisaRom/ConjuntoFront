@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -30,6 +31,7 @@ import com.example.app.ViewModel.UsuarioViewModel
 import com.example.app.ui.theme.AzulOscuro
 import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
+import coil.compose.AsyncImage
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -154,6 +156,34 @@ fun PantallaMascotasResidente(
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
+                fotoUri?.let { uriPreview ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.06f))
+                    ) {
+                        Column(modifier = Modifier.padding(10.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.Image,
+                                    contentDescription = null,
+                                    tint = GrisClaro
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Vista previa", color = GrisClaro, fontSize = 12.sp)
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            AsyncImage(
+                                model = uriPreview,
+                                contentDescription = "Vista previa de mascota",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(180.dp)
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
                 OutlinedTextField(
                     value = nombre,
                     onValueChange = { nombre = it },
@@ -262,7 +292,7 @@ fun PantallaMascotasResidente(
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !isLoading
                 ) {
-                    Text("Compartir", color = AzulOscuro, fontWeight = FontWeight.Bold)
+                    Text("Publicar", color = AzulOscuro, fontWeight = FontWeight.Bold)
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -276,7 +306,7 @@ private fun PublicacionMascotaFeed(mascota: Mascota) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.08f))
+        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.06f))
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {

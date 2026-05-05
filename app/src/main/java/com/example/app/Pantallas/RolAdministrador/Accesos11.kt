@@ -195,9 +195,7 @@ fun PantallaAccesos(
                     Text("Placa: ${acceso.placaVehiculo ?: "-"}", color = Color.White)
                     Text("Torre: ${acceso.torre ?: "-"}", color = Color.White)
                     Text("Apartamento: ${acceso.apartamento ?: "-"}", color = Color.White)
-                    Text("Hora autorizada: ${acceso.horaAutorizada ?: "-"}", color = Color.White)
-                    Text("Hora entrada: ${acceso.horaEntrada ?: "-"}", color = Color.White)
-                    Text("Hora salida: ${acceso.horaSalida ?: "-"}", color = Color.White)
+                    Text("Fecha: ${acceso.horaAutorizada ?: "-"}", color = Color.White)
                 }
             },
             confirmButton = {
@@ -217,7 +215,7 @@ fun AccesoItem(acceso: AccesoAdmin, onEliminar: () -> Unit, onVerDetalle: () -> 
             .fillMaxWidth()
             .padding(vertical = 4.dp)
             .clip(RoundedCornerShape(10.dp))
-            .background(Color.White.copy(alpha = 0.06f))
+            .background(Color(0xFF1D3557))
             .clickable { onVerDetalle() },
         shape = RoundedCornerShape(10.dp)
     ) {

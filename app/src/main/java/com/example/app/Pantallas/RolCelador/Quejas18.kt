@@ -2,10 +2,8 @@ package com.example.app.Pantallas.RolCelador
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,12 +20,13 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.filled.ReportProblem
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -52,7 +51,6 @@ import com.example.app.ui.theme.AzulOscuro
 import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun PantallaQuejasCelador(
     navController: NavController,
@@ -61,18 +59,11 @@ fun PantallaQuejasCelador(
     val quejas by quejaViewModel.quejas.collectAsState()
     val isLoading by quejaViewModel.isLoading.collectAsState()
     val error by quejaViewModel.error.collectAsState()
-    var categoriaSeleccionada by remember { mutableStateOf("Todas") }
+    var quejaSeleccionada by remember { mutableStateOf<Queja?>(null) }
 
-    LaunchedEffect(categoriaSeleccionada) {
-        if (categoriaSeleccionada == "Todas") {
-            quejaViewModel.obtenerTodos()
-        } else {
-            // Requerimiento: consumir con ?categoria=
-            quejaViewModel.obtenerPorCategoria(categoriaSeleccionada)
-        }
+    LaunchedEffect(Unit) {
+        quejaViewModel.obtenerTodos()
     }
-
-    val categorias = listOf("Todas", "Ruido", "Mascota", "Violencia")
 
     Column(
         modifier = Modifier
@@ -92,7 +83,7 @@ fun PantallaQuejasCelador(
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "Quejas",
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.headlineMedium,
                 color = GrisClaro
             )
         }
@@ -102,21 +93,6 @@ fun PantallaQuejasCelador(
         Text("${quejas.size} Quejas", style = MaterialTheme.typography.bodyMedium, color = Color.White)
 
         Spacer(modifier = Modifier.height(12.dp))
-
-        FlowRow(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            categorias.forEach { categoria ->
-                FilterChip(
-                    selected = categoriaSeleccionada == categoria,
-                    onClick = { categoriaSeleccionada = categoria },
-                    label = { Text(categoria) },
-                    modifier = Modifier.padding(end = 8.dp, bottom = 8.dp)
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(10.dp))
 
         if (isLoading) {
             Box(modifier = Modifier.fillMaxWidth().padding(top = 16.dp), contentAlignment = Alignment.Center) {
@@ -130,7 +106,11 @@ fun PantallaQuejasCelador(
                 verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(10.dp)
             ) {
                 items(quejas, key = { it.id ?: it.hashCode().toLong() }) { queja ->
-                    QuejaItem(queja = queja, icono = iconoPorCategoria(queja.categoriaVisual()))
+                    QuejaItem(
+                        queja = queja,
+                        icono = iconoPorCategoria(queja.categoriaVisual()),
+                        onClick = { quejaSeleccionada = queja }
+                    )
                 }
             }
         }
@@ -144,23 +124,42 @@ fun PantallaQuejasCelador(
             )
         }
     }
+
+    quejaSeleccionada?.let { queja ->
+        AlertDialog(
+            onDismissRequest = { quejaSeleccionada = null },
+            title = { Text("Detalle de queja", color = Color.White) },
+            text = {
+                Column {
+                    Text("Categoría: ${queja.categoriaVisual()}", color = Color.White)
+                    Text("Estado: ${queja.estado}", color = Color.White)
+                    Text("Fecha: ${queja.fechaCreacion ?: "No disponible"}", color = Color.White)
+                    Text("Usuario: ${queja.usuario?.nombre ?: queja.usuario?.usuario ?: "Sin usuario"}", color = Color.White)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(queja.detalleVisual(), color = Color.White)
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { quejaSeleccionada = null }) {
+                    Text("Cerrar", color = DoradoElegante)
+                }
+            },
+            containerColor = AzulOscuro
+        )
+    }
 }
 
 
 @Composable
-fun QuejaItem(queja: Queja, icono: ImageVector) {
-    val enProcesoActivo = queja.estado.equals("en proceso", ignoreCase = true)
-    val finalizadoActivo = queja.estado.equals("finalizado", ignoreCase = true) ||
-        queja.estado.equals("finalizada", ignoreCase = true)
-
-    Box(
+fun QuejaItem(queja: Queja, icono: ImageVector, onClick: () -> Unit) {
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
-            .background(Color.White.copy(alpha = 0.05f))
-            .padding(vertical = 12.dp, horizontal = 16.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF1D3557))
     ) {
-        Column {
+        Column(modifier = Modifier.padding(vertical = 12.dp, horizontal = 16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = icono,
@@ -177,9 +176,10 @@ fun QuejaItem(queja: Queja, icono: ImageVector) {
             }
             Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = "Detalle: ${queja.detalleVisual()}",
+                text = queja.detalleVisual(),
                 color = Color.White,
-                fontSize = 14.sp
+                fontSize = 14.sp,
+                maxLines = 2
             )
             Text(
                 text = "Usuario: ${queja.usuario?.nombre ?: queja.usuario?.usuario ?: "Sin usuario"}",
@@ -191,38 +191,6 @@ fun QuejaItem(queja: Queja, icono: ImageVector) {
                 color = GrisClaro,
                 fontSize = 12.sp
             )
-            Spacer(modifier = Modifier.height(10.dp))
-            Row {
-                Button(
-                    onClick = {},
-                    enabled = false,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (enProcesoActivo) DoradoElegante else GrisClaro
-                    ),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text(
-                        text = "En proceso",
-                        color = if (enProcesoActivo) AzulOscuro else Color.DarkGray,
-                        fontWeight = if (enProcesoActivo) FontWeight.Bold else FontWeight.Normal
-                    )
-                }
-                Spacer(modifier = Modifier.width(8.dp))
-                Button(
-                    onClick = {},
-                    enabled = false,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (finalizadoActivo) DoradoElegante else GrisClaro
-                    ),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text(
-                        text = "Finalizado",
-                        color = if (finalizadoActivo) AzulOscuro else Color.DarkGray,
-                        fontWeight = if (finalizadoActivo) FontWeight.Bold else FontWeight.Normal
-                    )
-                }
-            }
         }
     }
 }

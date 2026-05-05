@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -45,7 +46,6 @@ fun PantallaQuejasResidente(
     var torreAcusado by remember { mutableStateOf("") }
     var apartamentoAcusado by remember { mutableStateOf("") }
     var fecha by remember { mutableStateOf("") }
-    var showDatePicker by remember { mutableStateOf(false) }
     var tipo by remember { mutableStateOf("") }
     var expanded by remember { mutableStateOf(false) }
     var mensaje by remember { mutableStateOf("") }
@@ -90,7 +90,7 @@ fun PantallaQuejasResidente(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Text("Reporta (usuario logueado)", color = Color.White)
+        Text("Reporta (torre y apartamento)", color = Color.White)
         OutlinedTextField(
             value = torreAptoReporta,
             onValueChange = {},
@@ -140,14 +140,21 @@ fun PantallaQuejasResidente(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        Text("Fecha", color = Color.White)
+        Text("Fecha *", color = Color.White)
         OutlinedTextField(
             value = fecha,
-            onValueChange = {},
-            readOnly = true,
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { showDatePicker = true },
+            onValueChange = { fecha = it },
+            readOnly = false,
+            modifier = Modifier.fillMaxWidth(),
+            trailingIcon = {
+                IconButton(onClick = { abrirDatePickerQuejas(context) { fecha = it } }) {
+                    Icon(
+                        imageVector = Icons.Default.DateRange,
+                        contentDescription = "Abrir calendario",
+                        tint = GrisClaro
+                    )
+                }
+            },
             placeholder = { Text("Seleccionar en calendario") },
             colors = OutlinedTextFieldDefaults.colors(
                 unfocusedContainerColor = AzulOscuro,
@@ -299,33 +306,27 @@ fun PantallaQuejasResidente(
         }
     }
 
-    if (showDatePicker) {
-        val state = rememberDatePickerState()
-        DatePickerDialog(
-            onDismissRequest = { showDatePicker = false },
-            confirmButton = {
-                Button(onClick = {
-                    state.selectedDateMillis?.let { millis ->
-                        fecha = try {
-                            SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(millis))
-                        } catch (e: Exception) {
-                            ""
-                        }
-                    }
-                    showDatePicker = false
-                }) { Text("Aceptar") }
-            },
-            dismissButton = {
-                Text(
-                    "Cancelar",
-                    color = GrisClaro,
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .clickable { showDatePicker = false }
-                )
-            }
-        ) {
-            DatePicker(state = state)
-        }
-    }
+}
+
+private fun abrirDatePickerQuejas(
+    context: android.content.Context,
+    onDateSelected: (String) -> Unit
+) {
+    val calendar = java.util.Calendar.getInstance()
+    android.app.DatePickerDialog(
+        context,
+        { _, year, month, dayOfMonth ->
+            val fechaSeleccionada = String.format(
+                Locale.getDefault(),
+                "%02d/%02d/%04d",
+                dayOfMonth,
+                month + 1,
+                year
+            )
+            onDateSelected(fechaSeleccionada)
+        },
+        calendar.get(java.util.Calendar.YEAR),
+        calendar.get(java.util.Calendar.MONTH),
+        calendar.get(java.util.Calendar.DAY_OF_MONTH)
+    ).show()
 }

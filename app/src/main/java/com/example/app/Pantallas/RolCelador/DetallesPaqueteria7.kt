@@ -195,7 +195,7 @@ fun PantallaDetallesPaqueteriaCelador(
             OutlinedTextField(
                 readOnly = true,
                 value = residenteSeleccionado?.let { 
-                    "${it.nombre} (${it.torre ?: ""} - ${it.apartamento ?: ""})"
+                    "${it.nombre} - ${it.torre} - ${it.apartamento}"
                 } ?: "",
                 onValueChange = {},
                 modifier = Modifier
@@ -239,7 +239,7 @@ fun PantallaDetallesPaqueteriaCelador(
                         )
                     } else if (residentes.isEmpty()) {
                         DropdownMenuItem(
-                            text = { Text("No hay residentes disponibles", color = Color.White) },
+                            text = { Text("Sin residentes cargados", color = Color.White) },
                             onClick = {},
                             colors = MenuDefaults.itemColors(
                                 textColor = Color.White
@@ -253,13 +253,13 @@ fun PantallaDetallesPaqueteriaCelador(
                                         modifier = Modifier.padding(vertical = 4.dp)
                                     ) {
                                         Text(
-                                            text = residente.nombre ?: residente.usuario,
+                                            text = if (residente.nombre.isNotBlank()) residente.nombre else residente.usuario,
                                             color = Color.White,
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 14.sp
                                         )
                                         Text(
-                                            text = "Torre ${residente.torre ?: ""} - Apt ${residente.apartamento ?: ""}",
+                                            text = "Torre ${residente.torre} - Apt ${residente.apartamento}",
                                             color = GrisClaro,
                                             fontSize = 12.sp
                                         )

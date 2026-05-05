@@ -81,6 +81,7 @@ fun PantallaAccesoPeatonalCelador(
                 codigo.contains(acceso.codigoQr ?: "", ignoreCase = true) ||
                 acceso.id?.toString() == codigo
         }
+        accesoSeleccionado?.id?.let { accesoPeatonalViewModel.obtenerAccesoPeatonal(it) }
         mensajeEstado = if (accesoSeleccionado != null) {
             "Acceso encontrado."
         } else {
@@ -157,6 +158,8 @@ fun PantallaAccesoPeatonalCelador(
 
             Button(
                 onClick = {
+                    // Refresca desde backend antes de escanear.
+                    accesoPeatonalViewModel.obtenerAccesosPeatonales()
                     val options = ScanOptions().apply {
                         setPrompt("Escanea el código QR del acceso")
                         setBeepEnabled(true)

@@ -76,7 +76,9 @@ fun PantallaDashboardCelador(
 
     // Actualización incremental de publicaciones para evitar parpadeos.
     LaunchedEffect(notificaciones) {
-        val nuevas = notificaciones.filter { it.esValida() }.reversed()
+        val nuevas = notificaciones
+            .filter { it.esValida() && !esMensajeChatParaNovedades(it.mensaje) }
+            .reversed()
         val actualesPorId = notificacionesRender.withIndex()
             .associate { (index, item) -> (item.id ?: Long.MIN_VALUE - index.toLong()) to index }
         val nuevasClaves = mutableSetOf<Long>()
@@ -535,4 +537,8 @@ fun formatearFechaCelador(fechaISO: String?): String {
     } catch (e: Exception) {
         fechaISO
     }
+}
+
+private fun esMensajeChatParaNovedades(payload: String?): Boolean {
+    return payload?.startsWith("CHAT|") == true
 }

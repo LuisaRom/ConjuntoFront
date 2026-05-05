@@ -15,7 +15,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.Call
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -101,11 +100,6 @@ fun PantallaMensajes(
                             contentDescription = "Atrás",
                             tint = Color.White
                         )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { /* Acción al llamar */ }) {
-                        Icon(Icons.Filled.Call, contentDescription = "Llamar", tint = Color.White)
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(

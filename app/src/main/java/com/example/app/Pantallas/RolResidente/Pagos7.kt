@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -67,6 +68,8 @@ fun PantallaPagos(
     val scope = rememberCoroutineScope()
     val usuarioActual by usuarioViewModel.usuarioActual.collectAsState()
     val checkoutUrl by pagoAdministracionViewModel.checkoutUrl.collectAsState()
+    val isLoading by pagoAdministracionViewModel.isLoading.collectAsState()
+    val error by pagoAdministracionViewModel.error.collectAsState()
     var metodoSeleccionado by remember { mutableStateOf("EFECTIVO") }
     
     // Estado para los campos del formulario
@@ -123,6 +126,12 @@ fun PantallaPagos(
         } finally {
             pagoAdministracionViewModel.consumirCheckoutUrl()
         }
+    }
+
+    LaunchedEffect(error) {
+        val mensajeError = error ?: return@LaunchedEffect
+        Toast.makeText(context, mensajeError, Toast.LENGTH_LONG).show()
+        pagoAdministracionViewModel.clearError()
     }
 
     Column(
@@ -191,10 +200,26 @@ fun PantallaPagos(
             MetodoPagoItem(
                 tipo = "Pago en línea",
                 seleccionado = metodoSeleccionado == "Pago en línea",
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                enabled = !isLoading
             ) {
                 metodoSeleccionado = "Pago en línea"
                 pagoAdministracionViewModel.crearCheckoutAdministracion()
+            }
+        }
+
+        if (isLoading && metodoSeleccionado == "Pago en línea") {
+            Spacer(modifier = Modifier.height(12.dp))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(18.dp),
+                    color = DoradoElegante,
+                    strokeWidth = 2.dp
+                )
+                Text("Iniciando pago en línea...", color = GrisClaro, fontSize = 13.sp)
             }
         }
     }
@@ -205,6 +230,7 @@ fun MetodoPagoItem(
     tipo: String,
     seleccionado: Boolean,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     onClick: () -> Unit
 ) {
     val fondo = if (seleccionado) DoradoElegante else DoradoElegante
@@ -212,7 +238,7 @@ fun MetodoPagoItem(
         modifier = modifier
             .height(115.dp)
             .background(fondo, RoundedCornerShape(8.dp))
-            .clickable { onClick() }
+            .clickable(enabled = enabled) { onClick() }
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {

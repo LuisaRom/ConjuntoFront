@@ -2,11 +2,8 @@ package com.example.app.Pantallas.RolAdministrador
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,9 +12,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
@@ -49,7 +46,6 @@ import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun PantallaQuejas(
     navController: NavController,
@@ -60,23 +56,10 @@ fun PantallaQuejas(
     val error by quejaViewModel.error.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-    var categoriaSeleccionada by remember { mutableStateOf("Todas") }
-    var quejaAFinalizar by remember { mutableStateOf<Queja?>(null) }
+    var quejaSeleccionada by remember { mutableStateOf<Queja?>(null) }
 
     LaunchedEffect(Unit) {
         quejaViewModel.obtenerTodos()
-    }
-
-    val categoriasBase = listOf("Ruido", "Mascota", "Violencia")
-    val categoriasDisponibles = remember { listOf("Todas") + categoriasBase }
-    val conteoPorCategoria = remember(quejas) {
-        categoriasBase.associateWith { categoria ->
-            quejas.count { normalizarCategoria(it.categoriaVisual()) == categoria }
-        }
-    }
-    val quejasFiltradas = remember(quejas, categoriaSeleccionada) {
-        if (categoriaSeleccionada == "Todas") quejas
-        else quejas.filter { normalizarCategoria(it.categoriaVisual()) == categoriaSeleccionada }
     }
 
     Column(
@@ -106,33 +89,10 @@ fun PantallaQuejas(
         Spacer(modifier = Modifier.height(12.dp))
 
         Text(
-            "${quejasFiltradas.size} Quejas",
+            "${quejas.size} Quejas",
             style = MaterialTheme.typography.bodyMedium,
             color = Color.White
         )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        FlowRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            categoriasDisponibles.forEach { categoria ->
-                FilterChip(
-                    selected = categoriaSeleccionada == categoria,
-                    onClick = { categoriaSeleccionada = categoria },
-                    label = {
-                        val texto = if (categoria == "Todas") {
-                            "Todas (${quejas.size})"
-                        } else {
-                            "$categoria (${conteoPorCategoria[categoria] ?: 0})"
-                        }
-                        Text(texto)
-                    }
-                )
-            }
-        }
 
         Spacer(modifier = Modifier.height(12.dp))
 
@@ -141,57 +101,83 @@ fun PantallaQuejas(
                 CircularProgressIndicator(color = DoradoElegante)
             }
         } else {
-            Column(
+            LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
+                    .padding(top = 4.dp),
+                verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(10.dp)
             ) {
-                if (quejasFiltradas.isEmpty()) {
-                    Text("Sin quejas registradas", color = Color.Gray, fontSize = 14.sp)
+                if (quejas.isEmpty()) {
+                    item {
+                        Text("Sin quejas registradas", color = Color.Gray, fontSize = 14.sp)
+                    }
                 } else {
-                    quejasFiltradas.forEach { queja ->
-                        QuejaItem(
-                            queja = queja,
-                            onMarcarFinalizada = { quejaAFinalizar = queja }
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
+                    items(quejas, key = { it.id ?: it.hashCode().toLong() }) { queja ->
+                        QuejaItem(queja = queja, onClick = { quejaSeleccionada = queja })
                     }
                 }
 
                 error?.let {
-                    Text(
-                        text = it,
-                        color = Color.Red,
-                        fontSize = 13.sp,
-                        modifier = Modifier.padding(vertical = 6.dp)
-                    )
+                    item {
+                        Text(
+                            text = it,
+                            color = Color.Red,
+                            fontSize = 13.sp,
+                            modifier = Modifier.padding(vertical = 6.dp)
+                        )
+                    }
                 }
             }
         }
     }
 
-    if (quejaAFinalizar != null) {
+    if (quejaSeleccionada != null) {
+        val queja = quejaSeleccionada!!
+        val finalizada = queja.estado.equals("finalizada", ignoreCase = true)
         AlertDialog(
-            onDismissRequest = { quejaAFinalizar = null },
-            title = { Text("Finalizar queja", color = Color.White) },
-            text = { Text("¿Deseas marcar esta queja como finalizada?", color = Color.White) },
+            onDismissRequest = { quejaSeleccionada = null },
+            title = { Text("Detalle de queja", color = Color.White) },
+            text = {
+                Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = iconoPorCategoria(queja.categoriaVisual()),
+                            contentDescription = null,
+                            tint = DoradoElegante,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Categoría: ${queja.categoriaVisual()}", color = Color.White)
+                    }
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text("Estado: ${queja.estado}", color = Color.White)
+                    Text("Fecha: ${queja.fechaCreacion ?: "No disponible"}", color = Color.White)
+                    Text("Usuario: ${queja.usuario?.nombre ?: queja.usuario?.usuario ?: "Sin usuario"}", color = Color.White)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("Detalle:", color = GrisClaro)
+                    Text(queja.detalleVisual(), color = Color.White)
+                }
+            },
             confirmButton = {
-                TextButton(onClick = {
-                    val id = quejaAFinalizar?.id
-                    if (id != null) {
-                        quejaViewModel.finalizarQueja(id) {
+                if (!finalizada && queja.id != null) {
+                    TextButton(onClick = {
+                        quejaViewModel.finalizarQueja(queja.id) {
                             scope.launch {
                                 snackbarHostState.showSnackbar("Queja finalizada correctamente.")
                             }
                         }
+                        quejaSeleccionada = null
+                    }) {
+                        Text("Finalizar", color = DoradoElegante)
                     }
-                    quejaAFinalizar = null
-                }) {
-                    Text("Finalizar", color = DoradoElegante)
+                } else {
+                    TextButton(onClick = { quejaSeleccionada = null }) {
+                        Text("Cerrar", color = DoradoElegante)
+                    }
                 }
             },
             dismissButton = {
-                TextButton(onClick = { quejaAFinalizar = null }) {
+                TextButton(onClick = { quejaSeleccionada = null }) {
                     Text("Cancelar", color = Color.White)
                 }
             },
@@ -213,24 +199,19 @@ private fun normalizarCategoria(categoria: String): String {
 @Composable
 fun QuejaItem(
     queja: Queja,
-    onMarcarFinalizada: () -> Unit
+    onClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(8.dp)),
-        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.06f)),
+            .clickable { onClick() },
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF1D3557)),
         shape = RoundedCornerShape(8.dp)
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
-            Text(
-                text = "Categoría: ${queja.categoriaVisual()}",
-                color = Color.White,
-                fontWeight = FontWeight.SemiBold
-            )
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(top = 6.dp, bottom = 4.dp)
+                modifier = Modifier.padding(bottom = 4.dp)
             ) {
                 Icon(
                     imageVector = iconoPorCategoria(queja.categoriaVisual()),
@@ -240,9 +221,9 @@ fun QuejaItem(
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = "Tipo: ${normalizarCategoria(queja.categoriaVisual())}",
-                    color = GrisClaro,
-                    fontSize = 12.sp
+                    text = queja.categoriaVisual(),
+                    color = Color.White,
+                    fontWeight = FontWeight.SemiBold
                 )
             }
             Text(
@@ -262,27 +243,11 @@ fun QuejaItem(
             )
             Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = "Detalle: ${queja.detalleVisual()}",
+                text = queja.detalleVisual(),
                 color = Color.White,
-                fontSize = 14.sp
+                fontSize = 14.sp,
+                maxLines = 2
             )
-
-            val finalizada = queja.estado.equals("finalizada", ignoreCase = true)
-            if (!finalizada && queja.id != null) {
-                Spacer(modifier = Modifier.height(10.dp))
-                Button(
-                    onClick = onMarcarFinalizada,
-                    colors = ButtonDefaults.buttonColors(containerColor = DoradoElegante)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.CheckCircle,
-                        contentDescription = "Finalizar queja",
-                        tint = AzulOscuro
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Marcar como finalizada", color = AzulOscuro)
-                }
-            }
         }
     }
 }

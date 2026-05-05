@@ -81,6 +81,9 @@ fun PantallaInicioResidentes(
             if (!notificacion.esValida()) {
                 return@filter false
             }
+            if (esMensajeChatParaNovedadesResidente(notificacion.mensaje)) {
+                return@filter false
+            }
             val mensaje = notificacion.mensaje?.lowercase() ?: ""
             val esPaqueteria = (mensaje.contains("paquete") || mensaje.contains("paquetería") || mensaje.contains("transportadora")) &&
                 (mensaje.contains("recoger") || mensaje.contains("portería") || mensaje.contains("disponible"))
@@ -572,4 +575,8 @@ fun esNotificacionRecibo(notificacion: Notificacion): Boolean {
     
     // El mensaje debe contener "recibo" y alguno de los tipos
     return tieneRecibo && tieneTipoRecibo
+}
+
+private fun esMensajeChatParaNovedadesResidente(payload: String?): Boolean {
+    return payload?.startsWith("CHAT|") == true
 }

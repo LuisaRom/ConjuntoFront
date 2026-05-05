@@ -80,6 +80,7 @@ fun PantallaAccesoVehicularCelador(
                 acceso.placaVehiculo.equals(codigo, ignoreCase = true) ||
                 codigo.uppercase(Locale.ROOT).contains(acceso.placaVehiculo.uppercase(Locale.ROOT))
         }
+        accesoSeleccionado?.id?.let { accesoVehicularViewModel.obtenerAccesoVehicular(it) }
         mensajeEstado = if (accesoSeleccionado != null) {
             "Acceso encontrado."
         } else {
@@ -152,6 +153,8 @@ fun PantallaAccesoVehicularCelador(
             Spacer(modifier = Modifier.height(32.dp))
             Button(
                 onClick = {
+                    // Refresca desde backend antes de escanear.
+                    accesoVehicularViewModel.obtenerAccesosVehiculares()
                     val options = ScanOptions().apply {
                         setPrompt("Escanea el código QR del acceso")
                         setBeepEnabled(true)
