@@ -79,11 +79,12 @@ fun PantallaMensajes(
         }
     }
 
-    val mensajesChat = remember(notificaciones, usuarioActual?.id, receptor?.id) {
+    val mensajesChat = remember(notificaciones, usuarioActual?.id, receptor?.id, usuarios) {
         filtrarMensajesChat(
             notificaciones = notificaciones,
             emisorActualId = usuarioActual?.id,
-            receptorId = receptor?.id
+            receptorId = receptor?.id,
+            usuarios = usuarios
         )
     }
 
@@ -238,12 +239,25 @@ private fun extraerTextoChat(payload: String?): String {
 private fun filtrarMensajesChat(
     notificaciones: List<Notificacion>,
     emisorActualId: Long?,
-    receptorId: Long?
+    receptorId: Long?,
+    usuarios: List<com.example.app.Model.Usuario>
 ): List<Notificacion> {
     if (emisorActualId == null || receptorId == null) return emptyList()
+    val usuarioActual = usuarios.firstOrNull { it.id == emisorActualId }
+    val usuarioReceptor = usuarios.firstOrNull { it.id == receptorId }
+    val rolesValidos = setOf("ADMINISTRADOR", "CELADOR")
+    val chatPermitido = usuarioActual?.rol?.uppercase() in rolesValidos &&
+        usuarioReceptor?.rol?.uppercase() in rolesValidos
+    if (!chatPermitido) return emptyList()
+
     return notificaciones.filter { noti ->
         val from = extraerEmisorId(noti.mensaje)
         val to = extraerReceptorId(noti.mensaje)
-        (from == emisorActualId && to == receptorId) || (from == receptorId && to == emisorActualId)
+        val participantesCorrectos =
+            (from == emisorActualId && to == receptorId) || (from == receptorId && to == emisorActualId)
+        if (!participantesCorrectos) return@filter false
+        val rolFrom = usuarios.firstOrNull { it.id == from }?.rol?.uppercase()
+        val rolTo = usuarios.firstOrNull { it.id == to }?.rol?.uppercase()
+        rolFrom in rolesValidos && rolTo in rolesValidos
     }
 }

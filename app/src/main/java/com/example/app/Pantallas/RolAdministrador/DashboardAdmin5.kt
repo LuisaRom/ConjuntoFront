@@ -82,7 +82,9 @@ fun PantallaDashboardAdmin(
 
     // Actualiza solo los ítems que cambian sin limpiar la lista completa.
     LaunchedEffect(notificaciones) {
-        val nuevas = notificaciones.filter { it.esValida() }.reversed()
+        val nuevas = notificaciones
+            .filter { it.esValida() && !esMensajeChatParaNovedades(it.mensaje) }
+            .reversed()
         val actualesPorId = notificacionesRender.withIndex()
             .associate { (index, item) -> (item.id ?: Long.MIN_VALUE - index.toLong()) to index }
         val nuevasClaves = mutableSetOf<Long>()
@@ -257,6 +259,10 @@ fun PantallaDashboardAdmin(
             }
         }
     }
+}
+
+private fun esMensajeChatParaNovedades(payload: String?): Boolean {
+    return payload?.startsWith("CHAT|") == true
 }
 
 @Composable

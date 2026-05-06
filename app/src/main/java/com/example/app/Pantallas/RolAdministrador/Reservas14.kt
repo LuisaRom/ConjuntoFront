@@ -45,6 +45,7 @@ fun PantallaReservas(
     val isLoading by reservaZonaComunViewModel.isLoading.collectAsState()
     val error by reservaZonaComunViewModel.error.collectAsState()
     var reservaAEliminar by remember { mutableStateOf<ReservaZonaComun?>(null) }
+    var reservaDetalle by remember { mutableStateOf<ReservaZonaComun?>(null) }
 
     LaunchedEffect(Unit) {
         reservaZonaComunViewModel.obtenerTodos()
@@ -104,25 +105,29 @@ fun PantallaReservas(
                     titulo = "Piscina",
                     icono = Icons.Default.Pool,
                     reservas = reservasPiscina,
-                    onEliminarClick = { reservaAEliminar = it }
+                    onEliminarClick = { reservaAEliminar = it },
+                    onVerDetalleClick = { reservaDetalle = it }
                 )
                 ReservaCategoria(
                     titulo = "Salón Comunal",
                     icono = Icons.Default.Home,
                     reservas = reservasSalon,
-                    onEliminarClick = { reservaAEliminar = it }
+                    onEliminarClick = { reservaAEliminar = it },
+                    onVerDetalleClick = { reservaDetalle = it }
                 )
                 ReservaCategoria(
                     titulo = "Gimnasio",
                     icono = Icons.Default.FitnessCenter,
                     reservas = reservasGimnasio,
-                    onEliminarClick = { reservaAEliminar = it }
+                    onEliminarClick = { reservaAEliminar = it },
+                    onVerDetalleClick = { reservaDetalle = it }
                 )
                 ReservaCategoria(
                     titulo = "Zona BBQ",
                     icono = Icons.Default.OutdoorGrill,
                     reservas = reservasBbq,
-                    onEliminarClick = { reservaAEliminar = it }
+                    onEliminarClick = { reservaAEliminar = it },
+                    onVerDetalleClick = { reservaDetalle = it }
                 )
 
                 error?.let {
@@ -162,6 +167,31 @@ fun PantallaReservas(
             containerColor = AzulOscuro
         )
     }
+
+    reservaDetalle?.let { reserva ->
+        AlertDialog(
+            onDismissRequest = { reservaDetalle = null },
+            title = { Text("Detalle reserva", color = Color.White) },
+            text = {
+                Column {
+                    Text("Usuario: ${reserva.usuario?.nombre ?: reserva.usuario?.usuario ?: "Sin usuario"}", color = Color.White)
+                    Text("Torre/Apto: ${reserva.usuario?.torre ?: "-"} - ${reserva.usuario?.apartamento ?: "-"}", color = Color.White)
+                    Text("Zona: ${reserva.zonaComun}", color = Color.White)
+                    Text("Fecha: ${reserva.fechaReserva}", color = Color.White)
+                    Text("Horario: ${reserva.horaInicio} - ${reserva.horaFin}", color = Color.White)
+                    if (!reserva.serviciosAdicionales.isNullOrBlank()) {
+                        Text("Servicios: ${reserva.serviciosAdicionales}", color = Color.White)
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { reservaDetalle = null }) {
+                    Text("Cerrar", color = DoradoElegante)
+                }
+            },
+            containerColor = AzulOscuro
+        )
+    }
 }
 
 @Composable
@@ -169,7 +199,8 @@ fun ReservaCategoria(
     titulo: String,
     icono: ImageVector,
     reservas: List<ReservaZonaComun>,
-    onEliminarClick: (ReservaZonaComun) -> Unit
+    onEliminarClick: (ReservaZonaComun) -> Unit,
+    onVerDetalleClick: (ReservaZonaComun) -> Unit
 ) {
     Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -209,6 +240,7 @@ fun ReservaCategoria(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 4.dp, horizontal = 8.dp)
+                        .clickable { onVerDetalleClick(reserva) }
                         .background(Color.White.copy(alpha = 0.06f), RoundedCornerShape(8.dp))
                         .padding(12.dp)
                 ) {
@@ -218,17 +250,12 @@ fun ReservaCategoria(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = reserva.zonaComun,
+                                text = reserva.usuario?.nombre ?: reserva.usuario?.usuario ?: "Sin usuario",
                                 color = Color.White,
                                 fontWeight = FontWeight.SemiBold
                             )
                             Text(
-                                text = "Fecha: ${reserva.fechaReserva} | ${reserva.horaInicio} - ${reserva.horaFin}",
-                                color = GrisClaro,
-                                fontSize = 12.sp
-                            )
-                            Text(
-                                text = "Usuario: ${reserva.usuario?.nombre ?: reserva.usuario?.usuario ?: "Sin usuario"}",
+                                text = "Torre ${reserva.usuario?.torre ?: "-"} - Apt ${reserva.usuario?.apartamento ?: "-"}",
                                 color = GrisClaro,
                                 fontSize = 12.sp
                             )
