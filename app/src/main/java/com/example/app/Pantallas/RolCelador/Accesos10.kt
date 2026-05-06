@@ -97,7 +97,12 @@ fun PantallaAccesosCelador(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text("Acceso Vehicular", color = Color.White, style = MaterialTheme.typography.titleMedium)
-            IconButton(onClick = { navController.navigate("PantallaAccesoVehicularCelador") }) {
+            IconButton(onClick = {
+                navController.currentBackStackEntry
+                    ?.savedStateHandle
+                    ?.set("autoScanVehicular", true)
+                navController.navigate("PantallaAccesoVehicularCelador")
+            }) {
                 Icon(Icons.Default.CameraAlt, contentDescription = "Escanear vehicular", tint = DoradoElegante)
             }
         }
@@ -127,7 +132,12 @@ fun PantallaAccesosCelador(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text("Acceso Peatonal", color = Color.White, style = MaterialTheme.typography.titleMedium)
-            IconButton(onClick = { navController.navigate("PantallaAccesoPeatonalCelador") }) {
+            IconButton(onClick = {
+                navController.currentBackStackEntry
+                    ?.savedStateHandle
+                    ?.set("autoScanPeatonal", true)
+                navController.navigate("PantallaAccesoPeatonalCelador")
+            }) {
                 Icon(Icons.Default.CameraAlt, contentDescription = "Escanear peatonal", tint = DoradoElegante)
             }
         }

@@ -64,6 +64,11 @@ fun PantallaAccesoPeatonalCelador(
     var accesoSeleccionado by remember { mutableStateOf<AccesoPeatonal?>(null) }
     var mensajeEstado by remember { mutableStateOf("Escanea un QR para consultar un acceso peatonal de hoy.") }
     var accesoValido by remember { mutableStateOf<Boolean?>(null) }
+    val autoScanDesdeAccesos = remember {
+        navController.previousBackStackEntry
+            ?.savedStateHandle
+            ?.get<Boolean>("autoScanPeatonal") == true
+    }
 
     LaunchedEffect(Unit) {
         accesoPeatonalViewModel.obtenerAccesosPeatonales()
@@ -88,6 +93,25 @@ fun PantallaAccesoPeatonalCelador(
             "No existe un acceso peatonal del día para ese QR."
         }
         accesoValido = accesoSeleccionado != null
+    }
+    val iniciarEscaneo = {
+        // Refresca desde backend antes de escanear.
+        accesoPeatonalViewModel.obtenerAccesosPeatonales()
+        val options = ScanOptions().apply {
+            setPrompt("Escanea el código QR del acceso")
+            setBeepEnabled(true)
+            setOrientationLocked(false)
+        }
+        qrLauncher.launch(options)
+    }
+
+    LaunchedEffect(autoScanDesdeAccesos) {
+        if (autoScanDesdeAccesos) {
+            navController.previousBackStackEntry
+                ?.savedStateHandle
+                ?.set("autoScanPeatonal", false)
+            iniciarEscaneo()
+        }
     }
 
     Scaffold(
@@ -157,16 +181,7 @@ fun PantallaAccesoPeatonalCelador(
             Spacer(modifier = Modifier.height(28.dp))
 
             Button(
-                onClick = {
-                    // Refresca desde backend antes de escanear.
-                    accesoPeatonalViewModel.obtenerAccesosPeatonales()
-                    val options = ScanOptions().apply {
-                        setPrompt("Escanea el código QR del acceso")
-                        setBeepEnabled(true)
-                        setOrientationLocked(false)
-                    }
-                    qrLauncher.launch(options)
-                },
+                onClick = iniciarEscaneo,
                 colors = ButtonDefaults.buttonColors(containerColor = DoradoElegante),
                 modifier = Modifier
                     .fillMaxWidth()

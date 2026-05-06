@@ -63,6 +63,11 @@ fun PantallaAccesoVehicularCelador(
     var accesoSeleccionado by remember { mutableStateOf<AccesoVehicular?>(null) }
     var mensajeEstado by remember { mutableStateOf("Escanea un QR para consultar un acceso vehicular de hoy.") }
     var accesoValido by remember { mutableStateOf<Boolean?>(null) }
+    val autoScanDesdeAccesos = remember {
+        navController.previousBackStackEntry
+            ?.savedStateHandle
+            ?.get<Boolean>("autoScanVehicular") == true
+    }
 
     LaunchedEffect(Unit) {
         accesoVehicularViewModel.obtenerAccesosVehiculares()
@@ -87,6 +92,25 @@ fun PantallaAccesoVehicularCelador(
             "No existe un acceso vehicular del día para ese código."
         }
         accesoValido = accesoSeleccionado != null
+    }
+    val iniciarEscaneo = {
+        // Refresca desde backend antes de escanear.
+        accesoVehicularViewModel.obtenerAccesosVehiculares()
+        val options = ScanOptions().apply {
+            setPrompt("Escanea el código QR del acceso")
+            setBeepEnabled(true)
+            setOrientationLocked(false)
+        }
+        qrLauncher.launch(options)
+    }
+
+    LaunchedEffect(autoScanDesdeAccesos) {
+        if (autoScanDesdeAccesos) {
+            navController.previousBackStackEntry
+                ?.savedStateHandle
+                ?.set("autoScanVehicular", false)
+            iniciarEscaneo()
+        }
     }
 
     Scaffold(
@@ -152,16 +176,7 @@ fun PantallaAccesoVehicularCelador(
 
             Spacer(modifier = Modifier.height(32.dp))
             Button(
-                onClick = {
-                    // Refresca desde backend antes de escanear.
-                    accesoVehicularViewModel.obtenerAccesosVehiculares()
-                    val options = ScanOptions().apply {
-                        setPrompt("Escanea el código QR del acceso")
-                        setBeepEnabled(true)
-                        setOrientationLocked(false)
-                    }
-                    qrLauncher.launch(options)
-                },
+                onClick = iniciarEscaneo,
                 colors = ButtonDefaults.buttonColors(containerColor = DoradoElegante),
                 modifier = Modifier
                     .fillMaxWidth()
