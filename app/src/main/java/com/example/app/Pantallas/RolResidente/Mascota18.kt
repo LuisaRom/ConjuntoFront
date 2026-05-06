@@ -408,11 +408,18 @@ private fun guardarUriComoArchivoTemporal(
 ): File? {
     return try {
         val uri = android.net.Uri.parse(uriString)
-        val input = context.contentResolver.openInputStream(uri) ?: return null
+        val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: return null
         val file = File.createTempFile("mascota_", ".jpg", context.cacheDir)
-        input.use { inputStream ->
+
+        // Comprimir imagen para reducir tiempos de subida y evitar timeout.
+        val bitmap = android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+        if (bitmap != null) {
             file.outputStream().use { outputStream ->
-                inputStream.copyTo(outputStream)
+                bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 72, outputStream)
+            }
+        } else {
+            file.outputStream().use { outputStream ->
+                outputStream.write(bytes)
             }
         }
         file

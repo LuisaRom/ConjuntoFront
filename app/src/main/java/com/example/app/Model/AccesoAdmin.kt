@@ -12,6 +12,9 @@ data class AccesoAdmin(
     @SerializedName("nombreVisitante")
     val nombreVisitante: String? = null,
 
+    @SerializedName(value = "quienIngresa", alternate = ["nombrePersona", "visitante"])
+    val quienIngresa: String? = null,
+
     @SerializedName("placaVehiculo")
     val placaVehiculo: String? = null,
 
@@ -28,7 +31,10 @@ data class AccesoAdmin(
     val horaEntrada: String? = null,
 
     @SerializedName("horaSalida")
-    val horaSalida: String? = null
+    val horaSalida: String? = null,
+
+    @SerializedName(value = "usuario", alternate = ["autorizadoPor"])
+    val usuario: Usuario? = null
 ) {
     fun tipoVisual(): String {
         val tipo = tipoAcceso?.trim().orEmpty().lowercase()
@@ -48,9 +54,11 @@ data class AccesoAdmin(
     }
 
     fun detalleVisual(): String {
+        val torreBase = usuario?.torre?.takeIf { it.isNotBlank() } ?: torre?.takeIf { it.isNotBlank() }
+        val aptoBase = usuario?.apartamento?.takeIf { it.isNotBlank() } ?: apartamento?.takeIf { it.isNotBlank() }
         val ubicacion = listOfNotNull(
-            torre?.takeIf { it.isNotBlank() }?.let { "Torre $it" },
-            apartamento?.takeIf { it.isNotBlank() }?.let { "Apto $it" }
+            torreBase?.let { "Torre $it" },
+            aptoBase?.let { "Apto $it" }
         ).joinToString(" | ")
 
         val hora = horaEntrada?.takeIf { it.isNotBlank() }
@@ -58,5 +66,21 @@ data class AccesoAdmin(
             ?: "Hora no disponible"
 
         return if (ubicacion.isBlank()) hora else "$ubicacion | $hora"
+    }
+
+    fun nombreIngresoVisual(): String {
+        return quienIngresa?.takeIf { it.isNotBlank() }
+            ?: nombreVisitante?.takeIf { it.isNotBlank() }
+            ?: usuario?.nombre?.takeIf { it.isNotBlank() }
+            ?: usuario?.usuario?.takeIf { it.isNotBlank() }
+            ?: "-"
+    }
+
+    fun torreVisual(): String {
+        return usuario?.torre?.takeIf { it.isNotBlank() } ?: torre?.takeIf { it.isNotBlank() } ?: "-"
+    }
+
+    fun apartamentoVisual(): String {
+        return usuario?.apartamento?.takeIf { it.isNotBlank() } ?: apartamento?.takeIf { it.isNotBlank() } ?: "-"
     }
 }

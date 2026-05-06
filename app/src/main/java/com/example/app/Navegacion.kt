@@ -73,11 +73,21 @@ import com.example.app.ViewModel.UsuarioViewModel
 
 private fun homeRouteForRole(rol: String): String {
     return when (rol.uppercase()) {
-        "ADMINISTRADOR" -> "PantallaInicioAdmin"
+        "ADMINISTRADOR", "ADMIN" -> "PantallaInicioAdmin"
         "CELADOR" -> "PantallaDashboardCelador"
         "RESIDENTE" -> "PantallaInicioResidentes"
         else -> "PantallaSeleccionRol"
     }
+}
+
+private fun roleMatchesAllowed(currentRole: String?, allowedRoles: Set<String>): Boolean {
+    val role = currentRole?.uppercase() ?: return false
+    val aliases = when (role) {
+        "ADMIN" -> setOf("ADMIN", "ADMINISTRADOR")
+        "ADMINISTRADOR" -> setOf("ADMINISTRADOR", "ADMIN")
+        else -> setOf(role)
+    }
+    return allowedRoles.any { it.uppercase() in aliases }
 }
 
 @Composable
@@ -87,8 +97,8 @@ private fun RoleGuard(
     content: @Composable () -> Unit
 ) {
     val user by AuthManager.currentUser.collectAsState()
-    val role = user?.rol?.uppercase()
-    val isAllowed = role != null && role in allowedRoles
+    val role = user?.rol
+    val isAllowed = roleMatchesAllowed(role, allowedRoles)
 
     LaunchedEffect(role) {
         if (user == null) {

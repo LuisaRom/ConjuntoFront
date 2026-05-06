@@ -30,10 +30,16 @@ object RetrofitClient {
             path.contains("/v3/api-docs")
     }
 
+    private fun shouldSkipForbiddenToast(path: String): Boolean {
+        // Algunos endpoints se prueban con fallback entre rutas.
+        // Evitamos mostrar toast de permisos en la primera ruta fallida.
+        return path.contains("/api/usuarios/crear")
+    }
+
     private val okHttpClient = OkHttpClient.Builder()
-        .connectTimeout(30, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
-        .writeTimeout(30, TimeUnit.SECONDS)
+        .connectTimeout(90, TimeUnit.SECONDS)
+        .readTimeout(90, TimeUnit.SECONDS)
+        .writeTimeout(90, TimeUnit.SECONDS)
         .addInterceptor { chain ->
             val original = chain.request()
             val path = original.url.encodedPath
@@ -52,7 +58,7 @@ object RetrofitClient {
             val response = chain.proceed(request)
             when (response.code) {
                 401 -> AuthManager.handleUnauthorized()
-                403 -> AuthManager.handleForbidden()
+                403 -> if (!shouldSkipForbiddenToast(path)) AuthManager.handleForbidden()
             }
             response
         }

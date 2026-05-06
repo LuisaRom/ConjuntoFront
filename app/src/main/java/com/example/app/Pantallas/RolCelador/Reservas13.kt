@@ -161,13 +161,10 @@ fun PantallaReservasCelador(
             text = {
                 Column {
                     Text(
-                        "Usuario: ${(reserva.usuario?.nombre ?: reserva.usuario?.usuario ?: "-")} - Torre ${reserva.usuario?.torre?.takeIf { it.isNotBlank() } ?: "-"} - Apt ${reserva.usuario?.apartamento?.takeIf { it.isNotBlank() } ?: "-"}",
+                        "Usuario: ${reserva.usuario?.nombre ?: reserva.usuario?.usuario ?: "-"}",
                         color = Color.White
                     )
-                    Text(
-                        "Torre/Apto: Torre ${reserva.usuario?.torre?.takeIf { it.isNotBlank() } ?: "-"} - Apt ${reserva.usuario?.apartamento?.takeIf { it.isNotBlank() } ?: "-"}",
-                        color = Color.White
-                    )
+                    Text("Torre/Apto: ${torreAptoVisualCelador(reserva)}", color = Color.White)
                     Text("Zona: ${reserva.zonaComun}", color = Color.White)
                     Text("Fecha: ${reserva.fechaReserva}", color = Color.White)
                     Text("Horario: ${reserva.horaInicio} - ${reserva.horaFin}", color = Color.White)
@@ -240,13 +237,28 @@ private fun ReservaCategoriaCelador(
                 ) {
                     Column(modifier = Modifier.fillMaxWidth()) {
                         Text(
-                            text = "${reserva.usuario?.nombre ?: reserva.usuario?.usuario ?: "Sin usuario"} - Torre ${reserva.usuario?.torre?.takeIf { it.isNotBlank() } ?: "-"} - Apt ${reserva.usuario?.apartamento?.takeIf { it.isNotBlank() } ?: "-"}",
+                            text = reserva.usuario?.nombre ?: reserva.usuario?.usuario ?: "Sin usuario",
                             color = Color.White,
                             fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = torreAptoVisualCelador(reserva),
+                            color = GrisClaro,
+                            fontSize = 12.sp
                         )
                     }
                 }
             }
         }
     }
+}
+
+private fun torreAptoVisualCelador(reserva: ReservaZonaComun): String {
+    val torre = reserva.usuario?.torre?.takeIf { it.isNotBlank() }
+        ?: reserva.torre?.takeIf { it.isNotBlank() }
+        ?: "-"
+    val apto = reserva.usuario?.apartamento?.takeIf { it.isNotBlank() }
+        ?: reserva.apartamento?.takeIf { it.isNotBlank() }
+        ?: "-"
+    return "$torre.$apto"
 }

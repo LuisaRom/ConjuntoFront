@@ -43,7 +43,7 @@ class UsuarioRepository @Inject constructor() {
             api.crearUsuario(request)
         } catch (e: HttpException) {
             // Compatibilidad con versiones del backend que aún usan /api/usuarios.
-            if (e.code() == 404 || e.code() == 405) {
+            if (e.code() == 404 || e.code() == 405 || e.code() == 403) {
                 api.guardarUsuario(request)
             } else {
                 val errorBody = e.response()?.errorBody()?.string().orEmpty()

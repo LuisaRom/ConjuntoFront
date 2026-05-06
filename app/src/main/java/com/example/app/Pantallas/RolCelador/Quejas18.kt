@@ -94,7 +94,7 @@ fun PantallaQuejasCelador(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        if (isLoading) {
+        if (isLoading && quejas.isEmpty()) {
             Box(modifier = Modifier.fillMaxWidth().padding(top = 16.dp), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = DoradoElegante)
             }

@@ -89,7 +89,11 @@ class NotificacionViewModel @Inject constructor(
         }
     }
 
-    fun guardar(notificacion: Notificacion) = viewModelScope.launch {
+    fun guardar(
+        notificacion: Notificacion,
+        onSuccess: (() -> Unit)? = null,
+        onError: ((String) -> Unit)? = null
+    ) = viewModelScope.launch {
         _isLoading.value = true
         _error.value = null
         try {
@@ -101,11 +105,12 @@ class NotificacionViewModel @Inject constructor(
             // Esperar un momento antes de refrescar para asegurar que el servidor procesó
             kotlinx.coroutines.delay(300)
             obtenerTodos()
+            onSuccess?.invoke()
         } catch (e: Exception) {
             android.util.Log.e("NotificacionViewModel", "Error al guardar notificación", e)
-            _error.value = "Error al guardar notificación: ${e.message}"
-            // NO hacer re-throw para evitar crashes. La UI debe manejar el error desde _error.value
-            // throw e // Comentado para evitar crashes
+            val mensaje = "Error al guardar notificación: ${e.message}"
+            _error.value = mensaje
+            onError?.invoke(mensaje)
         } finally {
             _isLoading.value = false
         }

@@ -175,10 +175,7 @@ fun PantallaReservas(
             text = {
                 Column {
                     Text("Usuario: ${reserva.usuario?.nombre ?: reserva.usuario?.usuario ?: "Sin usuario"}", color = Color.White)
-                    Text(
-                        "Torre/Apto: Torre ${reserva.usuario?.torre?.takeIf { it.isNotBlank() } ?: "-"} - Apt ${reserva.usuario?.apartamento?.takeIf { it.isNotBlank() } ?: "-"}",
-                        color = Color.White
-                    )
+                    Text("Torre/Apto: ${torreAptoVisual(reserva)}", color = Color.White)
                     Text("Zona: ${reserva.zonaComun}", color = Color.White)
                     Text("Fecha: ${reserva.fechaReserva}", color = Color.White)
                     Text("Horario: ${reserva.horaInicio} - ${reserva.horaFin}", color = Color.White)
@@ -258,7 +255,7 @@ fun ReservaCategoria(
                                 fontWeight = FontWeight.SemiBold
                             )
                             Text(
-                                text = "Torre ${reserva.usuario?.torre?.takeIf { it.isNotBlank() } ?: "-"} - Apt ${reserva.usuario?.apartamento?.takeIf { it.isNotBlank() } ?: "-"}",
+                                text = torreAptoVisual(reserva),
                                 color = GrisClaro,
                                 fontSize = 12.sp
                             )
@@ -278,4 +275,14 @@ fun ReservaCategoria(
             }
         }
     }
+}
+
+private fun torreAptoVisual(reserva: ReservaZonaComun): String {
+    val torre = reserva.usuario?.torre?.takeIf { it.isNotBlank() }
+        ?: reserva.torre?.takeIf { it.isNotBlank() }
+        ?: "-"
+    val apto = reserva.usuario?.apartamento?.takeIf { it.isNotBlank() }
+        ?: reserva.apartamento?.takeIf { it.isNotBlank() }
+        ?: "-"
+    return "$torre.$apto"
 }

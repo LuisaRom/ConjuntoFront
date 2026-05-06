@@ -192,10 +192,13 @@ fun PantallaAccesos(
             text = {
                 Column {
                     Text("Tipo: ${acceso.tipoVisual()}", color = Color.White)
-                    Text("Visitante: ${acceso.nombreVisitante ?: "-"}", color = Color.White)
+                    Text(
+                        "${if (acceso.tipoVisual() == "Vehicular") "Quién ingresa" else "Visitante"}: ${acceso.nombreIngresoVisual()}",
+                        color = Color.White
+                    )
                     Text("Placa: ${acceso.placaVehiculo ?: "-"}", color = Color.White)
-                    Text("Torre: ${acceso.torre ?: "-"}", color = Color.White)
-                    Text("Apartamento: ${acceso.apartamento ?: "-"}", color = Color.White)
+                    Text("Torre: ${acceso.torreVisual()}", color = Color.White)
+                    Text("Apartamento: ${acceso.apartamentoVisual()}", color = Color.White)
                     Text("Fecha: ${acceso.horaAutorizada ?: "-"}", color = Color.White)
                 }
             },

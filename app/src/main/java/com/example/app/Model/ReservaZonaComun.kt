@@ -21,5 +21,11 @@ data class ReservaZonaComun(
     val serviciosAdicionales: String? = null,
 
     @SerializedName("usuario")
-    val usuario: Usuario?=null
+    val usuario: Usuario? = null,
+
+    @SerializedName("torre")
+    val torre: String? = null,
+
+    @SerializedName("apartamento")
+    val apartamento: String? = null
 )

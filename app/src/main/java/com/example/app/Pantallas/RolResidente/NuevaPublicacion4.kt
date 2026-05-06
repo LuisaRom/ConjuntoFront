@@ -590,32 +590,31 @@ fun PantallaNuevaPublicacion(
                         android.util.Log.d("NuevaPublicacion", "Guardando notificación: mensaje=$descripcion, usuario=${usuarioActual?.id}, imagenUrl=${imagenSeleccionada}, videoUrl=$videoPath, etiquetas=${usuariosEtiquetados.size}")
                         
                         coroutineScope.launch {
-                            try {
-                                notificacionViewModel.guardar(notificacion)
-                                mensajeExito = "Publicación creada exitosamente"
-                                mensajeError = null
-                                
-                        // Limpiar campos después de guardar
-                        descripcion = ""
-                        imagenSeleccionada = null
-                        imagenUri = null
-                        videoSeleccionado = null
-                        videoFile = null
-                        usuariosEtiquetados = emptyList()
-                        imageFile = null
-                                
-                                // Refrescar y volver al dashboard de forma segura
-                                kotlinx.coroutines.delay(500)
-                                notificacionViewModel.obtenerTodos()
-                                navController.navigate("PantallaDashboardResidente") {
-                                    popUpTo("PantallaDashboardResidente") { inclusive = false }
-                                    launchSingleTop = true
+                            notificacionViewModel.guardar(
+                                notificacion = notificacion,
+                                onSuccess = {
+                                    mensajeExito = "Publicación creada exitosamente"
+                                    mensajeError = null
+
+                                    // Limpiar campos después de guardar
+                                    descripcion = ""
+                                    imagenSeleccionada = null
+                                    imagenUri = null
+                                    videoSeleccionado = null
+                                    videoFile = null
+                                    usuariosEtiquetados = emptyList()
+                                    imageFile = null
+
+                                    navController.navigate("PantallaDashboardResidente") {
+                                        popUpTo("PantallaDashboardResidente") { inclusive = false }
+                                        launchSingleTop = true
+                                    }
+                                },
+                                onError = { errorGuardado ->
+                                    mensajeError = errorGuardado
+                                    mensajeExito = null
                                 }
-                            } catch (e: Exception) {
-                                mensajeError = "Error al guardar publicación: ${e.message}"
-                                mensajeExito = null
-                                e.printStackTrace() // Para debugging
-                            }
+                            )
                         }
                     }
                 },
