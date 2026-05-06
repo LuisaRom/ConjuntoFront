@@ -26,9 +26,12 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -54,6 +57,7 @@ import com.example.app.ViewModel.UsuarioViewModel
 import com.example.app.ui.theme.AzulOscuro
 import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
+import androidx.compose.material.icons.filled.DateRange
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -115,33 +119,38 @@ fun PantallaReservaPiscina(
         }
 
         Spacer(modifier = Modifier.height(24.dp))
-        Text(
-            text = "Miercoles a Domingo | 8am-12m y 4pm-8pm | Maximo 3 horas",
-            color = GrisClaro,
-            fontSize = 13.sp
-        )
+        Card(
+            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.06f)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(12.dp)) {
+                Text(
+                    text = "Horarios *",
+                    color = DoradoElegante,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Miercoles a Domingo - 8am a 12m y 4pm a 8pm",
+                    color = GrisClaro,
+                    fontSize = 13.sp
+                )
+            }
+        }
         Spacer(modifier = Modifier.height(12.dp))
 
         CampoSoloLectura(label = "Torre - Apartamento", valor = torreApto)
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        OutlinedTextField(
-            value = fecha,
-            onValueChange = {},
-            readOnly = true,
-            label = { Text("Fecha", color = GrisClaro) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { showDatePicker = true },
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White,
-                focusedBorderColor = DoradoElegante,
-                unfocusedBorderColor = GrisClaro,
-                focusedLabelColor = GrisClaro,
-                unfocusedLabelColor = GrisClaro
-            )
+        CampoFechaConCalendarioReserva(
+            label = "Fecha *",
+            valor = fecha,
+            onDateSelected = {
+                fecha = it
+                horarioSeleccionado = ""
+            }
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -184,7 +193,7 @@ fun PantallaReservaPiscina(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        CampoReservaPiscina("Número de Personas", numPersonas) { numPersonas = it }
+        CampoReservaPiscina("Número de Personas *", numPersonas) { numPersonas = it }
 
         Spacer(modifier = Modifier.height(32.dp))
 
@@ -238,62 +247,7 @@ fun PantallaReservaPiscina(
         }
     }
 
-    if (showDatePicker) {
-        val today = remember { Calendar.getInstance().timeInMillis }
-        val state = androidx.compose.material3.rememberDatePickerState(
-            selectableDates = object : SelectableDates {
-                override fun isSelectableDate(utcTimeMillis: Long): Boolean {
-                    val calendar = Calendar.getInstance().apply { timeInMillis = utcTimeMillis }
-                    val diaValido = calendar.get(Calendar.DAY_OF_WEEK) in setOf(
-                        Calendar.WEDNESDAY,
-                        Calendar.THURSDAY,
-                        Calendar.FRIDAY,
-                        Calendar.SATURDAY,
-                        Calendar.SUNDAY
-                    )
-                    val inicioDelDia = Calendar.getInstance().apply {
-                        timeInMillis = utcTimeMillis
-                        set(Calendar.HOUR_OF_DAY, 0)
-                        set(Calendar.MINUTE, 0)
-                        set(Calendar.SECOND, 0)
-                        set(Calendar.MILLISECOND, 0)
-                    }.timeInMillis
-                    val hoyInicio = Calendar.getInstance().apply {
-                        timeInMillis = today
-                        set(Calendar.HOUR_OF_DAY, 0)
-                        set(Calendar.MINUTE, 0)
-                        set(Calendar.SECOND, 0)
-                        set(Calendar.MILLISECOND, 0)
-                    }.timeInMillis
-                    return diaValido && inicioDelDia >= hoyInicio
-                }
-            }
-        )
-        DatePickerDialog(
-            onDismissRequest = { showDatePicker = false },
-            confirmButton = {
-                Button(onClick = {
-                    val millis = state.selectedDateMillis
-                    if (millis != null) {
-                        fecha = millisToFechaIsoPiscina(millis)
-                        horarioSeleccionado = ""
-                    }
-                    showDatePicker = false
-                }) { Text("Aceptar") }
-            },
-            dismissButton = {
-                Text(
-                    text = "Cancelar",
-                    color = GrisClaro,
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .clickable { showDatePicker = false }
-                )
-            }
-        ) {
-            DatePicker(state = state)
-        }
-    }
+    showDatePicker = false
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -422,4 +376,70 @@ private fun String.toMinutesOrNull(): Int? {
     val horas = partes[0].toIntOrNull() ?: return null
     val minutos = partes[1].toIntOrNull() ?: return null
     return horas * 60 + minutos
+}
+
+@Composable
+private fun CampoFechaConCalendarioReserva(
+    label: String,
+    valor: String,
+    onDateSelected: (String) -> Unit
+) {
+    val context = LocalContext.current
+    val calendar = remember { Calendar.getInstance() }
+
+    Column(modifier = Modifier.padding(vertical = 4.dp)) {
+        Text(text = label, color = Color.LightGray, fontSize = 12.sp)
+        OutlinedTextField(
+            value = valor,
+            onValueChange = onDateSelected,
+            modifier = Modifier.fillMaxWidth(),
+            trailingIcon = {
+                IconButton(onClick = {
+                    android.app.DatePickerDialog(
+                        context,
+                        { _, year, month, dayOfMonth ->
+                            val fechaSeleccionada = String.format(
+                                Locale.getDefault(),
+                                "%02d/%02d/%04d",
+                                dayOfMonth,
+                                month + 1,
+                                year
+                            )
+                            onDateSelected(fechaSeleccionada.toIsoDateTimeOrNow())
+                        },
+                        calendar.get(Calendar.YEAR),
+                        calendar.get(Calendar.MONTH),
+                        calendar.get(Calendar.DAY_OF_MONTH)
+                    ).show()
+                }) {
+                    Icon(
+                        imageVector = Icons.Default.DateRange,
+                        contentDescription = "Abrir calendario",
+                        tint = GrisClaro
+                    )
+                }
+            },
+            readOnly = false,
+            singleLine = true,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = DoradoElegante,
+                unfocusedBorderColor = GrisClaro,
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White,
+                cursorColor = DoradoElegante
+            )
+        )
+    }
+}
+
+private fun String.toIsoDateTimeOrNow(): String {
+    if (isBlank()) {
+        return SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+    }
+    return try {
+        val parsedDate = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).parse(this)
+        SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(parsedDate ?: Date())
+    } catch (_: Exception) {
+        SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+    }
 }

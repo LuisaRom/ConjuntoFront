@@ -53,8 +53,11 @@ fun PantallaMascotasResidente(
     var nombre by remember { mutableStateOf("") }
     var tipo by remember { mutableStateOf("") }
     var descripcion by remember { mutableStateOf("") }
-    var vacunacionCompleta by remember { mutableStateOf(false) }
+    var vacunacionCompleta by remember { mutableStateOf<Boolean?>(null) }
     var expandedTipo by remember { mutableStateOf(false) }
+    var expandedVacunacion by remember { mutableStateOf(false) }
+    var mensajeExito by remember { mutableStateOf<String?>(null) }
+    var mensajeError by remember { mutableStateOf<String?>(null) }
     val tiposMascota = listOf("Perro", "Gato", "Ave", "Otro")
 
     val seleccionarFotoLauncher = rememberLauncherForActivityResult(
@@ -70,6 +73,7 @@ fun PantallaMascotasResidente(
     LaunchedEffect(error) {
         error?.let {
             Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+            mensajeError = it
             mascotaViewModel.clearError()
         }
     }
@@ -236,31 +240,81 @@ fun PantallaMascotasResidente(
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Vacunación completa", color = Color.White)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Switch(
-                        checked = vacunacionCompleta,
-                        onCheckedChange = { vacunacionCompleta = it },
-                        colors = SwitchDefaults.colors(checkedThumbColor = DoradoElegante)
+                ExposedDropdownMenuBox(
+                    expanded = expandedVacunacion,
+                    onExpandedChange = { expandedVacunacion = !expandedVacunacion }
+                ) {
+                    OutlinedTextField(
+                        value = when (vacunacionCompleta) {
+                            true -> "Sí"
+                            false -> "No"
+                            null -> ""
+                        },
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Vacunación completa *") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expandedVacunacion) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor(androidx.compose.material3.MenuAnchorType.PrimaryNotEditable, true),
+                        colors = camposDark()
                     )
+                    ExposedDropdownMenu(
+                        expanded = expandedVacunacion,
+                        onDismissRequest = { expandedVacunacion = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Sí") },
+                            onClick = {
+                                vacunacionCompleta = true
+                                expandedVacunacion = false
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("No") },
+                            onClick = {
+                                vacunacionCompleta = false
+                                expandedVacunacion = false
+                            }
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Campos obligatorios *", color = Color.LightGray, fontSize = 12.sp)
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
+                mensajeExito?.let {
+                    Text(text = it, color = Color.Green, fontSize = 12.sp)
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+                mensajeError?.let {
+                    Text(text = it, color = Color.Red, fontSize = 12.sp)
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
                 Button(
                     onClick = {
-                        if (nombre.isBlank() || tipo.isBlank() || descripcion.isBlank()) {
+                        if (fotoUri == null) {
+                            Toast.makeText(context, "La foto es obligatoria", Toast.LENGTH_SHORT).show()
+                            mensajeError = "La foto es obligatoria"
+                            return@Button
+                        }
+                        if (nombre.isBlank() || tipo.isBlank() || descripcion.isBlank() || vacunacionCompleta == null) {
                             Toast.makeText(context, "Completa todos los campos requeridos", Toast.LENGTH_SHORT).show()
+                            mensajeError = "Completa todos los campos obligatorios (*)"
                             return@Button
                         }
                         if (fotoUri != null && fotoUri?.startsWith("content://") != true) {
                             Toast.makeText(context, "Formato de imagen no válido", Toast.LENGTH_SHORT).show()
+                            mensajeError = "Formato de imagen no válido"
                             return@Button
                         }
                         val razaPayload = buildString {
                             append(descripcion.trim())
                             append(" | Vacunación: ")
-                            append(if (vacunacionCompleta) "Sí" else "No")
+                            append(if (vacunacionCompleta == true) "Sí" else "No")
                         }
                         val mascota = Mascota(
                             nombre = nombre.trim(),
@@ -274,12 +328,17 @@ fun PantallaMascotasResidente(
                             nombre = ""
                             tipo = ""
                             descripcion = ""
-                            vacunacionCompleta = false
+                            vacunacionCompleta = null
                             fotoUri = null
+                            mensajeError = null
+                            mensajeExito = "Publicación creada con éxito"
                             Toast.makeText(context, "Publicación creada con éxito", Toast.LENGTH_SHORT).show()
+                            mascotaViewModel.obtenerTodos()
+                            Unit
                         }
                         if (fotoUri != null && fotoFile == null) {
                             Toast.makeText(context, "No se pudo procesar la imagen seleccionada", Toast.LENGTH_SHORT).show()
+                            mensajeError = "No se pudo procesar la imagen seleccionada"
                             return@Button
                         }
                         if (fotoFile != null) {

@@ -74,8 +74,8 @@ fun PantallaAccesosResidente(navController: NavController) {
 fun AccesoItemVisual(titulo: String, icono: ImageVector, onClick: () -> Unit) {
     Column(
         modifier = Modifier
-            .width(180.dp)
-            .height(160.dp)
+            .width(170.dp)
+            .height(155.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(Color.White.copy(alpha = 0.05f))
             .clickable { onClick() }

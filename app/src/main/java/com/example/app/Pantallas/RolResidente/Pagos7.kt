@@ -100,6 +100,9 @@ fun PantallaPagos(
     
     // Monto por defecto
     val monto = remember { "200.000 COP" }
+    val valorNumericoPago = remember(monto) {
+        monto.filter { it.isDigit() }.toLongOrNull() ?: 0L
+    }
     // Se incluirá en el PDF y en pago en línea cuando el flujo de reservas lo alimente.
     val totalServiciosAdicionales = remember { "0 COP" }
     
@@ -204,7 +207,17 @@ fun PantallaPagos(
                 enabled = !isLoading
             ) {
                 metodoSeleccionado = "Pago en línea"
-                pagoAdministracionViewModel.crearCheckoutAdministracion()
+                val usuarioId = usuarioActual?.id
+                if (usuarioId == null) {
+                    Toast.makeText(context, "No se pudo identificar el usuario para generar el pago.", Toast.LENGTH_LONG).show()
+                    return@MetodoPagoItem
+                }
+                pagoAdministracionViewModel.crearCheckoutAdministracion(
+                    usuarioId = usuarioId,
+                    apartamento = usuarioActual?.apartamento.orEmpty(),
+                    valor = valorNumericoPago,
+                    descripcion = "Pago administración"
+                )
             }
         }
 

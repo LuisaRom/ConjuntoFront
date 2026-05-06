@@ -18,6 +18,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -27,6 +28,7 @@ import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -75,7 +77,6 @@ fun PantallaReservaGimnasio(
 
     var fecha by remember { mutableStateOf("") }
     var horarioSeleccionado by remember { mutableStateOf("") }
-    var showDatePicker by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         reservaZonaComunViewModel.obtenerTodos()
@@ -127,32 +128,16 @@ fun PantallaReservaGimnasio(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        OutlinedTextField(
-            value = fecha,
-            onValueChange = {},
-            readOnly = true,
-            label = { Text("Fecha", color = GrisClaro) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { showDatePicker = true },
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White,
-                focusedBorderColor = DoradoElegante,
-                unfocusedBorderColor = GrisClaro,
-                focusedLabelColor = GrisClaro,
-                unfocusedLabelColor = GrisClaro
-            )
+        CampoFechaConCalendarioGimnasio(
+            label = "Fecha *",
+            valor = fecha,
+            onDateSelected = {
+                fecha = it
+                horarioSeleccionado = ""
+            }
         )
 
         Spacer(modifier = Modifier.height(12.dp))
-        Text("Horarios disponibles", color = GrisClaro, fontSize = 14.sp)
-        Text(
-            "Disponible: fondo claro | Seleccionado: dorado",
-            color = Color.LightGray,
-            fontSize = 12.sp
-        )
-        Spacer(modifier = Modifier.height(6.dp))
 
         if (fecha.isBlank()) {
             Text("Selecciona una fecha para ver rangos.", color = Color.LightGray, fontSize = 12.sp)
@@ -233,63 +218,6 @@ fun PantallaReservaGimnasio(
         }
     }
 
-    if (showDatePicker) {
-        val today = remember { Calendar.getInstance().timeInMillis }
-        val state = androidx.compose.material3.rememberDatePickerState(
-            selectableDates = object : SelectableDates {
-                override fun isSelectableDate(utcTimeMillis: Long): Boolean {
-                    val calendar = Calendar.getInstance().apply { timeInMillis = utcTimeMillis }
-                    val diaValido = calendar.get(Calendar.DAY_OF_WEEK) in setOf(
-                        Calendar.MONDAY,
-                        Calendar.TUESDAY,
-                        Calendar.WEDNESDAY,
-                        Calendar.THURSDAY,
-                        Calendar.FRIDAY,
-                        Calendar.SATURDAY
-                    )
-                    val inicioDelDia = Calendar.getInstance().apply {
-                        timeInMillis = utcTimeMillis
-                        set(Calendar.HOUR_OF_DAY, 0)
-                        set(Calendar.MINUTE, 0)
-                        set(Calendar.SECOND, 0)
-                        set(Calendar.MILLISECOND, 0)
-                    }.timeInMillis
-                    val hoyInicio = Calendar.getInstance().apply {
-                        timeInMillis = today
-                        set(Calendar.HOUR_OF_DAY, 0)
-                        set(Calendar.MINUTE, 0)
-                        set(Calendar.SECOND, 0)
-                        set(Calendar.MILLISECOND, 0)
-                    }.timeInMillis
-                    return diaValido && inicioDelDia >= hoyInicio
-                }
-            }
-        )
-        DatePickerDialog(
-            onDismissRequest = { showDatePicker = false },
-            confirmButton = {
-                Button(onClick = {
-                    val millis = state.selectedDateMillis
-                    if (millis != null) {
-                        fecha = millisToFechaIsoGimnasio(millis)
-                        horarioSeleccionado = ""
-                    }
-                    showDatePicker = false
-                }) { Text("Aceptar") }
-            },
-            dismissButton = {
-                Text(
-                    text = "Cancelar",
-                    color = GrisClaro,
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .clickable { showDatePicker = false }
-                )
-            }
-        ) {
-            DatePicker(state = state)
-        }
-    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -388,4 +316,67 @@ private fun String.toMinutesOrNullGimnasio(): Int? {
     val horas = partes[0].toIntOrNull() ?: return null
     val minutos = partes[1].toIntOrNull() ?: return null
     return horas * 60 + minutos
+}
+
+@Composable
+private fun CampoFechaConCalendarioGimnasio(
+    label: String,
+    valor: String,
+    onDateSelected: (String) -> Unit
+) {
+    val context = LocalContext.current
+    val calendar = remember { Calendar.getInstance() }
+
+    Column(modifier = Modifier.padding(vertical = 4.dp)) {
+        Text(text = label, color = Color.LightGray, fontSize = 12.sp)
+        OutlinedTextField(
+            value = valor,
+            onValueChange = onDateSelected,
+            modifier = Modifier.fillMaxWidth(),
+            trailingIcon = {
+                IconButton(onClick = {
+                    android.app.DatePickerDialog(
+                        context,
+                        { _, year, month, dayOfMonth ->
+                            val fechaSeleccionada = String.format(
+                                Locale.getDefault(),
+                                "%02d/%02d/%04d",
+                                dayOfMonth,
+                                month + 1,
+                                year
+                            )
+                            onDateSelected(formatearFechaISOGimnasio(fechaSeleccionada))
+                        },
+                        calendar.get(Calendar.YEAR),
+                        calendar.get(Calendar.MONTH),
+                        calendar.get(Calendar.DAY_OF_MONTH)
+                    ).show()
+                }) {
+                    Icon(
+                        imageVector = Icons.Default.DateRange,
+                        contentDescription = "Abrir calendario",
+                        tint = GrisClaro
+                    )
+                }
+            },
+            readOnly = false,
+            singleLine = true,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = DoradoElegante,
+                unfocusedBorderColor = GrisClaro,
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White,
+                cursorColor = DoradoElegante
+            )
+        )
+    }
+}
+
+private fun formatearFechaISOGimnasio(fecha: String): String {
+    return try {
+        val parsedDate = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).parse(fecha)
+        SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(parsedDate ?: Date())
+    } catch (_: Exception) {
+        SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+    }
 }

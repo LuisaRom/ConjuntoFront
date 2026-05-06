@@ -17,13 +17,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -50,6 +49,7 @@ import com.example.app.ViewModel.UsuarioViewModel
 import com.example.app.ui.theme.AzulOscuro
 import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
+import androidx.compose.material.icons.filled.DateRange
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -70,7 +70,6 @@ fun PantallaReservaSalonComunal(
     var fecha by remember { mutableStateOf("") }
     var horaInicio by remember { mutableStateOf("") }
     var horaFin by remember { mutableStateOf("") }
-    var showDatePicker by remember { mutableStateOf(false) }
 
     var expandedHoraInicio by remember { mutableStateOf(false) }
     var expandedHoraFin by remember { mutableStateOf(false) }
@@ -143,22 +142,10 @@ fun PantallaReservaSalonComunal(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        OutlinedTextField(
-            value = fecha,
-            onValueChange = {},
-            readOnly = true,
-            label = { Text("Fecha", color = GrisClaro) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { showDatePicker = true },
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White,
-                focusedBorderColor = DoradoElegante,
-                unfocusedBorderColor = GrisClaro,
-                focusedLabelColor = GrisClaro,
-                unfocusedLabelColor = GrisClaro
-            )
+        CampoFechaConCalendarioSalon(
+            label = "Fecha *",
+            valor = fecha,
+            onDateSelected = { fecha = it }
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -171,7 +158,7 @@ fun PantallaReservaSalonComunal(
                 value = horaInicio,
                 onValueChange = {},
                 readOnly = true,
-                label = { Text("Hora inicio (08:00 - 21:00)") },
+                label = { Text("Hora inicio * (08:00 - 21:00)") },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedHoraInicio) },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -212,7 +199,7 @@ fun PantallaReservaSalonComunal(
                 value = horaFin,
                 onValueChange = {},
                 readOnly = true,
-                label = { Text("Hora fin (máximo 22:00)") },
+                label = { Text("Hora fin * (máximo 22:00)") },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedHoraFin) },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -432,32 +419,6 @@ fun PantallaReservaSalonComunal(
         Spacer(modifier = Modifier.height(16.dp))
     }
 
-    if (showDatePicker) {
-        val state = androidx.compose.material3.rememberDatePickerState()
-        DatePickerDialog(
-            onDismissRequest = { showDatePicker = false },
-            confirmButton = {
-                Button(onClick = {
-                    val millis = state.selectedDateMillis
-                    if (millis != null) {
-                        fecha = millisToFechaIsoSalon(millis)
-                    }
-                    showDatePicker = false
-                }) { Text("Aceptar") }
-            },
-            dismissButton = {
-                Text(
-                    text = "Cancelar",
-                    color = GrisClaro,
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .clickable { showDatePicker = false }
-                )
-            }
-        ) {
-            DatePicker(state = state)
-        }
-    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -508,6 +469,69 @@ private fun millisToFechaIsoSalon(millis: Long): String {
         SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(millis))
     } catch (e: Exception) {
         ""
+    }
+}
+
+@Composable
+private fun CampoFechaConCalendarioSalon(
+    label: String,
+    valor: String,
+    onDateSelected: (String) -> Unit
+) {
+    val context = LocalContext.current
+    val calendar = remember { Calendar.getInstance() }
+
+    Column(modifier = Modifier.padding(vertical = 4.dp)) {
+        Text(text = label, color = Color.LightGray, fontSize = 12.sp)
+        OutlinedTextField(
+            value = valor,
+            onValueChange = onDateSelected,
+            modifier = Modifier.fillMaxWidth(),
+            trailingIcon = {
+                IconButton(onClick = {
+                    android.app.DatePickerDialog(
+                        context,
+                        { _, year, month, dayOfMonth ->
+                            val fechaSeleccionada = String.format(
+                                Locale.getDefault(),
+                                "%02d/%02d/%04d",
+                                dayOfMonth,
+                                month + 1,
+                                year
+                            )
+                            onDateSelected(formatearFechaISO(fechaSeleccionada))
+                        },
+                        calendar.get(Calendar.YEAR),
+                        calendar.get(Calendar.MONTH),
+                        calendar.get(Calendar.DAY_OF_MONTH)
+                    ).show()
+                }) {
+                    Icon(
+                        imageVector = Icons.Default.DateRange,
+                        contentDescription = "Abrir calendario",
+                        tint = GrisClaro
+                    )
+                }
+            },
+            readOnly = false,
+            singleLine = true,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = DoradoElegante,
+                unfocusedBorderColor = GrisClaro,
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White,
+                cursorColor = DoradoElegante
+            )
+        )
+    }
+}
+
+private fun formatearFechaISO(fecha: String): String {
+    return try {
+        val parsedDate = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).parse(fecha)
+        SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(parsedDate ?: Date())
+    } catch (_: Exception) {
+        SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
     }
 }
 

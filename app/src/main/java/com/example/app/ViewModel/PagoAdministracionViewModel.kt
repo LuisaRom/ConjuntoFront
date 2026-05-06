@@ -2,6 +2,7 @@ package com.example.app.ViewModel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.app.Model.CrearPagoRequest
 import com.example.app.Model.PagoAdministracion
 import com.example.app.Repository.PagoAdministracionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -89,12 +90,23 @@ class PagoAdministracionViewModel @Inject constructor(
         }
     }
 
-    fun crearCheckoutAdministracion() = viewModelScope.launch {
+    fun crearCheckoutAdministracion(
+        usuarioId: Long,
+        apartamento: String,
+        valor: Long,
+        descripcion: String
+    ) = viewModelScope.launch {
         _isLoading.value = true
         _error.value = null
         try {
+            val request = CrearPagoRequest(
+                usuarioId = usuarioId,
+                apartamento = apartamento,
+                valor = valor,
+                descripcion = descripcion
+            )
             val url = withContext(Dispatchers.IO) {
-                repository.crearCheckoutAdministracion()
+                repository.crearCheckoutAdministracion(request)
             }
             _checkoutUrl.value = url
         } catch (e: Exception) {
