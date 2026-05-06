@@ -17,7 +17,8 @@ class AccesoVehicularRepository @Inject constructor(
     }
 
     suspend fun guardar(accesoVehicular: AccesoVehicular): AccesoVehicular {
-        return api.guardarAccesoVehicular(accesoVehicular)
+        return runCatching { api.guardarAccesoVehicularCrear(accesoVehicular) }
+            .getOrElse { api.guardarAccesoVehicular(accesoVehicular) }
     }
 
     suspend fun eliminar(id: Long) {

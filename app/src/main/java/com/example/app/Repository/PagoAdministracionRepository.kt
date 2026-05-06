@@ -10,7 +10,11 @@ class PagoAdministracionRepository @Inject constructor(
 ) {
 
     suspend fun obtenerTodos(): List<PagoAdministracion> {
-        return api.obtenerPagos()
+        return runCatching { api.obtenerMisPagos() }
+            .recoverCatching { api.obtenerPagosResidente() }
+            .recoverCatching { api.obtenerPagosResidenteAlias() }
+            .recoverCatching { api.obtenerPagosResidentePost() }
+            .getOrThrow()
     }
 
     suspend fun obtenerPorId(id: Long): PagoAdministracion {

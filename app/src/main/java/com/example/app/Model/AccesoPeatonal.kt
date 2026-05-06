@@ -8,6 +8,9 @@ data class AccesoPeatonal(
     @SerializedName("nombreVisitante")
     val nombreVisitante: String,
 
+    @SerializedName(value = "fecha", alternate = ["fechaAcceso"])
+    val fecha: String? = null,
+
     @SerializedName("torre")
     val torre: String,
 

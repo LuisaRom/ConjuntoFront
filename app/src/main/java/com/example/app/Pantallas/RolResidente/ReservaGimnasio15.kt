@@ -27,6 +27,8 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -116,11 +118,33 @@ fun PantallaReservaGimnasio(
         }
 
         Spacer(modifier = Modifier.height(24.dp))
-        Text(
-            text = "Lunes a Sabado | 5am-10am y 3pm-8pm | Maximo 3 horas",
-            color = GrisClaro,
-            fontSize = 13.sp
-        )
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.08f))
+        ) {
+            Column(modifier = Modifier.padding(12.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.DateRange,
+                        contentDescription = null,
+                        tint = DoradoElegante
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Horario gimnasio",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
+                }
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "Lunes a Sábado - 5am a 10am y 3pm a 8pm",
+                    color = GrisClaro,
+                    fontSize = 13.sp
+                )
+            }
+        }
         Spacer(modifier = Modifier.height(12.dp))
 
         // Formulario
@@ -143,7 +167,7 @@ fun PantallaReservaGimnasio(
             Text("Selecciona una fecha para ver rangos.", color = Color.LightGray, fontSize = 12.sp)
         } else if (rangosDisponibles.isEmpty()) {
             Text(
-                "Sin rangos disponibles para esa fecha. Reglas: lunes-sábado, 05:00-10:00 y 15:00-20:00, máximo 3 horas.",
+                "Sin rangos disponibles para esa fecha. Reglas: lunes-sábado, 05:00-10:00 y 15:00-20:00.",
                 color = Color.LightGray,
                 fontSize = 12.sp
             )

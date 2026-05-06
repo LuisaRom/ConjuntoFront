@@ -106,7 +106,7 @@ fun PantallaMenu(navController: NavController) {
 fun OpcionMenuBoton(titulo: String, icono: ImageVector, onClick: () -> Unit) {
     Column(
         modifier = Modifier
-            .width(170.dp)
+            .width(160.dp)
             .height(150.dp)
             .clip(RoundedCornerShape(10.dp))
             .background(Color.White.copy(alpha = 0.05f))

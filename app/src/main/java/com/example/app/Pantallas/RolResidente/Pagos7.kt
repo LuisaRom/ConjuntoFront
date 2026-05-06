@@ -111,6 +111,7 @@ fun PantallaPagos(
         if (usuarioActual == null) {
             usuarioViewModel.obtenerTodos()
         }
+        pagoAdministracionViewModel.obtenerTodos()
     }
 
     LaunchedEffect(checkoutUrl) {

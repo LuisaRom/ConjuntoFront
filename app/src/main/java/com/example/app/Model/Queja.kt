@@ -14,11 +14,20 @@ data class Queja(
     @SerializedName(value = "torreApartamento", alternate = ["torreApto", "ubicacion"])
     val torreApartamento: String? = null,
 
+    @SerializedName(value = "torreAcusado", alternate = ["torre"])
+    val torreAcusado: String? = null,
+
+    @SerializedName(value = "apartamentoAcusado", alternate = ["apartamento"])
+    val apartamentoAcusado: String? = null,
+
     @SerializedName(value = "mensaje", alternate = ["detalle"])
     val mensaje: String? = null,
 
     @SerializedName("fechaCreacion")
     val fechaCreacion: String?, // Formato ISO 8601
+
+    @SerializedName("fecha")
+    val fecha: String? = null,
 
     @SerializedName("estado")
     val estado: String = "",

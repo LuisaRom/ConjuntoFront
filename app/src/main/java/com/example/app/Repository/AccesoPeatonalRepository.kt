@@ -17,7 +17,8 @@ class AccesoPeatonalRepository @Inject constructor(
     }
 
     suspend fun guardarAccesoPeatonal(accesoPeatonal: AccesoPeatonal): AccesoPeatonal {
-        return api.guardarAccesoPeatonal(accesoPeatonal)
+        return runCatching { api.guardarAccesoPeatonalCrear(accesoPeatonal) }
+            .getOrElse { api.guardarAccesoPeatonal(accesoPeatonal) }
     }
 
     suspend fun eliminarAccesoPeatonal(id: Long) {

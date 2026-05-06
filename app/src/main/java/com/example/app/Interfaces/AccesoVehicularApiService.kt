@@ -14,6 +14,9 @@ interface AccesoVehicularApiService {
     @GET("/api/accesos-vehiculares/{id}")
     suspend fun obtenerAccesoVehicular(@Path("id") id: Long): AccesoVehicular
 
+    @POST("/api/accesos-vehiculares/crear")
+    suspend fun guardarAccesoVehicularCrear(@Body accesoVehicular: AccesoVehicular): AccesoVehicular
+
     @POST("/api/accesos-vehiculares")
     suspend fun guardarAccesoVehicular(@Body accesoVehicular: AccesoVehicular): AccesoVehicular
 

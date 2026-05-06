@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -36,6 +37,13 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+
+private val accesoLabelStyle = TextStyle(
+    color = Color.LightGray,
+    fontSize = 12.sp,
+    fontWeight = FontWeight.Medium,
+    lineHeight = 16.sp
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -126,12 +134,12 @@ fun PantallaAccesoVehicularResidente(
 
         CampoAcceso("Torre - Apartamento", torreApartamento, enabled = false)
         CampoFechaConCalendario(
-            label = "Fecha",
+            label = "Fecha *",
             valor = fecha,
             onDateSelected = { fecha = it }
         )
 
-        Text("Tipo de Vehículo", color = Color.White)
+        Text("Tipo Vehículo *", style = accesoLabelStyle)
 
         ExposedDropdownMenuBox(
             expanded = expanded,
@@ -141,7 +149,7 @@ fun PantallaAccesoVehicularResidente(
                 readOnly = true,
                 value = tipoVehiculo,
                 onValueChange = {},
-                label = { Text("Selecciona el tipo") },
+                label = { Text("Selecciona el tipo", style = accesoLabelStyle) },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -171,8 +179,8 @@ fun PantallaAccesoVehicularResidente(
         }
 
         Spacer(modifier = Modifier.height(8.dp))
-        CampoAcceso("Placa", placa) { placa = it }
-        CampoAcceso("¿Quién ingresa?", quienIngresa) { quienIngresa = it }
+        CampoAcceso("Placa *", placa) { placa = it }
+        CampoAcceso("Quién ingresa *", quienIngresa) { quienIngresa = it }
 
         Spacer(modifier = Modifier.height(32.dp))
 
@@ -186,6 +194,9 @@ fun PantallaAccesoVehicularResidente(
 
                 val acceso = AccesoVehicular(
                     placaVehiculo = placa.uppercase(),
+                    tipoVehiculo = tipoVehiculo,
+                    quienIngresa = quienIngresa,
+                    fecha = fecha.toIsoDateTimeOrNow(),
                     torre = torre,
                     apartamento = apartamento,
                     codigoQr = codigoUnico,
@@ -262,7 +273,7 @@ fun CampoAcceso(
     onChange: (String) -> Unit = {}
 ) {
     Column(modifier = Modifier.padding(vertical = 4.dp)) {
-        Text(text = label, color = Color.LightGray, fontSize = 12.sp)
+        Text(text = label, style = accesoLabelStyle)
         OutlinedTextField(
             value = valor,
             onValueChange = { if (enabled) onChange(it) },
@@ -295,7 +306,7 @@ private fun CampoFechaConCalendario(
     val calendar = remember { Calendar.getInstance() }
 
     Column(modifier = Modifier.padding(vertical = 4.dp)) {
-        Text(text = label, color = Color.LightGray, fontSize = 12.sp)
+        Text(text = label, style = accesoLabelStyle)
         OutlinedTextField(
             value = valor,
             onValueChange = onDateSelected,

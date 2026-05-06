@@ -42,6 +42,7 @@ fun PantallaQuejasResidente(
     val usuarioActual by usuarioViewModel.usuarioActual.collectAsState()
     val quejas by quejaViewModel.quejas.collectAsState()
     val isLoading by quejaViewModel.isLoading.collectAsState()
+    val error by quejaViewModel.error.collectAsState()
 
     var torreAcusado by remember { mutableStateOf("") }
     var apartamentoAcusado by remember { mutableStateOf("") }
@@ -49,6 +50,7 @@ fun PantallaQuejasResidente(
     var tipo by remember { mutableStateOf("") }
     var expanded by remember { mutableStateOf(false) }
     var mensaje by remember { mutableStateOf("") }
+    var envioExitoso by remember { mutableStateOf(false) }
 
     val opcionesTipo = listOf("Ruido", "Violencia", "Mascota")
     val torreAptoReporta = remember(usuarioActual) {
@@ -62,6 +64,12 @@ fun PantallaQuejasResidente(
 
     LaunchedEffect(Unit) {
         quejaViewModel.obtenerTodos()
+    }
+
+    LaunchedEffect(error) {
+        val currentError = error ?: return@LaunchedEffect
+        Toast.makeText(context, currentError, Toast.LENGTH_LONG).show()
+        quejaViewModel.clearError()
     }
 
     Column(
@@ -167,7 +175,7 @@ fun PantallaQuejasResidente(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        Text("Tipo", color = Color.White)
+        Text("Tipo *", color = Color.White)
         ExposedDropdownMenuBox(
             expanded = expanded,
             onExpandedChange = { expanded = !expanded }
@@ -207,7 +215,7 @@ fun PantallaQuejasResidente(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        Text("Mensaje", color = Color.White)
+        Text("Mensaje *", color = Color.White)
         OutlinedTextField(
             value = mensaje,
             onValueChange = { mensaje = it },
@@ -247,17 +255,23 @@ fun PantallaQuejasResidente(
                     descripcion = detalle,
                     tipo = tipo,
                     torreApartamento = "$torreAcusado${if (apartamentoAcusado.isNotBlank()) " - $apartamentoAcusado" else ""}",
+                    torreAcusado = torreAcusado,
+                    apartamentoAcusado = apartamentoAcusado.ifBlank { null },
                     mensaje = mensaje,
                     fechaCreacion = fecha,
+                    fecha = fecha,
                     estado = "En proceso",
                     usuario = usuarioActual
                 )
                 quejaViewModel.guardar(queja) {
                     Toast.makeText(context, "Queja creada con éxito", Toast.LENGTH_SHORT).show()
-                    navController.navigate("PantallaMenuResidente") {
-                        popUpTo("PantallaMenuResidente") { inclusive = false }
-                        launchSingleTop = true
-                    }
+                    envioExitoso = true
+                    torreAcusado = ""
+                    apartamentoAcusado = ""
+                    fecha = ""
+                    tipo = ""
+                    mensaje = ""
+                    quejaViewModel.obtenerTodos()
                 }
             },
             modifier = Modifier
@@ -271,6 +285,11 @@ fun PantallaQuejasResidente(
                 color = AzulOscuro,
                 fontWeight = FontWeight.Bold
             )
+        }
+
+        if (envioExitoso) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text("Queja enviada correctamente.", color = Color(0xFF66BB6A), fontSize = 12.sp)
         }
 
         Spacer(modifier = Modifier.height(20.dp))

@@ -4,8 +4,6 @@ import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,12 +16,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -64,7 +59,7 @@ import java.util.Date
 import java.util.Locale
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaReservaPiscina(
     navController: NavController,
@@ -74,13 +69,11 @@ fun PantallaReservaPiscina(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val usuarioActual by usuarioViewModel.usuarioActual.collectAsState()
-    val reservas by reservaZonaComunViewModel.reservas.collectAsState()
     val isLoading by reservaZonaComunViewModel.isLoading.collectAsState()
 
     var fecha by remember { mutableStateOf("") }
     var horarioSeleccionado by remember { mutableStateOf("") }
     var numPersonas by remember { mutableStateOf("") }
-    var showDatePicker by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         reservaZonaComunViewModel.obtenerTodos()
@@ -92,13 +85,9 @@ fun PantallaReservaPiscina(
         "$torre - $apto"
     }
 
-    val rangosDisponibles = remember(fecha, reservas) {
-        if (fecha.isBlank()) {
-            emptyList()
-        } else {
-            construirRangosDisponiblesPiscina(fecha, reservas)
-        }
-    }
+    val opcionesManana = listOf("8-9", "9-10", "10-11", "11-12")
+    val opcionesTarde = listOf("16-17", "17-18", "18-19", "19-20")
+    val todasLasOpciones = opcionesManana + opcionesTarde
 
     Column(
         modifier = Modifier
@@ -154,24 +143,34 @@ fun PantallaReservaPiscina(
         )
 
         Spacer(modifier = Modifier.height(12.dp))
-        Text("Horarios disponibles", color = GrisClaro, fontSize = 14.sp)
-        Text(
-            "Disponible: fondo claro | Seleccionado: dorado",
-            color = Color.LightGray,
-            fontSize = 12.sp
-        )
+        Text("Hora", color = GrisClaro, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
         Spacer(modifier = Modifier.height(6.dp))
         if (fecha.isBlank()) {
-            Text("Selecciona una fecha para ver rangos.", color = Color.LightGray, fontSize = 12.sp)
-        } else if (rangosDisponibles.isEmpty()) {
-            Text(
-                "Sin rangos disponibles para esa fecha. Reglas: mié-dom, 8:00-12:00 y 16:00-20:00, máximo 3 horas.",
-                color = Color.LightGray,
-                fontSize = 12.sp
-            )
+            Text("Selecciona una fecha para elegir hora.", color = Color.LightGray, fontSize = 12.sp)
         } else {
-            FlowRow {
-                rangosDisponibles.forEach { rango ->
+            Text("MAÑANA", color = DoradoElegante, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Row(modifier = Modifier.fillMaxWidth()) {
+                opcionesManana.forEach { rango ->
+                    FilterChip(
+                        selected = horarioSeleccionado == rango,
+                        onClick = { horarioSeleccionado = rango },
+                        label = { Text(rango) },
+                        leadingIcon = if (horarioSeleccionado == rango) {
+                            { Icon(Icons.Default.Check, contentDescription = null, tint = AzulOscuro) }
+                        } else null,
+                        colors = FilterChipDefaults.filterChipColors(
+                            containerColor = GrisClaro.copy(alpha = 0.28f),
+                            labelColor = Color.White,
+                            selectedContainerColor = DoradoElegante,
+                            selectedLabelColor = AzulOscuro
+                        ),
+                        modifier = Modifier.padding(end = 8.dp, bottom = 8.dp)
+                    )
+                }
+            }
+            Text("TARDE", color = DoradoElegante, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Row(modifier = Modifier.fillMaxWidth()) {
+                opcionesTarde.forEach { rango ->
                     FilterChip(
                         selected = horarioSeleccionado == rango,
                         onClick = { horarioSeleccionado = rango },
@@ -193,7 +192,13 @@ fun PantallaReservaPiscina(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        CampoReservaPiscina("Número de Personas *", numPersonas) { numPersonas = it }
+        CampoReservaPiscina("Número de Personas *", numPersonas) {
+            val soloDigitos = it.filter(Char::isDigit)
+            val numero = soloDigitos.toIntOrNull()
+            if (soloDigitos.isEmpty() || (numero != null && numero <= 6)) {
+                numPersonas = soloDigitos
+            }
+        }
 
         Spacer(modifier = Modifier.height(32.dp))
 
@@ -216,11 +221,19 @@ fun PantallaReservaPiscina(
                     Toast.makeText(context, "Ingresa el número de personas", Toast.LENGTH_SHORT).show()
                     return@Button
                 }
+                if ((numPersonas.toIntOrNull() ?: 0) > 6) {
+                    Toast.makeText(context, "Número de personas máximo: 6", Toast.LENGTH_SHORT).show()
+                    return@Button
+                }
+                if (horarioSeleccionado !in todasLasOpciones) {
+                    Toast.makeText(context, "Selecciona una hora válida", Toast.LENGTH_SHORT).show()
+                    return@Button
+                }
                 val reserva = ReservaZonaComun(
                     zonaComun = "piscina",
                     fechaReserva = fecha,
-                    horaInicio = rango[0],
-                    horaFin = rango[1],
+                    horaInicio = "${rango[0].padStart(2, '0')}:00",
+                    horaFin = "${rango[1].padStart(2, '0')}:00",
                     usuario = usuarioActual
                 )
                 reservaZonaComunViewModel.guardar(reserva) {
@@ -247,7 +260,6 @@ fun PantallaReservaPiscina(
         }
     }
 
-    showDatePicker = false
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -293,90 +305,6 @@ private fun CampoSoloLectura(label: String, valor: String) {
     }
 }
 
-private fun construirRangosDisponiblesPiscina(
-    fechaIso: String,
-    reservas: List<ReservaZonaComun>
-): List<String> {
-    if (!esDiaPermitidoPiscina(fechaIso)) {
-        return emptyList()
-    }
-
-    val reservasPiscinaDelDia = reservas.filter {
-        it.zonaComun.equals("piscina", ignoreCase = true) && it.fechaReserva == fechaIso
-    }
-
-    val bloques = listOf(8 to 12, 16 to 20)
-    val rangos = mutableListOf<String>()
-    for ((inicioBloque, finBloque) in bloques) {
-        for (horaInicio in inicioBloque until finBloque) {
-            for (duracion in 1..3) {
-                val horaFin = horaInicio + duracion
-                if (horaFin > finBloque) continue
-
-                val inicioTxt = "%02d:00".format(horaInicio)
-                val finTxt = "%02d:00".format(horaFin)
-                val estaDisponible = reservasPiscinaDelDia.none { reserva ->
-                    hayCruceHorario(
-                        inicioTxt,
-                        finTxt,
-                        reserva.horaInicio,
-                        reserva.horaFin
-                    )
-                }
-                if (estaDisponible) {
-                    rangos.add("$inicioTxt - $finTxt")
-                }
-            }
-        }
-    }
-    return rangos.distinct()
-}
-
-private fun millisToFechaIsoPiscina(millis: Long): String {
-    return try {
-        SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(millis))
-    } catch (e: Exception) {
-        ""
-    }
-}
-
-private fun esDiaPermitidoPiscina(fechaIso: String): Boolean {
-    return try {
-        val fecha = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(fechaIso) ?: return false
-        val calendar = Calendar.getInstance().apply { time = fecha }
-        when (calendar.get(Calendar.DAY_OF_WEEK)) {
-            Calendar.WEDNESDAY,
-            Calendar.THURSDAY,
-            Calendar.FRIDAY,
-            Calendar.SATURDAY,
-            Calendar.SUNDAY -> true
-            else -> false
-        }
-    } catch (e: Exception) {
-        false
-    }
-}
-
-private fun hayCruceHorario(
-    inicioNuevo: String,
-    finNuevo: String,
-    inicioExistente: String,
-    finExistente: String
-): Boolean {
-    val nuevoInicioMin = inicioNuevo.toMinutesOrNull() ?: return false
-    val nuevoFinMin = finNuevo.toMinutesOrNull() ?: return false
-    val existenteInicioMin = inicioExistente.toMinutesOrNull() ?: return false
-    val existenteFinMin = finExistente.toMinutesOrNull() ?: return false
-    return nuevoInicioMin < existenteFinMin && nuevoFinMin > existenteInicioMin
-}
-
-private fun String.toMinutesOrNull(): Int? {
-    val partes = split(":")
-    if (partes.size != 2) return null
-    val horas = partes[0].toIntOrNull() ?: return null
-    val minutos = partes[1].toIntOrNull() ?: return null
-    return horas * 60 + minutos
-}
 
 @Composable
 private fun CampoFechaConCalendarioReserva(

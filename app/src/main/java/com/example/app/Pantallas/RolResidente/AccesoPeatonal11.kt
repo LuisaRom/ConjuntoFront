@@ -111,9 +111,9 @@ fun PantallaAccesoPeatonalResidente(
         Spacer(modifier = Modifier.height(24.dp))
 
         CampoAccesoP("Torre - Apartamento", torreApartamento, enabled = false)
-        CampoAccesoP("Nombre del Visitante", nombreVisitante) { nombreVisitante = it }
+        CampoAccesoP("Nombre del Visitante *", nombreVisitante) { nombreVisitante = it }
         CampoFechaConCalendarioPeatonal(
-            label = "Fecha",
+            label = "Fecha *",
             valor = fecha,
             onDateSelected = { fecha = it }
         )
@@ -133,6 +133,7 @@ fun PantallaAccesoPeatonalResidente(
                 // Crear el acceso peatonal
                 val acceso = AccesoPeatonal(
                     nombreVisitante = nombreVisitante,
+                    fecha = fecha.toIsoDateTimeOrNowPeatonal(),
                     torre = torre,
                     apartamento = apartamento,
                     codigoQr = codigoQR,

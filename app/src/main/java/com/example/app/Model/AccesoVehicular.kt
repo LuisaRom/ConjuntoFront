@@ -8,6 +8,15 @@ data class AccesoVehicular(
     @SerializedName("placaVehiculo")
     val placaVehiculo: String,
 
+    @SerializedName(value = "tipoVehiculo", alternate = ["tipo"])
+    val tipoVehiculo: String? = null,
+
+    @SerializedName(value = "quienIngresa", alternate = ["nombrePersona"])
+    val quienIngresa: String? = null,
+
+    @SerializedName(value = "fecha", alternate = ["fechaAcceso"])
+    val fecha: String? = null,
+
     @SerializedName("torre")
     val torre: String,
 

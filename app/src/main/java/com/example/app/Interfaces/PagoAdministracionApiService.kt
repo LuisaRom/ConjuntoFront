@@ -10,8 +10,17 @@ import retrofit2.http.POST
 import retrofit2.http.Path
 
 interface PagoAdministracionApiService {
-    @GET("/api/pagos")
-    suspend fun obtenerPagos(): List<PagoAdministracion>
+    @GET("/api/pagos/mis-pagos")
+    suspend fun obtenerMisPagos(): List<PagoAdministracion>
+
+    @GET("/api/pagos/residente")
+    suspend fun obtenerPagosResidente(): List<PagoAdministracion>
+
+    @GET("/api/pagos/residente/pagos")
+    suspend fun obtenerPagosResidenteAlias(): List<PagoAdministracion>
+
+    @POST("/api/pagos/residente/pagos")
+    suspend fun obtenerPagosResidentePost(): List<PagoAdministracion>
 
     @GET("/api/pagos/{id}")
     suspend fun obtenerPago(@Path("id") id: Long): PagoAdministracion

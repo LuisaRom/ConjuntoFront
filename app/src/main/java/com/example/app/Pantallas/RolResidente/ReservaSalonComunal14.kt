@@ -17,6 +17,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -51,6 +53,7 @@ import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
 import androidx.compose.material.icons.filled.DateRange
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import kotlinx.coroutines.launch
@@ -131,11 +134,33 @@ fun PantallaReservaSalonComunal(
         }
 
         Spacer(modifier = Modifier.height(24.dp))
-        Text(
-            text = "Todos los dias | 8am-10pm | Minimo 5 horas",
-            color = GrisClaro,
-            fontSize = 13.sp
-        )
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.08f))
+        ) {
+            Column(modifier = Modifier.padding(12.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.DateRange,
+                        contentDescription = null,
+                        tint = DoradoElegante
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Horario salón comunal",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
+                }
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "Todos los días - 8am a 10pm - Mínimo 5 horas",
+                    color = GrisClaro,
+                    fontSize = 13.sp
+                )
+            }
+        }
         Spacer(modifier = Modifier.height(12.dp))
 
         CampoSoloLecturaSalon("Torre - Apartamento", torreApto)
