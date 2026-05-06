@@ -6,6 +6,7 @@ import com.example.app.DTO.LoginRequest
 import com.example.app.DTO.LoginResponse
 import com.example.app.Interfaces.RetrofitClient.RetrofitClient
 import com.example.app.Interfaces.UsuarioApiService
+import com.example.app.Model.CrearUsuarioRequest
 import com.example.app.Model.Usuario
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
@@ -27,14 +28,32 @@ class UsuarioRepository @Inject constructor() {
     }
 
     suspend fun guardar(usuario: Usuario): Usuario {
+        val request = CrearUsuarioRequest(
+            nombre = usuario.nombre.trim(),
+            documento = usuario.documento.trim(),
+            telefono = usuario.telefono.trim(),
+            email = usuario.email.trim(),
+            usuario = usuario.usuario.trim(),
+            password = usuario.password,
+            rol = usuario.rol.trim().uppercase(),
+            torre = usuario.torre.takeIf { it.isNotBlank() }?.trim(),
+            apartamento = usuario.apartamento.takeIf { it.isNotBlank() }?.trim()
+        )
         return try {
-            api.crearUsuario(usuario)
+            api.crearUsuario(request)
         } catch (e: HttpException) {
             // Compatibilidad con versiones del backend que aún usan /api/usuarios.
             if (e.code() == 404 || e.code() == 405) {
-                api.guardarUsuario(usuario)
+                api.guardarUsuario(request)
             } else {
-                throw e
+                val errorBody = e.response()?.errorBody()?.string().orEmpty()
+                val backendError = runCatching {
+                    Gson().fromJson(errorBody, ApiErrorResponse::class.java)?.error
+                }.getOrNull().orEmpty()
+                if (e.code() == 500) {
+                    throw Exception(backendError.ifBlank { "Error del servidor al crear usuario. Verifica documento, rol y datos obligatorios." })
+                }
+                throw Exception(backendError.ifBlank { "Error al crear usuario (${e.code()})" })
             }
         }
     }

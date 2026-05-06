@@ -209,7 +209,7 @@ fun PantallaReservaZonaBBQ(
             ) {
                 horasInicioDisponibles.forEach { opcion ->
                     DropdownMenuItem(
-                        text = { Text(opcion) },
+                        text = { Text(formatearHoraConSufijoBbq(opcion)) },
                         onClick = {
                             horaInicio = opcion
                             horaFin = ""
@@ -249,7 +249,7 @@ fun PantallaReservaZonaBBQ(
             ) {
                 horasFinDisponibles.forEach { opcion ->
                     DropdownMenuItem(
-                        text = { Text(opcion) },
+                        text = { Text(formatearHoraConSufijoBbq(opcion)) },
                         onClick = {
                             horaFin = opcion
                             expandedHoraFin = false
@@ -546,4 +546,10 @@ private fun formatearFechaIsoBbq(fecha: String): String {
     } catch (_: Exception) {
         SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
     }
+}
+
+private fun formatearHoraConSufijoBbq(hora: String): String {
+    val h = hora.substringBefore(":").toIntOrNull() ?: return hora
+    val sufijo = if (h < 12) "am" else "pm"
+    return "${h}${sufijo}"
 }

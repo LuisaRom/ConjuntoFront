@@ -71,7 +71,6 @@ fun PantallaCreacionPublicacionAdmin(
     var pendingAction by remember { mutableStateOf<(() -> Unit)?>(null) }
     var mensajeExito by remember { mutableStateOf<String?>(null) }
     var mensajeError by remember { mutableStateOf<String?>(null) }
-    var publicacionGuardada by remember { mutableStateOf(false) }
     var imageFile by remember { mutableStateOf<File?>(null) }
     
     val usuarios by usuarioViewModel.usuarios.collectAsState()
@@ -282,13 +281,6 @@ fun PantallaCreacionPublicacionAdmin(
                 takePictureLauncher.launch(uri)
             }
             permissionLauncher.launch(cameraPermission)
-        }
-    }
-
-    LaunchedEffect(publicacionGuardada) {
-        if (publicacionGuardada) {
-            kotlinx.coroutines.delay(1500)
-            navController.popBackStack()
         }
     }
 
@@ -611,11 +603,13 @@ fun PantallaCreacionPublicacionAdmin(
                         usuariosEtiquetados = emptyList()
                         imageFile = null
                                 
-                                // Marcar como guardado y refrescar
-                                publicacionGuardada = true
-                                // Esperar un momento antes de refrescar para asegurar que el servidor procesó
+                                // Refrescar y volver al dashboard de forma segura.
                                 kotlinx.coroutines.delay(500)
                                 notificacionViewModel.obtenerTodos()
+                                navController.navigate("PantallaDashboardAdmin") {
+                                    popUpTo("PantallaDashboardAdmin") { inclusive = false }
+                                    launchSingleTop = true
+                                }
                             } catch (e: Exception) {
                                 mensajeError = "Error al guardar publicación: ${e.message}"
                                 mensajeExito = null

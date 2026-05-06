@@ -113,12 +113,20 @@ fun PantallaReservaPiscina(
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(12.dp)) {
-                Text(
-                    text = "Horarios *",
-                    color = DoradoElegante,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 13.sp
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.DateRange,
+                        contentDescription = "Horarios",
+                        tint = DoradoElegante
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Horarios *",
+                        color = DoradoElegante,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp
+                    )
+                }
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = "Miercoles a Domingo - 8am a 12m y 4pm a 8pm",
@@ -154,7 +162,7 @@ fun PantallaReservaPiscina(
                     FilterChip(
                         selected = horarioSeleccionado == rango,
                         onClick = { horarioSeleccionado = rango },
-                        label = { Text(rango) },
+                        label = { Text(formatearRangoPiscina(rango)) },
                         leadingIcon = if (horarioSeleccionado == rango) {
                             { Icon(Icons.Default.Check, contentDescription = null, tint = AzulOscuro) }
                         } else null,
@@ -174,7 +182,7 @@ fun PantallaReservaPiscina(
                     FilterChip(
                         selected = horarioSeleccionado == rango,
                         onClick = { horarioSeleccionado = rango },
-                        label = { Text(rango) },
+                        label = { Text(formatearRangoPiscina(rango)) },
                         leadingIcon = if (horarioSeleccionado == rango) {
                             { Icon(Icons.Default.Check, contentDescription = null, tint = AzulOscuro) }
                         } else null,
@@ -260,6 +268,15 @@ fun PantallaReservaPiscina(
         }
     }
 
+}
+
+private fun formatearRangoPiscina(rango: String): String {
+    val partes = rango.split("-").map { it.trim().toIntOrNull() ?: return rango }
+    if (partes.size != 2) return rango
+    val inicio = partes[0]
+    val fin = partes[1]
+    val sufijo = if (inicio < 12) "am" else "pm"
+    return "${inicio}${sufijo}-${fin}${sufijo}"
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

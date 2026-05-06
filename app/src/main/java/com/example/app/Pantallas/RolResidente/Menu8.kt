@@ -98,7 +98,7 @@ fun PantallaMenuResidente(navController: NavController) {
 fun MenuBoton(titulo: String, icon: ImageVector, onClick: () -> Unit) {
     Column(
         modifier = Modifier
-            .width(180.dp)
+            .width(160.dp)
             .height(155.dp)
             .clip(RoundedCornerShape(10.dp))
             .background(Color.White.copy(alpha = 0.1f))

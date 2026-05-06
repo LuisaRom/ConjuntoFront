@@ -177,7 +177,7 @@ fun PantallaReservaGimnasio(
                     FilterChip(
                         selected = horarioSeleccionado == rango,
                         onClick = { horarioSeleccionado = rango },
-                        label = { Text(rango) },
+                        label = { Text(formatearRangoConSufijo(rango)) },
                         leadingIcon = if (horarioSeleccionado == rango) {
                             { Icon(Icons.Default.Check, contentDescription = null, tint = AzulOscuro) }
                         } else null,
@@ -403,4 +403,13 @@ private fun formatearFechaISOGimnasio(fecha: String): String {
     } catch (_: Exception) {
         SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
     }
+}
+
+private fun formatearRangoConSufijo(rango: String): String {
+    val partes = rango.split("-").map { it.trim() }
+    if (partes.size != 2) return rango
+    val inicio = partes[0].substringBefore(":").toIntOrNull() ?: return rango
+    val fin = partes[1].substringBefore(":").toIntOrNull() ?: return rango
+    val sufijo = if (inicio < 12) "am" else "pm"
+    return "${inicio}${sufijo}-${fin}${sufijo}"
 }

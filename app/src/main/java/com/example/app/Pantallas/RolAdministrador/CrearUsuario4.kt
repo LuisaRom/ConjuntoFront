@@ -31,6 +31,7 @@ fun PantallaCrearUsuario(
 ) {
     var nombre by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
+    var documento by remember { mutableStateOf("") }
     var telefono by remember { mutableStateOf("") }
     var rolSeleccionado by remember { mutableStateOf("RESIDENTE") }
     var usuario by remember { mutableStateOf("") }
@@ -40,6 +41,7 @@ fun PantallaCrearUsuario(
     
     var errorNombre by remember { mutableStateOf<String?>(null) }
     var errorEmail by remember { mutableStateOf<String?>(null) }
+    var errorDocumento by remember { mutableStateOf<String?>(null) }
     var errorTelefono by remember { mutableStateOf<String?>(null) }
     var errorRol by remember { mutableStateOf<String?>(null) }
     var errorUsuario by remember { mutableStateOf<String?>(null) }
@@ -66,6 +68,7 @@ fun PantallaCrearUsuario(
     fun validarFormulario(): Boolean {
         errorNombre = null
         errorEmail = null
+        errorDocumento = null
         errorTelefono = null
         errorRol = null
         errorUsuario = null
@@ -91,6 +94,11 @@ fun PantallaCrearUsuario(
         
         if (telefono.isBlank()) {
             errorTelefono = "El teléfono es obligatorio"
+            esValido = false
+        }
+
+        if (documento.isBlank()) {
+            errorDocumento = "El documento es obligatorio"
             esValido = false
         }
         
@@ -130,7 +138,7 @@ fun PantallaCrearUsuario(
         
         val nuevoUsuario = Usuario(
             nombre = nombre,
-            documento = "", // Se puede agregar campo de documento si es necesario
+            documento = documento,
             telefono = telefono,
             email = email,
             usuario = usuario,
@@ -151,6 +159,7 @@ fun PantallaCrearUsuario(
                 nombre = ""
                 email = ""
                 telefono = ""
+                documento = ""
                 usuario = ""
                 torre = ""
                 apartamento = ""
@@ -281,6 +290,30 @@ fun PantallaCrearUsuario(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                 isError = errorTelefono != null,
                 supportingText = errorTelefono?.let { { Text(it, color = Color.Red) } },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    focusedBorderColor = DoradoElegante,
+                    unfocusedBorderColor = GrisClaro,
+                    focusedLabelColor = GrisClaro,
+                    unfocusedLabelColor = GrisClaro
+                )
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            OutlinedTextField(
+                value = documento,
+                onValueChange = {
+                    documento = it
+                    errorDocumento = null
+                },
+                label = { Text("Documento *", color = GrisClaro) },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                isError = errorDocumento != null,
+                supportingText = errorDocumento?.let { { Text(it, color = Color.Red) } },
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = Color.White,
                     unfocusedTextColor = Color.White,

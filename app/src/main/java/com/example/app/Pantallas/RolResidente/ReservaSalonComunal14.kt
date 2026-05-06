@@ -203,7 +203,7 @@ fun PantallaReservaSalonComunal(
             ) {
                 horasInicioDisponibles.forEach { opcion ->
                     DropdownMenuItem(
-                        text = { Text(opcion) },
+                        text = { Text(formatearHoraConSufijo(opcion)) },
                         onClick = {
                             horaInicio = opcion
                             horaFin = ""
@@ -244,7 +244,7 @@ fun PantallaReservaSalonComunal(
             ) {
                 horasFinDisponibles.forEach { opcion ->
                     DropdownMenuItem(
-                        text = { Text(opcion) },
+                        text = { Text(formatearHoraConSufijo(opcion)) },
                         onClick = {
                             horaFin = opcion
                             expandedHoraFin = false
@@ -558,5 +558,11 @@ private fun formatearFechaISO(fecha: String): String {
     } catch (_: Exception) {
         SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
     }
+}
+
+private fun formatearHoraConSufijo(hora: String): String {
+    val h = hora.substringBefore(":").toIntOrNull() ?: return hora
+    val sufijo = if (h < 12) "am" else "pm"
+    return "${h}${sufijo}"
 }
 

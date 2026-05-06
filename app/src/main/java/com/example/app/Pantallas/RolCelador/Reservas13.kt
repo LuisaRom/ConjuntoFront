@@ -98,7 +98,7 @@ fun PantallaReservasCelador(
             }
             Text(
                 text = "Reservas",
-                style = MaterialTheme.typography.headlineMedium,
+                style = MaterialTheme.typography.headlineSmall,
                 color = GrisClaro,
                 modifier = Modifier.padding(start = 8.dp)
             )
@@ -160,8 +160,14 @@ fun PantallaReservasCelador(
             title = { Text("Detalle Reserva", color = Color.White) },
             text = {
                 Column {
-                    Text("Usuario: ${reserva.usuario?.nombre ?: reserva.usuario?.usuario ?: "-"}", color = Color.White)
-                    Text("Torre/Apto: ${reserva.usuario?.torre ?: "-"} - ${reserva.usuario?.apartamento ?: "-"}", color = Color.White)
+                    Text(
+                        "Usuario: ${(reserva.usuario?.nombre ?: reserva.usuario?.usuario ?: "-")} - Torre ${reserva.usuario?.torre?.takeIf { it.isNotBlank() } ?: "-"} - Apt ${reserva.usuario?.apartamento?.takeIf { it.isNotBlank() } ?: "-"}",
+                        color = Color.White
+                    )
+                    Text(
+                        "Torre/Apto: Torre ${reserva.usuario?.torre?.takeIf { it.isNotBlank() } ?: "-"} - Apt ${reserva.usuario?.apartamento?.takeIf { it.isNotBlank() } ?: "-"}",
+                        color = Color.White
+                    )
                     Text("Zona: ${reserva.zonaComun}", color = Color.White)
                     Text("Fecha: ${reserva.fechaReserva}", color = Color.White)
                     Text("Horario: ${reserva.horaInicio} - ${reserva.horaFin}", color = Color.White)
@@ -234,14 +240,9 @@ private fun ReservaCategoriaCelador(
                 ) {
                     Column(modifier = Modifier.fillMaxWidth()) {
                         Text(
-                            text = reserva.usuario?.nombre ?: reserva.usuario?.usuario ?: "Sin usuario",
+                            text = "${reserva.usuario?.nombre ?: reserva.usuario?.usuario ?: "Sin usuario"} - Torre ${reserva.usuario?.torre?.takeIf { it.isNotBlank() } ?: "-"} - Apt ${reserva.usuario?.apartamento?.takeIf { it.isNotBlank() } ?: "-"}",
                             color = Color.White,
                             fontWeight = FontWeight.SemiBold
-                        )
-                        Text(
-                            text = "Torre ${reserva.usuario?.torre ?: "-"} - Apt ${reserva.usuario?.apartamento ?: "-"}",
-                            color = GrisClaro,
-                            fontSize = 12.sp
                         )
                     }
                 }

@@ -28,7 +28,18 @@ interface MascotaApiService {
         @Part("nombre") nombre: RequestBody,
         @Part("tipo") tipo: RequestBody,
         @Part("raza") raza: RequestBody,
+        @Part("usuarioId") usuarioId: RequestBody?,
         @Part foto: MultipartBody.Part
+    ): Mascota
+
+    @Multipart
+    @POST("/api/mascotas/crear")
+    suspend fun guardarMascotaMultipartImagen(
+        @Part("nombre") nombre: RequestBody,
+        @Part("tipo") tipo: RequestBody,
+        @Part("raza") raza: RequestBody,
+        @Part("usuarioId") usuarioId: RequestBody?,
+        @Part imagen: MultipartBody.Part
     ): Mascota
 
     @DELETE("/api/mascotas/{id}")

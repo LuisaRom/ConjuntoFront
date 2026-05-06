@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -51,8 +52,9 @@ fun PantallaQuejasResidente(
     var expanded by remember { mutableStateOf(false) }
     var mensaje by remember { mutableStateOf("") }
     var envioExitoso by remember { mutableStateOf(false) }
+    var mostrarFormulario by remember { mutableStateOf(false) }
 
-    val opcionesTipo = listOf("Ruido", "Violencia", "Mascota")
+    val opcionesTipo = listOf("Ruido", "Violencia", "Basura")
     val torreAptoReporta = remember(usuarioActual) {
         val torre = usuarioActual?.torre?.ifBlank { "-" } ?: "-"
         val apto = usuarioActual?.apartamento?.ifBlank { "-" } ?: "-"
@@ -72,13 +74,25 @@ fun PantallaQuejasResidente(
         quejaViewModel.clearError()
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(AzulOscuro)
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState())
-    ) {
+    Scaffold(
+        containerColor = AzulOscuro,
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { mostrarFormulario = !mostrarFormulario },
+                containerColor = DoradoElegante
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Nueva queja", tint = AzulOscuro)
+            }
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(AzulOscuro)
+                .padding(innerPadding)
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState())
+        ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -98,201 +112,6 @@ fun PantallaQuejasResidente(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Text("Reporta (torre y apartamento)", color = Color.White)
-        OutlinedTextField(
-            value = torreAptoReporta,
-            onValueChange = {},
-            enabled = false,
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            colors = OutlinedTextFieldDefaults.colors(
-                disabledTextColor = Color.White,
-                disabledBorderColor = GrisClaro,
-                disabledLabelColor = GrisClaro
-            )
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Text("Torre del acusado *", color = Color.White)
-        OutlinedTextField(
-            value = torreAcusado,
-            onValueChange = { torreAcusado = it },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            colors = OutlinedTextFieldDefaults.colors(
-                unfocusedContainerColor = AzulOscuro,
-                focusedBorderColor = DoradoElegante,
-                unfocusedBorderColor = GrisClaro,
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White
-            )
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Text("Apartamento del acusado (opcional)", color = Color.White)
-        OutlinedTextField(
-            value = apartamentoAcusado,
-            onValueChange = { apartamentoAcusado = it },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            colors = OutlinedTextFieldDefaults.colors(
-                unfocusedContainerColor = AzulOscuro,
-                focusedBorderColor = DoradoElegante,
-                unfocusedBorderColor = GrisClaro,
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White
-            )
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Text("Fecha *", color = Color.White)
-        OutlinedTextField(
-            value = fecha,
-            onValueChange = { fecha = it },
-            readOnly = false,
-            modifier = Modifier.fillMaxWidth(),
-            trailingIcon = {
-                IconButton(onClick = { abrirDatePickerQuejas(context) { fecha = it } }) {
-                    Icon(
-                        imageVector = Icons.Default.DateRange,
-                        contentDescription = "Abrir calendario",
-                        tint = GrisClaro
-                    )
-                }
-            },
-            placeholder = { Text("Seleccionar en calendario") },
-            colors = OutlinedTextFieldDefaults.colors(
-                unfocusedContainerColor = AzulOscuro,
-                focusedBorderColor = DoradoElegante,
-                unfocusedBorderColor = GrisClaro,
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White
-            )
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Text("Tipo *", color = Color.White)
-        ExposedDropdownMenuBox(
-            expanded = expanded,
-            onExpandedChange = { expanded = !expanded }
-        ) {
-            OutlinedTextField(
-                readOnly = true,
-                value = tipo,
-                onValueChange = {},
-                label = { Text("Selecciona el tipo") },
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .menuAnchor(androidx.compose.material3.MenuAnchorType.PrimaryNotEditable, true),
-                colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedContainerColor = AzulOscuro,
-                    focusedBorderColor = DoradoElegante,
-                    unfocusedBorderColor = GrisClaro,
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White
-                )
-            )
-            ExposedDropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
-            ) {
-                opcionesTipo.forEach { opcion ->
-                    DropdownMenuItem(
-                        text = { Text(opcion) },
-                        onClick = {
-                            tipo = opcion
-                            expanded = false
-                        }
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Text("Mensaje *", color = Color.White)
-        OutlinedTextField(
-            value = mensaje,
-            onValueChange = { mensaje = it },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(120.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                unfocusedContainerColor = AzulOscuro,
-                focusedBorderColor = DoradoElegante,
-                unfocusedBorderColor = GrisClaro,
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White
-            )
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Button(
-            onClick = {
-                if (usuarioActual?.id == null) {
-                    Toast.makeText(context, "No hay sesión activa", Toast.LENGTH_SHORT).show()
-                    return@Button
-                }
-                if (torreAcusado.isBlank() || fecha.isBlank() || tipo.isBlank() || mensaje.isBlank()) {
-                    Toast.makeText(context, "Completa los campos obligatorios", Toast.LENGTH_SHORT).show()
-                    return@Button
-                }
-                val detalle = buildString {
-                    append("Fecha: $fecha\n")
-                    append("Tipo: $tipo\n")
-                    append("Acusado Torre: $torreAcusado")
-                    if (apartamentoAcusado.isNotBlank()) append(" - Apto: $apartamentoAcusado")
-                    append("\n")
-                    append("Descripción: $mensaje")
-                }
-                val queja = Queja(
-                    descripcion = detalle,
-                    tipo = tipo,
-                    torreApartamento = "$torreAcusado${if (apartamentoAcusado.isNotBlank()) " - $apartamentoAcusado" else ""}",
-                    torreAcusado = torreAcusado,
-                    apartamentoAcusado = apartamentoAcusado.ifBlank { null },
-                    mensaje = mensaje,
-                    fechaCreacion = fecha,
-                    fecha = fecha,
-                    estado = "En proceso",
-                    usuario = usuarioActual
-                )
-                quejaViewModel.guardar(queja) {
-                    Toast.makeText(context, "Queja creada con éxito", Toast.LENGTH_SHORT).show()
-                    envioExitoso = true
-                    torreAcusado = ""
-                    apartamentoAcusado = ""
-                    fecha = ""
-                    tipo = ""
-                    mensaje = ""
-                    quejaViewModel.obtenerTodos()
-                }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = DoradoElegante),
-            enabled = !isLoading
-        ) {
-            Text(
-                if (isLoading) "Guardando..." else "Crear Queja",
-                color = AzulOscuro,
-                fontWeight = FontWeight.Bold
-            )
-        }
-
-        if (envioExitoso) {
-            Spacer(modifier = Modifier.height(8.dp))
-            Text("Queja enviada correctamente.", color = Color(0xFF66BB6A), fontSize = 12.sp)
-        }
-
-        Spacer(modifier = Modifier.height(20.dp))
         Text("Mis quejas y seguimiento", color = Color.White, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -323,8 +142,207 @@ fun PantallaQuejasResidente(
                 }
             }
         }
-    }
 
+        if (mostrarFormulario) {
+            Spacer(modifier = Modifier.height(18.dp))
+            Text("Crear nueva queja", color = Color.White, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Text("Reporta (torre y apartamento)", color = Color.White)
+            OutlinedTextField(
+                value = torreAptoReporta,
+                onValueChange = {},
+                enabled = false,
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    disabledTextColor = Color.White,
+                    disabledBorderColor = GrisClaro,
+                    disabledLabelColor = GrisClaro
+                )
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text("Torre del acusado *", color = Color.White)
+            OutlinedTextField(
+                value = torreAcusado,
+                onValueChange = { torreAcusado = it },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedContainerColor = AzulOscuro,
+                    focusedBorderColor = DoradoElegante,
+                    unfocusedBorderColor = GrisClaro,
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White
+                )
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text("Apartamento del acusado (opcional)", color = Color.White)
+            OutlinedTextField(
+                value = apartamentoAcusado,
+                onValueChange = { apartamentoAcusado = it },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedContainerColor = AzulOscuro,
+                    focusedBorderColor = DoradoElegante,
+                    unfocusedBorderColor = GrisClaro,
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White
+                )
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text("Fecha *", color = Color.White)
+            OutlinedTextField(
+                value = fecha,
+                onValueChange = { fecha = it },
+                readOnly = false,
+                modifier = Modifier.fillMaxWidth(),
+                trailingIcon = {
+                    IconButton(onClick = { abrirDatePickerQuejas(context) { fecha = it } }) {
+                        Icon(
+                            imageVector = Icons.Default.DateRange,
+                            contentDescription = "Abrir calendario",
+                            tint = GrisClaro
+                        )
+                    }
+                },
+                placeholder = { Text("Seleccionar en calendario") },
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedContainerColor = AzulOscuro,
+                    focusedBorderColor = DoradoElegante,
+                    unfocusedBorderColor = GrisClaro,
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White
+                )
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text("Tipo *", color = Color.White)
+            ExposedDropdownMenuBox(
+                expanded = expanded,
+                onExpandedChange = { expanded = !expanded }
+            ) {
+                OutlinedTextField(
+                    readOnly = true,
+                    value = tipo,
+                    onValueChange = {},
+                    label = { Text("Selecciona el tipo") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor(androidx.compose.material3.MenuAnchorType.PrimaryNotEditable, true),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedContainerColor = AzulOscuro,
+                        focusedBorderColor = DoradoElegante,
+                        unfocusedBorderColor = GrisClaro,
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White
+                    )
+                )
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    opcionesTipo.forEach { opcion ->
+                        DropdownMenuItem(
+                            text = { Text(opcion) },
+                            onClick = {
+                                tipo = opcion
+                                expanded = false
+                            }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text("Mensaje *", color = Color.White)
+            OutlinedTextField(
+                value = mensaje,
+                onValueChange = { mensaje = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(120.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedContainerColor = AzulOscuro,
+                    focusedBorderColor = DoradoElegante,
+                    unfocusedBorderColor = GrisClaro,
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White
+                )
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Button(
+                onClick = {
+                    if (usuarioActual?.id == null) {
+                        Toast.makeText(context, "No hay sesión activa", Toast.LENGTH_SHORT).show()
+                        return@Button
+                    }
+                    if (torreAcusado.isBlank() || fecha.isBlank() || tipo.isBlank() || mensaje.isBlank()) {
+                        Toast.makeText(context, "Completa los campos obligatorios", Toast.LENGTH_SHORT).show()
+                        return@Button
+                    }
+                    val detalle = buildString {
+                        append("Fecha: $fecha\n")
+                        append("Tipo: $tipo\n")
+                        append("Acusado Torre: $torreAcusado")
+                        if (apartamentoAcusado.isNotBlank()) append(" - Apto: $apartamentoAcusado")
+                        append("\n")
+                        append("Descripción: $mensaje")
+                    }
+                    val queja = Queja(
+                        descripcion = detalle,
+                        tipo = tipo,
+                        torreApartamento = "$torreAcusado${if (apartamentoAcusado.isNotBlank()) " - $apartamentoAcusado" else ""}",
+                        torreAcusado = torreAcusado,
+                        apartamentoAcusado = apartamentoAcusado.ifBlank { null },
+                        mensaje = mensaje,
+                        fechaCreacion = fecha,
+                        fecha = fecha,
+                        estado = "En proceso",
+                        usuario = usuarioActual
+                    )
+                    quejaViewModel.guardar(queja) {
+                        Toast.makeText(context, "Queja creada con éxito", Toast.LENGTH_SHORT).show()
+                        envioExitoso = true
+                        torreAcusado = ""
+                        apartamentoAcusado = ""
+                        fecha = ""
+                        tipo = ""
+                        mensaje = ""
+                        mostrarFormulario = false
+                        quejaViewModel.obtenerTodos()
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = DoradoElegante),
+                enabled = !isLoading
+            ) {
+                Text(
+                    if (isLoading) "Guardando..." else "Crear Queja",
+                    color = AzulOscuro,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            if (envioExitoso) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("Queja enviada correctamente.", color = Color(0xFF66BB6A), fontSize = 12.sp)
+            }
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+        }
+    }
 }
 
 private fun abrirDatePickerQuejas(

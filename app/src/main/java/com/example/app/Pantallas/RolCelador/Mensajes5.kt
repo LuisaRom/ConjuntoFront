@@ -16,16 +16,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -44,20 +40,16 @@ fun PantallaMensajesCelador(
     usuarioViewModel: UsuarioViewModel = hiltViewModel()
 ) {
     val usuarios by usuarioViewModel.usuarios.collectAsState()
-    var busqueda by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
-        if (usuarios.isEmpty()) usuarioViewModel.obtenerTodos()
+        usuarioViewModel.obtenerTodos()
     }
 
-    val usuariosMensajeria = remember(usuarios, busqueda) {
+    val usuariosMensajeria = remember(usuarios) {
         usuarios.filter { usuario ->
             val rol = usuario.rol.uppercase()
-            rol == "ADMINISTRADOR" || rol == "ADMIN"
-        }.filter { usuario ->
-            val nombre = usuario.nombre.ifBlank { usuario.usuario }
-            nombre.contains(busqueda, ignoreCase = true)
-        }.sortedBy { it.nombre.ifBlank { it.usuario } }
+            rol == "ADMINISTRADOR" || rol == "ADMIN" || rol == "CELADOR"
+        }.sortedBy { it.usuario }
     }
 
     Column(
@@ -83,27 +75,6 @@ fun PantallaMensajesCelador(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        OutlinedTextField(
-            value = busqueda,
-            onValueChange = { busqueda = it },
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text("Buscar por nombre", color = GrisClaro) },
-            singleLine = true,
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White,
-                focusedBorderColor = DoradoElegante,
-                unfocusedBorderColor = GrisClaro,
-                focusedLabelColor = DoradoElegante,
-                unfocusedLabelColor = GrisClaro,
-                cursorColor = DoradoElegante,
-                focusedContainerColor = AzulOscuro,
-                unfocusedContainerColor = AzulOscuro
-            )
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
         if (usuariosMensajeria.isEmpty()) {
             Text(
                 text = "No hay usuarios para mostrar.",
@@ -113,18 +84,16 @@ fun PantallaMensajesCelador(
         } else {
             LazyColumn {
                 items(usuariosMensajeria, key = { it.id ?: it.usuario.hashCode().toLong() }) { usuario ->
-                    val nombre = usuario.nombre.ifBlank { usuario.usuario }
-                    val torreApto = "Torre ${usuario.torre.ifBlank { "-" }} - Apt ${usuario.apartamento.ifBlank { "-" }}"
+                    val usuarioChat = usuario.usuario.ifBlank { usuario.nombre }
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { navController.navigate("PantallaMensajes/$nombre") }
+                            .clickable { navController.navigate("PantallaMensajes/$usuarioChat") }
                             .padding(vertical = 8.dp)
                             .background(Color.White.copy(alpha = 0.06f))
                             .padding(12.dp)
                     ) {
-                        Text(nombre, color = Color.White)
-                        Text(torreApto, color = GrisClaro, fontSize = 12.sp)
+                        Text(usuarioChat, color = Color.White)
                     }
                 }
             }

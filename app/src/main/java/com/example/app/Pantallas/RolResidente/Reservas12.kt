@@ -96,7 +96,7 @@ fun PantallaReservasResidente(navController: NavController) {
 fun CategoriaReservaItem(titulo: String, icono: ImageVector, onClickAgregar: () -> Unit) {
     Column(
         modifier = Modifier
-            .width(160.dp)
+            .width(150.dp)
             .height(155.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(Color.White.copy(alpha = 0.05f))

@@ -84,7 +84,7 @@ fun PantallaAccesosCelador(
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "Accesos",
-                style = MaterialTheme.typography.headlineMedium,
+                style = MaterialTheme.typography.headlineSmall,
                 color = GrisClaro
             )
         }
