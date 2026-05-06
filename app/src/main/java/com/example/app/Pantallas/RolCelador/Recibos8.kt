@@ -5,34 +5,35 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -62,11 +63,9 @@ import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaRecibosCelador(
     navController: NavController,
@@ -75,76 +74,29 @@ fun PantallaRecibosCelador(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+
     val usuarios by usuarioViewModel.usuarios.collectAsState()
-    val residentes = remember(usuarios) {
-        usuarios.filter { it.rol.equals("RESIDENTE", ignoreCase = true) }
-    }
+    val residentes = usuarios.filter { it.rol?.uppercase() == "RESIDENTE" }
 
     var enelExpanded by remember { mutableStateOf(false) }
     var vantiExpanded by remember { mutableStateOf(false) }
     var epzExpanded by remember { mutableStateOf(false) }
 
-    var enelModo by remember { mutableStateOf("TODOS") }
-    var vantiModo by remember { mutableStateOf("TODOS") }
-    var epzModo by remember { mutableStateOf("TODOS") }
+    var enelSeleccionados by remember { mutableStateOf<Set<Long>>(emptySet()) }
+    var vantiSeleccionados by remember { mutableStateOf<Set<Long>>(emptySet()) }
+    var epzSeleccionados by remember { mutableStateOf<Set<Long>>(emptySet()) }
 
-    var enelResidenteId by remember { mutableStateOf<Long?>(null) }
-    var vantiResidenteId by remember { mutableStateOf<Long?>(null) }
-    var epzResidenteId by remember { mutableStateOf<Long?>(null) }
+    var enelTodosSeleccionado by remember { mutableStateOf(false) }
+    var vantiTodosSeleccionado by remember { mutableStateOf(false) }
+    var epzTodosSeleccionado by remember { mutableStateOf(false) }
 
-    var enelEnviando by remember { mutableStateOf(false) }
-    var vantiEnviando by remember { mutableStateOf(false) }
-    var epzEnviando by remember { mutableStateOf(false) }
-
-    var enelEnviado by remember { mutableStateOf(false) }
-    var vantiEnviado by remember { mutableStateOf(false) }
-    var epzEnviado by remember { mutableStateOf(false) }
+    var enelNotificado by remember { mutableStateOf(false) }
+    var vantiNotificado by remember { mutableStateOf(false) }
+    var epzNotificado by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        if (usuarios.isEmpty()) usuarioViewModel.obtenerTodos()
-    }
-
-    fun enviar(tipo: String, modo: String, residenteId: Long?, setEnviando: (Boolean) -> Unit, setEnviado: (Boolean) -> Unit) {
-        scope.launch {
-            if (modo == "INDIVIDUAL" && residenteId == null) {
-                Toast.makeText(context, "Selecciona un residente", Toast.LENGTH_SHORT).show()
-                return@launch
-            }
-            setEnviando(true)
-            try {
-                val destinatarios = if (modo == "TODOS") residentes else residentes.filter { it.id == residenteId }
-                if (destinatarios.isEmpty()) {
-                    Toast.makeText(context, "No hay residentes para notificar", Toast.LENGTH_SHORT).show()
-                    return@launch
-                }
-
-                val fechaActual = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).format(Date())
-                val mensaje = "Tienes un recibo de $tipo disponible en la portería. Por favor pasa a recogerlo."
-                var enviadas = 0
-                destinatarios.forEach { residente ->
-                    if (residente.id != null) {
-                        try {
-                            notificacionViewModel.guardar(
-                                Notificacion(
-                                    mensaje = mensaje,
-                                    fechaEnvio = fechaActual,
-                                    usuario = residente
-                                )
-                            )
-                            delay(250)
-                            enviadas++
-                        } catch (_: Exception) {
-                        }
-                    }
-                }
-                notificacionViewModel.obtenerTodos()
-                setEnviado(true)
-                Toast.makeText(context, "Notificaciones enviadas a $enviadas residente(s)", Toast.LENGTH_SHORT).show()
-            } catch (e: Exception) {
-                Toast.makeText(context, "Error al enviar notificaciones: ${e.message}", Toast.LENGTH_LONG).show()
-            } finally {
-                setEnviando(false)
-            }
+        if (usuarios.isEmpty()) {
+            usuarioViewModel.obtenerTodos()
         }
     }
 
@@ -157,10 +109,12 @@ fun PantallaRecibosCelador(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                imageVector = Icons.Default.ArrowBack,
                 contentDescription = "Volver",
                 tint = GrisClaro,
-                modifier = Modifier.clickable { navController.popBackStack() }
+                modifier = Modifier.clickable {
+                    navController.popBackStack()
+                }
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text("Recibos", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 20.sp)
@@ -174,15 +128,51 @@ fun PantallaRecibosCelador(
             expanded = enelExpanded,
             onExpandClick = { enelExpanded = !enelExpanded },
             residentes = residentes,
-            modo = enelModo,
-            onModoChange = { enelModo = it },
-            residenteSeleccionadoId = enelResidenteId,
-            onResidenteSeleccionado = { enelResidenteId = it },
-            onEnviarNotificaciones = {
-                enviar("ENEL", enelModo, enelResidenteId, { enelEnviando = it }, { enelEnviado = it })
+            seleccionados = enelSeleccionados,
+            todosSeleccionado = enelTodosSeleccionado,
+            onSeleccionarResidente = { id ->
+                val nuevoSet = if (enelSeleccionados.contains(id)) enelSeleccionados - id else enelSeleccionados + id
+                enelSeleccionados = nuevoSet
+                if (enelTodosSeleccionado) enelTodosSeleccionado = false
             },
-            enviado = enelEnviado,
-            enviando = enelEnviando
+            onSeleccionarTodos = {
+                enelTodosSeleccionado = !enelTodosSeleccionado
+                enelSeleccionados = if (enelTodosSeleccionado) residentes.mapNotNull { it.id }.toSet() else emptySet()
+            },
+            onEnviarNotificaciones = {
+                scope.launch {
+                    try {
+                        val destinatarios = if (enelTodosSeleccionado) residentes else residentes.filter { it.id in enelSeleccionados }
+                        if (destinatarios.isEmpty()) {
+                            Toast.makeText(context, "Por favor selecciona al menos un residente", Toast.LENGTH_SHORT).show()
+                            return@launch
+                        }
+                        val fechaActual = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)
+                        var enviadas = 0
+                        for (residente in destinatarios) {
+                            if (residente.id != null) {
+                                try {
+                                    val notificacion = Notificacion(
+                                        mensaje = "Tienes un recibo de ENEL disponible en la portería. Por favor pasa a recogerlo.",
+                                        fechaEnvio = fechaActual,
+                                        usuario = residente
+                                    )
+                                    notificacionViewModel.guardar(notificacion)
+                                    delay(1500)
+                                    enviadas++
+                                } catch (_: Exception) {
+                                }
+                            }
+                        }
+                        notificacionViewModel.obtenerTodos()
+                        enelNotificado = true
+                        Toast.makeText(context, "Notificaciones enviadas a $enviadas residente(s)", Toast.LENGTH_SHORT).show()
+                    } catch (e: Exception) {
+                        Toast.makeText(context, "Error al enviar notificaciones: ${e.message}", Toast.LENGTH_LONG).show()
+                    }
+                }
+            },
+            tieneNotificacion = enelNotificado
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -193,15 +183,51 @@ fun PantallaRecibosCelador(
             expanded = vantiExpanded,
             onExpandClick = { vantiExpanded = !vantiExpanded },
             residentes = residentes,
-            modo = vantiModo,
-            onModoChange = { vantiModo = it },
-            residenteSeleccionadoId = vantiResidenteId,
-            onResidenteSeleccionado = { vantiResidenteId = it },
-            onEnviarNotificaciones = {
-                enviar("VANTI", vantiModo, vantiResidenteId, { vantiEnviando = it }, { vantiEnviado = it })
+            seleccionados = vantiSeleccionados,
+            todosSeleccionado = vantiTodosSeleccionado,
+            onSeleccionarResidente = { id ->
+                val nuevoSet = if (vantiSeleccionados.contains(id)) vantiSeleccionados - id else vantiSeleccionados + id
+                vantiSeleccionados = nuevoSet
+                if (vantiTodosSeleccionado) vantiTodosSeleccionado = false
             },
-            enviado = vantiEnviado,
-            enviando = vantiEnviando
+            onSeleccionarTodos = {
+                vantiTodosSeleccionado = !vantiTodosSeleccionado
+                vantiSeleccionados = if (vantiTodosSeleccionado) residentes.mapNotNull { it.id }.toSet() else emptySet()
+            },
+            onEnviarNotificaciones = {
+                scope.launch {
+                    try {
+                        val destinatarios = if (vantiTodosSeleccionado) residentes else residentes.filter { it.id in vantiSeleccionados }
+                        if (destinatarios.isEmpty()) {
+                            Toast.makeText(context, "Por favor selecciona al menos un residente", Toast.LENGTH_SHORT).show()
+                            return@launch
+                        }
+                        val fechaActual = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)
+                        var enviadas = 0
+                        for (residente in destinatarios) {
+                            if (residente.id != null) {
+                                try {
+                                    val notificacion = Notificacion(
+                                        mensaje = "Tienes un recibo de VANTI disponible en la portería. Por favor pasa a recogerlo.",
+                                        fechaEnvio = fechaActual,
+                                        usuario = residente
+                                    )
+                                    notificacionViewModel.guardar(notificacion)
+                                    delay(1500)
+                                    enviadas++
+                                } catch (_: Exception) {
+                                }
+                            }
+                        }
+                        delay(500)
+                        vantiNotificado = true
+                        Toast.makeText(context, "Notificaciones enviadas a $enviadas residente(s)", Toast.LENGTH_SHORT).show()
+                    } catch (e: Exception) {
+                        Toast.makeText(context, "Error al enviar notificaciones: ${e.message}", Toast.LENGTH_LONG).show()
+                    }
+                }
+            },
+            tieneNotificacion = vantiNotificado
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -212,20 +238,55 @@ fun PantallaRecibosCelador(
             expanded = epzExpanded,
             onExpandClick = { epzExpanded = !epzExpanded },
             residentes = residentes,
-            modo = epzModo,
-            onModoChange = { epzModo = it },
-            residenteSeleccionadoId = epzResidenteId,
-            onResidenteSeleccionado = { epzResidenteId = it },
-            onEnviarNotificaciones = {
-                enviar("EPZ", epzModo, epzResidenteId, { epzEnviando = it }, { epzEnviado = it })
+            seleccionados = epzSeleccionados,
+            todosSeleccionado = epzTodosSeleccionado,
+            onSeleccionarResidente = { id ->
+                val nuevoSet = if (epzSeleccionados.contains(id)) epzSeleccionados - id else epzSeleccionados + id
+                epzSeleccionados = nuevoSet
+                if (epzTodosSeleccionado) epzTodosSeleccionado = false
             },
-            enviado = epzEnviado,
-            enviando = epzEnviando
+            onSeleccionarTodos = {
+                epzTodosSeleccionado = !epzTodosSeleccionado
+                epzSeleccionados = if (epzTodosSeleccionado) residentes.mapNotNull { it.id }.toSet() else emptySet()
+            },
+            onEnviarNotificaciones = {
+                scope.launch {
+                    try {
+                        val destinatarios = if (epzTodosSeleccionado) residentes else residentes.filter { it.id in epzSeleccionados }
+                        if (destinatarios.isEmpty()) {
+                            Toast.makeText(context, "Por favor selecciona al menos un residente", Toast.LENGTH_SHORT).show()
+                            return@launch
+                        }
+                        val fechaActual = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)
+                        var enviadas = 0
+                        for (residente in destinatarios) {
+                            if (residente.id != null) {
+                                try {
+                                    val notificacion = Notificacion(
+                                        mensaje = "Tienes un recibo de EPZ disponible en la portería. Por favor pasa a recogerlo.",
+                                        fechaEnvio = fechaActual,
+                                        usuario = residente
+                                    )
+                                    notificacionViewModel.guardar(notificacion)
+                                    delay(1500)
+                                    enviadas++
+                                } catch (_: Exception) {
+                                }
+                            }
+                        }
+                        delay(500)
+                        epzNotificado = true
+                        Toast.makeText(context, "Notificaciones enviadas a $enviadas residente(s)", Toast.LENGTH_SHORT).show()
+                    } catch (e: Exception) {
+                        Toast.makeText(context, "Error al enviar notificaciones: ${e.message}", Toast.LENGTH_LONG).show()
+                    }
+                }
+            },
+            tieneNotificacion = epzNotificado
         )
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReciboItemExpandible(
     logoResId: Int,
@@ -233,23 +294,27 @@ fun ReciboItemExpandible(
     expanded: Boolean,
     onExpandClick: () -> Unit,
     residentes: List<Usuario>,
-    modo: String,
-    onModoChange: (String) -> Unit,
-    residenteSeleccionadoId: Long?,
-    onResidenteSeleccionado: (Long?) -> Unit,
+    seleccionados: Set<Long>,
+    todosSeleccionado: Boolean,
+    onSeleccionarResidente: (Long) -> Unit,
+    onSeleccionarTodos: () -> Unit,
     onEnviarNotificaciones: () -> Unit,
-    enviado: Boolean,
-    enviando: Boolean
+    tieneNotificacion: Boolean
 ) {
-    var expandirResidentes by remember { mutableStateOf(false) }
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = AzulOscuro.copy(alpha = 0.8f)),
+        colors = CardDefaults.cardColors(
+            containerColor = AzulOscuro.copy(alpha = 0.8f)
+        ),
         shape = RoundedCornerShape(12.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
             Row(
-                modifier = Modifier.fillMaxWidth().clickable { onExpandClick() },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onExpandClick() },
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Image(
@@ -259,92 +324,150 @@ fun ReciboItemExpandible(
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(nombreRecibo, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    Text(
+                        text = nombreRecibo,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
                     if (expanded) {
-                        Text("Modo: $modo", color = GrisClaro, fontSize = 12.sp)
+                        Text(
+                            text = "${seleccionados.size} residente(s) seleccionado(s)",
+                            color = GrisClaro,
+                            fontSize = 12.sp
+                        )
                     }
                 }
-                if (enviado) {
-                    Text(
-                        "Enviado",
-                        color = Color.White,
-                        fontSize = 11.sp,
+                if (tieneNotificacion) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Box(
                         modifier = Modifier
-                            .background(Color(0xFF2E7D32), RoundedCornerShape(8.dp))
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                            .size(12.dp)
+                            .background(Color.Green, CircleShape)
                     )
+                    Spacer(modifier = Modifier.width(8.dp))
+                } else {
                     Spacer(modifier = Modifier.width(8.dp))
                 }
                 Icon(
                     imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                    contentDescription = null,
-                    tint = DoradoElegante
+                    contentDescription = if (expanded) "Colapsar" else "Expandir",
+                    tint = DoradoElegante,
+                    modifier = Modifier.size(24.dp)
                 )
             }
 
             if (expanded) {
-                Spacer(modifier = Modifier.height(12.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterChip(
-                        selected = modo == "TODOS",
-                        onClick = { onModoChange("TODOS") },
-                        label = { Text("CHECKLIST TODOS") }
+                Spacer(modifier = Modifier.height(16.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onSeleccionarTodos() }
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = todosSeleccionado,
+                        onCheckedChange = { onSeleccionarTodos() },
+                        colors = CheckboxDefaults.colors(
+                            checkedColor = DoradoElegante,
+                            uncheckedColor = GrisClaro
+                        )
                     )
-                    FilterChip(
-                        selected = modo == "INDIVIDUAL",
-                        onClick = { onModoChange("INDIVIDUAL") },
-                        label = { Text("CHECKLIST INDIVIDUAL") }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "TODOS",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
                     )
                 }
 
-                if (modo == "INDIVIDUAL") {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    ExposedDropdownMenuBox(
-                        expanded = expandirResidentes,
-                        onExpandedChange = { expandirResidentes = !expandirResidentes }
-                    ) {
-                        val etiqueta = residentes.firstOrNull { it.id == residenteSeleccionadoId }?.let {
-                            "${it.nombre.ifBlank { it.usuario }} - ${it.torre} - ${it.apartamento}"
-                        } ?: ""
-                        OutlinedTextField(
-                            value = etiqueta,
-                            onValueChange = {},
-                            readOnly = true,
-                            label = { Text("Residente") },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandirResidentes) },
-                            modifier = Modifier.fillMaxWidth().menuAnchor(androidx.compose.material3.MenuAnchorType.PrimaryNotEditable, true),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White,
-                                focusedBorderColor = DoradoElegante,
-                                unfocusedBorderColor = GrisClaro
-                            )
-                        )
-                        ExposedDropdownMenu(
-                            expanded = expandirResidentes,
-                            onDismissRequest = { expandirResidentes = false }
-                        ) {
-                            residentes.forEach { residente ->
-                                DropdownMenuItem(
-                                    text = { Text("${residente.nombre.ifBlank { residente.usuario }} - ${residente.torre} - ${residente.apartamento}") },
-                                    onClick = {
-                                        onResidenteSeleccionado(residente.id)
-                                        expandirResidentes = false
+                Divider(color = GrisClaro.copy(alpha = 0.3f), thickness = 1.dp)
+                Spacer(modifier = Modifier.height(8.dp))
+
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 300.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    items(residentes) { residente ->
+                        if (residente.id != null) {
+                            val id = residente.id
+                            val isChecked = todosSeleccionado || id in seleccionados
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        if (todosSeleccionado) {
+                                            onSeleccionarTodos()
+                                            onSeleccionarResidente(id)
+                                        } else {
+                                            onSeleccionarResidente(id)
+                                        }
                                     }
+                                    .padding(vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Checkbox(
+                                    checked = isChecked,
+                                    onCheckedChange = {
+                                        if (todosSeleccionado) {
+                                            onSeleccionarTodos()
+                                            onSeleccionarResidente(id)
+                                        } else {
+                                            onSeleccionarResidente(id)
+                                        }
+                                    },
+                                    colors = CheckboxDefaults.colors(
+                                        checkedColor = DoradoElegante,
+                                        uncheckedColor = GrisClaro
+                                    )
                                 )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Column {
+                                    Text(
+                                        text = residente.nombre ?: residente.usuario,
+                                        color = Color.White,
+                                        fontSize = 14.sp
+                                    )
+                                    if (!residente.torre.isNullOrBlank() || !residente.apartamento.isNullOrBlank()) {
+                                        Text(
+                                            text = "Torre ${residente.torre ?: ""} - Apt ${residente.apartamento ?: ""}",
+                                            color = GrisClaro,
+                                            fontSize = 12.sp
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(16.dp))
+                val haySeleccionados = todosSeleccionado || seleccionados.isNotEmpty()
                 Button(
                     onClick = onEnviarNotificaciones,
-                    colors = ButtonDefaults.buttonColors(containerColor = DoradoElegante),
-                    modifier = Modifier.fillMaxWidth().height(48.dp),
-                    enabled = !enviando && (modo == "TODOS" || residenteSeleccionadoId != null)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = DoradoElegante,
+                        disabledContainerColor = GrisClaro
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    enabled = haySeleccionados
                 ) {
-                    Text(if (enviando) "Enviando..." else "Enviar notificación", color = AzulOscuro, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = if (haySeleccionados) {
+                            "Enviar Notificaciones (${if (todosSeleccionado) residentes.size else seleccionados.size})"
+                        } else {
+                            "Selecciona residentes"
+                        },
+                        color = if (haySeleccionados) AzulOscuro else Color.Gray,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp
+                    )
                 }
             }
         }

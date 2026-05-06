@@ -23,6 +23,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -215,9 +216,9 @@ fun AccesoItem(acceso: AccesoAdmin, onEliminar: () -> Unit, onVerDetalle: () -> 
             .fillMaxWidth()
             .padding(vertical = 4.dp)
             .clip(RoundedCornerShape(10.dp))
-            .background(Color(0xFF1D3557))
             .clickable { onVerDetalle() },
-        shape = RoundedCornerShape(10.dp)
+        shape = RoundedCornerShape(10.dp),
+        colors = CardDefaults.cardColors(containerColor = AzulOscuro)
     ) {
         Row(
             modifier = Modifier
@@ -228,7 +229,7 @@ fun AccesoItem(acceso: AccesoAdmin, onEliminar: () -> Unit, onVerDetalle: () -> 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = acceso.tituloVisual(),
-                    color = Color.White,
+                    color = GrisClaro,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(

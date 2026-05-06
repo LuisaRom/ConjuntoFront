@@ -52,8 +52,8 @@ import com.example.app.ViewModel.PaqueteriaViewModel
 import com.example.app.ui.theme.AzulOscuro
 import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
-import java.text.SimpleDateFormat
-import java.util.Locale
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun PantallaPaqueteriaCelador(
@@ -88,7 +88,7 @@ fun PantallaPaqueteriaCelador(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "Paquetería",
+                text = "Paqueteria",
                 style = MaterialTheme.typography.headlineSmall,
                 color = GrisClaro
             )
@@ -385,16 +385,10 @@ fun PaqueteCardCompleto(
 fun formatearFechaPaquete(fechaISO: String?): String {
     if (fechaISO.isNullOrBlank()) return "No disponible"
     return try {
-        val formatosEntrada = listOf(
-            "yyyy-MM-dd'T'HH:mm:ss.SSS",
-            "yyyy-MM-dd'T'HH:mm:ss"
-        )
-        val fecha = formatosEntrada.firstNotNullOfOrNull { patron ->
-            runCatching {
-                SimpleDateFormat(patron, Locale.getDefault()).parse(fechaISO)
-            }.getOrNull()
-        } ?: return fechaISO
-        SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(fecha)
+        val formatter = DateTimeFormatter.ISO_DATE_TIME
+        val fecha = LocalDateTime.parse(fechaISO, formatter)
+        val formatterSalida = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
+        fecha.format(formatterSalida)
     } catch (e: Exception) {
         fechaISO
     }
