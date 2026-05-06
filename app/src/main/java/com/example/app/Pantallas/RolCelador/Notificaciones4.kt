@@ -2,10 +2,8 @@ package com.example.app.Pantallas.RolCelador
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -33,7 +31,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -69,70 +66,58 @@ fun PantallaNotificacionesCelador(navController: NavController) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Row(
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                Button(
-                    onClick = { selectedTab = "Mensajes"
-                            navController.navigate("PantallaMensajesCelador")
-            },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(44.dp),
-                    shape = RoundedCornerShape(50),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (selectedTab == "Mensajes") DoradoElegante else GrisClaro
-                    )
+                BotonNotificacionGrande(
+                    titulo = "Mensajes",
+                    seleccionado = selectedTab == "Mensajes"
                 ) {
-                    Text(
-                        "Mensajes",
-                        color = AzulOscuro,
-                        fontSize = 12.sp
-                    )
+                    selectedTab = "Mensajes"
+                    navController.navigate("PantallaMensajesCelador")
                 }
-
-                Button(
-                    onClick = {
-                        selectedTab = "Paqueteria"
-                        navController.navigate("PantallaPaqueteriaCelador")
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(44.dp),
-                    shape = RoundedCornerShape(50),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (selectedTab == "Paqueteria") DoradoElegante else GrisClaro
-                    )
+                BotonNotificacionGrande(
+                    titulo = "Paquetería",
+                    seleccionado = selectedTab == "Paqueteria"
                 ) {
-                    Text(
-                        "Paquetería",
-                        color = AzulOscuro,
-                        fontSize = 12.sp
-                    )
+                    selectedTab = "Paqueteria"
+                    navController.navigate("PantallaPaqueteriaCelador")
                 }
-
-                Button(
-                    onClick = {
-                        selectedTab = "Recibos"
-                        navController.navigate("PantallaRecibosCelador")
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(44.dp),
-                    shape = RoundedCornerShape(50),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (selectedTab == "Recibos") DoradoElegante else GrisClaro
-                    )
+                BotonNotificacionGrande(
+                    titulo = "Recibos",
+                    seleccionado = selectedTab == "Recibos"
                 ) {
-                    Text(
-                        "Recibos",
-                        color = AzulOscuro,
-                        fontSize = 12.sp
-                    )
+                    selectedTab = "Recibos"
+                    navController.navigate("PantallaRecibosCelador")
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun BotonNotificacionGrande(
+    titulo: String,
+    seleccionado: Boolean,
+    onClick: () -> Unit
+) {
+    Button(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(72.dp),
+        shape = RoundedCornerShape(14.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (seleccionado) DoradoElegante else GrisClaro
+        )
+    ) {
+        Text(
+            text = titulo,
+            color = AzulOscuro,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 

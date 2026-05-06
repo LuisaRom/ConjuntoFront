@@ -62,14 +62,12 @@ fun PantallaDetallesPaqueteriaCelador(
     
     // Cargar usuarios al iniciar
     LaunchedEffect(Unit) {
-        if (usuarios.isEmpty()) {
-            usuarioViewModel.obtenerTodos()
-        }
+        usuarioViewModel.obtenerTodos()
     }
     
     // Filtrar solo residentes
     val residentes = usuarios.filter { 
-        it.rol?.uppercase() == "RESIDENTE" 
+        it.rol.uppercase().contains("RESIDENTE")
     }
     
     // Autocompletar torre-apto cuando se selecciona un residente

@@ -95,9 +95,7 @@ fun PantallaRecibosCelador(
     var epzNotificado by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        if (usuarios.isEmpty()) {
-            usuarioViewModel.obtenerTodos()
-        }
+        usuarioViewModel.obtenerTodos()
     }
 
     Column(

@@ -98,7 +98,7 @@ fun PantallaMenuCelador(navController: NavController) {
 fun MenuBoton(titulo: String, icon: ImageVector, onClick: () -> Unit) {
     Column(
         modifier = Modifier
-            .width(160.dp)
+            .width(150.dp)
             .height(155.dp)
             .clip(RoundedCornerShape(10.dp))
             .background(Color.White.copy(alpha = 0.1f))

@@ -1,6 +1,7 @@
 package com.example.app.Pantallas.RolCelador
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,6 +24,9 @@ import androidx.compose.material.icons.filled.OutdoorGrill
 import androidx.compose.material.icons.filled.Pool
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -31,6 +35,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -54,6 +61,7 @@ fun PantallaReservasCelador(
     val reservas by reservaZonaComunViewModel.reservas.collectAsState()
     val isLoading by reservaZonaComunViewModel.isLoading.collectAsState()
     val error by reservaZonaComunViewModel.error.collectAsState()
+    var reservaDetalle by remember { mutableStateOf<ReservaZonaComun?>(null) }
 
     LaunchedEffect(Unit) {
         reservaZonaComunViewModel.obtenerTodos()
@@ -112,22 +120,26 @@ fun PantallaReservasCelador(
                 ReservaCategoriaCelador(
                     titulo = "Piscina",
                     icono = Icons.Default.Pool,
-                    reservas = reservasPiscina
+                    reservas = reservasPiscina,
+                    onClick = { reservaDetalle = it }
                 )
                 ReservaCategoriaCelador(
                     titulo = "Salón Comunal",
                     icono = Icons.Default.Home,
-                    reservas = reservasSalon
+                    reservas = reservasSalon,
+                    onClick = { reservaDetalle = it }
                 )
                 ReservaCategoriaCelador(
                     titulo = "Gimnasio",
                     icono = Icons.Default.FitnessCenter,
-                    reservas = reservasGimnasio
+                    reservas = reservasGimnasio,
+                    onClick = { reservaDetalle = it }
                 )
                 ReservaCategoriaCelador(
                     titulo = "Zona BBQ",
                     icono = Icons.Default.OutdoorGrill,
-                    reservas = reservasBbq
+                    reservas = reservasBbq,
+                    onClick = { reservaDetalle = it }
                 )
 
                 error?.let {
@@ -141,13 +153,42 @@ fun PantallaReservasCelador(
             }
         }
     }
+
+    reservaDetalle?.let { reserva ->
+        AlertDialog(
+            onDismissRequest = { reservaDetalle = null },
+            title = { Text("Detalle Reserva", color = Color.White) },
+            text = {
+                Column {
+                    Text("Usuario: ${reserva.usuario?.nombre ?: reserva.usuario?.usuario ?: "-"}", color = Color.White)
+                    Text("Torre/Apto: ${reserva.usuario?.torre ?: "-"} - ${reserva.usuario?.apartamento ?: "-"}", color = Color.White)
+                    Text("Zona: ${reserva.zonaComun}", color = Color.White)
+                    Text("Fecha: ${reserva.fechaReserva}", color = Color.White)
+                    Text("Horario: ${reserva.horaInicio} - ${reserva.horaFin}", color = Color.White)
+                    if (!reserva.serviciosAdicionales.isNullOrBlank()) {
+                        Text("Servicios: ${reserva.serviciosAdicionales}", color = Color.White)
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { reservaDetalle = null },
+                    colors = ButtonDefaults.buttonColors(containerColor = DoradoElegante)
+                ) {
+                    Text("Cerrar", color = AzulOscuro, fontWeight = FontWeight.Bold)
+                }
+            },
+            containerColor = AzulOscuro
+        )
+    }
 }
 
 @Composable
 private fun ReservaCategoriaCelador(
     titulo: String,
     icono: ImageVector,
-    reservas: List<ReservaZonaComun>
+    reservas: List<ReservaZonaComun>,
+    onClick: (ReservaZonaComun) -> Unit
 ) {
     Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -187,22 +228,18 @@ private fun ReservaCategoriaCelador(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 4.dp, horizontal = 8.dp)
+                        .clickable { onClick(reserva) }
                         .background(Color.White.copy(alpha = 0.06f), RoundedCornerShape(8.dp))
                         .padding(12.dp)
                 ) {
                     Column(modifier = Modifier.fillMaxWidth()) {
                         Text(
-                            text = reserva.zonaComun,
+                            text = reserva.usuario?.nombre ?: reserva.usuario?.usuario ?: "Sin usuario",
                             color = Color.White,
                             fontWeight = FontWeight.SemiBold
                         )
                         Text(
-                            text = "Fecha: ${reserva.fechaReserva} | ${reserva.horaInicio} - ${reserva.horaFin}",
-                            color = GrisClaro,
-                            fontSize = 12.sp
-                        )
-                        Text(
-                            text = "Usuario: ${reserva.usuario?.nombre ?: reserva.usuario?.usuario ?: "Sin usuario"}",
+                            text = "Torre ${reserva.usuario?.torre ?: "-"} - Apt ${reserva.usuario?.apartamento ?: "-"}",
                             color = GrisClaro,
                             fontSize = 12.sp
                         )

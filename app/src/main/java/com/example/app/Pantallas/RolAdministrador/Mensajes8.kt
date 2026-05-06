@@ -59,6 +59,7 @@ fun PantallaMensajes(
     usuarioViewModel: UsuarioViewModel = hiltViewModel()
 ) {
     val usuarioActual by AuthManager.currentUser.collectAsState()
+    val usuarioActualVm by usuarioViewModel.usuarioActual.collectAsState()
     val usuarios by usuarioViewModel.usuarios.collectAsState()
     val notificaciones by notificacionViewModel.notificaciones.collectAsState()
     var textoMensaje by remember { mutableStateOf("") }
@@ -79,10 +80,12 @@ fun PantallaMensajes(
         }
     }
 
-    val mensajesChat = remember(notificaciones, usuarioActual?.id, receptor?.id, usuarios) {
+    val usuarioActualId = usuarioActual?.id ?: usuarioActualVm?.id
+
+    val mensajesChat = remember(notificaciones, usuarioActualId, receptor?.id, usuarios) {
         filtrarMensajesChat(
             notificaciones = notificaciones,
-            emisorActualId = usuarioActual?.id,
+            emisorActualId = usuarioActualId,
             receptorId = receptor?.id,
             usuarios = usuarios
         )
@@ -116,7 +119,7 @@ fun PantallaMensajes(
                 .fillMaxSize()
                 .background(AzulOscuro)
         ) {
-            if (receptor == null || usuarioActual?.id == null) {
+            if (receptor == null || usuarioActualId == null) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -138,7 +141,7 @@ fun PantallaMensajes(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(mensajesChat, key = { it.id ?: it.hashCode().toLong() }) { mensaje ->
-                    val esMio = extraerEmisorId(mensaje.mensaje) == usuarioActual?.id
+                    val esMio = extraerEmisorId(mensaje.mensaje) == usuarioActualId
                     val texto = extraerTextoChat(mensaje.mensaje)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -181,7 +184,7 @@ fun PantallaMensajes(
                 IconButton(onClick = {
                     if (textoMensaje.isBlank()) return@IconButton
                     val payload = construirPayloadChat(
-                        emisorId = usuarioActual?.id ?: return@IconButton,
+                        emisorId = usuarioActualId,
                         receptorId = receptor.id ?: return@IconButton,
                         texto = textoMensaje.trim()
                     )

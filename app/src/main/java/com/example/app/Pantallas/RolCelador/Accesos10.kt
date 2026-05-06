@@ -96,7 +96,16 @@ fun PantallaAccesosCelador(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Acceso Vehicular", color = Color.White, style = MaterialTheme.typography.titleMedium)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.DirectionsCar,
+                    contentDescription = "Vehicular",
+                    tint = DoradoElegante,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Acceso Vehicular", color = Color.White, style = MaterialTheme.typography.titleMedium)
+            }
             IconButton(onClick = {
                 navController.currentBackStackEntry
                     ?.savedStateHandle
@@ -131,7 +140,16 @@ fun PantallaAccesosCelador(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Acceso Peatonal", color = Color.White, style = MaterialTheme.typography.titleMedium)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.DirectionsWalk,
+                    contentDescription = "Peatonal",
+                    tint = DoradoElegante,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Acceso Peatonal", color = Color.White, style = MaterialTheme.typography.titleMedium)
+            }
             IconButton(onClick = {
                 navController.currentBackStackEntry
                     ?.savedStateHandle
