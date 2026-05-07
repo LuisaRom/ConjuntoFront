@@ -577,12 +577,17 @@ fun PantallaNuevaPublicacion(
                         }
                         
                         // Solo enviar imagenUrl si hay una imagen seleccionada
+                        val imagenParaBackend = imagenSeleccionada
+                            ?.takeIf { it.startsWith("http://") || it.startsWith("https://") }
+                        val videoParaBackend = videoPath
+                            ?.takeIf { it.startsWith("http://") || it.startsWith("https://") }
+
                         val notificacion = Notificacion(
                             mensaje = descripcion,
                             fechaEnvio = fechaActual,
                             usuario = usuarioActual,
-                            imagenUrl = imagenSeleccionada?.takeIf { it.isNotBlank() },
-                            videoUrl = videoPath,
+                            imagenUrl = imagenParaBackend,
+                            videoUrl = videoParaBackend,
                             usuariosEtiquetados = usuariosEtiquetadosJson
                         )
                         

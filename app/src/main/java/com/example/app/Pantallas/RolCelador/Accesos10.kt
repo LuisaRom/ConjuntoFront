@@ -211,7 +211,7 @@ fun PantallaAccesosCelador(
                     Text("Visitante: ${acceso.nombreVisitante}", color = Color.White)
                     Text("Torre/Apto: ${acceso.torre} - ${acceso.apartamento}", color = Color.White)
                     Text("Código QR: ${acceso.codigoQr}", color = Color.White)
-                    Text("Hora autorizada: ${acceso.horaAutorizada ?: "-"}", color = Color.White)
+                    Text("Fecha: ${acceso.horaAutorizada ?: "-"}", color = Color.White)
                 }
             },
             confirmButton = {

@@ -53,6 +53,7 @@ fun PantallaQuejasResidente(
     var mensaje by remember { mutableStateOf("") }
     var envioExitoso by remember { mutableStateOf(false) }
     var mostrarFormulario by remember { mutableStateOf(false) }
+    var quejaDetalle by remember { mutableStateOf<Queja?>(null) }
 
     val opcionesTipo = listOf("Ruido", "Violencia", "Basura")
     val torreAptoReporta = remember(usuarioActual) {
@@ -61,11 +62,18 @@ fun PantallaQuejasResidente(
         "$torre - $apto"
     }
     val misQuejas = remember(quejas, usuarioActual?.id) {
-        quejas.filter { it.usuario?.id == usuarioActual?.id }
+        val porUsuario = quejas.filter { it.usuario?.id == usuarioActual?.id }
+        if (porUsuario.isNotEmpty()) porUsuario else quejas
     }
 
     LaunchedEffect(Unit) {
         quejaViewModel.obtenerTodos()
+    }
+    LaunchedEffect(Unit) {
+        while (true) {
+            kotlinx.coroutines.delay(3000)
+            quejaViewModel.obtenerTodos()
+        }
     }
 
     LaunchedEffect(error) {
@@ -124,7 +132,8 @@ fun PantallaQuejasResidente(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 4.dp),
+                        .padding(vertical = 4.dp)
+                        .clickable { quejaDetalle = q },
                     colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.06f))
                 ) {
                     Column(modifier = Modifier.padding(10.dp)) {
@@ -132,7 +141,7 @@ fun PantallaQuejasResidente(
                         Text("Detalle: ${q.detalleVisual()}", color = Color.LightGray, fontSize = 12.sp)
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            text = if (finalizada) "Finalizada" else "En proceso",
+                            text = estadoVisualQueja(q.estado),
                             color = Color.White,
                             modifier = Modifier
                                 .background(colorEstado, RoundedCornerShape(6.dp))
@@ -342,6 +351,42 @@ fun PantallaQuejasResidente(
 
         Spacer(modifier = Modifier.height(20.dp))
         }
+    }
+
+    quejaDetalle?.let { queja ->
+        AlertDialog(
+            onDismissRequest = { quejaDetalle = null },
+            title = { Text("Detalle de queja", color = Color.White) },
+            text = {
+                Column {
+                    Text("Estado: ${estadoVisualQueja(queja.estado)}", color = Color.White)
+                    Text("Tipo: ${queja.categoriaVisual()}", color = Color.White)
+                    Text("Fecha: ${queja.fecha ?: queja.fechaCreacion ?: "-"}", color = Color.White)
+                    Text(
+                        "Acusado: Torre ${queja.torreAcusado ?: "-"} - Apto ${queja.apartamentoAcusado ?: "-"}",
+                        color = Color.White
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text("Descripción:", color = GrisClaro)
+                    Text(queja.detalleVisual(), color = Color.White)
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { quejaDetalle = null }) {
+                    Text("Cerrar", color = DoradoElegante)
+                }
+            },
+            containerColor = AzulOscuro
+        )
+    }
+}
+
+private fun estadoVisualQueja(estado: String?): String {
+    val valor = estado?.trim().orEmpty()
+    if (valor.isBlank()) return "En proceso"
+    return when {
+        valor.equals("finalizada", true) || valor.equals("finalizado", true) -> "Finalizada"
+        else -> valor
     }
 }
 

@@ -284,5 +284,5 @@ private fun torreAptoVisual(reserva: ReservaZonaComun): String {
     val apto = reserva.usuario?.apartamento?.takeIf { it.isNotBlank() }
         ?: reserva.apartamento?.takeIf { it.isNotBlank() }
         ?: "-"
-    return "$torre.$apto"
+    return "$torre-$apto"
 }

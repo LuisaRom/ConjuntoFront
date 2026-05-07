@@ -90,7 +90,11 @@ fun PantallaInicioResidentes(
             val tieneRecibo = mensaje.contains("recibo")
             val tieneTipoRecibo = mensaje.contains("enel") || mensaje.contains("vanti") || mensaje.contains("epz")
             val esRecibo = tieneRecibo && tieneTipoRecibo
-            !esPaqueteria && !esRecibo
+            val esActualizacionQueja = (
+                mensaje.contains("queja") &&
+                    (mensaje.contains("estado") || mensaje.contains("proceso") || mensaje.contains("finalizada") || mensaje.contains("finalizado"))
+                )
+            !esPaqueteria && !esRecibo && !esActualizacionQueja
         }.reversed()
 
         val actualesPorId = notificacionesRender.withIndex()

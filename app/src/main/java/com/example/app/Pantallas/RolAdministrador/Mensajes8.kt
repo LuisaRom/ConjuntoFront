@@ -248,9 +248,9 @@ private fun filtrarMensajesChat(
     if (emisorActualId == null || receptorId == null) return emptyList()
     val usuarioActual = usuarios.firstOrNull { it.id == emisorActualId }
     val usuarioReceptor = usuarios.firstOrNull { it.id == receptorId }
-    val rolesValidos = setOf("ADMINISTRADOR", "CELADOR")
-    val chatPermitido = usuarioActual?.rol?.uppercase() in rolesValidos &&
-        usuarioReceptor?.rol?.uppercase() in rolesValidos
+    val rolesValidos = setOf("ADMINISTRADOR", "ADMIN", "CELADOR")
+    val chatPermitido = normalizarRolChat(usuarioActual?.rol) in rolesValidos &&
+        normalizarRolChat(usuarioReceptor?.rol) in rolesValidos
     if (!chatPermitido) return emptyList()
 
     return notificaciones.filter { noti ->
@@ -259,8 +259,16 @@ private fun filtrarMensajesChat(
         val participantesCorrectos =
             (from == emisorActualId && to == receptorId) || (from == receptorId && to == emisorActualId)
         if (!participantesCorrectos) return@filter false
-        val rolFrom = usuarios.firstOrNull { it.id == from }?.rol?.uppercase()
-        val rolTo = usuarios.firstOrNull { it.id == to }?.rol?.uppercase()
+        val rolFrom = normalizarRolChat(usuarios.firstOrNull { it.id == from }?.rol)
+        val rolTo = normalizarRolChat(usuarios.firstOrNull { it.id == to }?.rol)
         rolFrom in rolesValidos && rolTo in rolesValidos
+    }
+}
+
+private fun normalizarRolChat(rol: String?): String {
+    return when (rol?.uppercase()) {
+        "ADMINISTRADOR", "ADMIN" -> "ADMIN"
+        "CELADOR" -> "CELADOR"
+        else -> rol?.uppercase().orEmpty()
     }
 }

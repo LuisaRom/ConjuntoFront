@@ -80,15 +80,23 @@ class MascotaViewModel @Inject constructor(
             onSuccess?.invoke()
         } catch (e: Exception) {
             android.util.Log.e("MascotaViewModel", "Error al guardar mascota con foto", e)
-            _error.value = when (e) {
-                is HttpException -> {
-                    if (e.code() == 400) {
-                        "No se pudo crear la mascota (400). Verifica imagen y campos requeridos."
-                    } else {
-                        "Error HTTP ${e.code()} al guardar mascota con foto"
-                    }
+            if (e is HttpException && e.code() == 400) {
+                // Fallback para backends que rechazan multipart: crear publicación sin foto.
+                runCatching {
+                    withContext(Dispatchers.IO) { repository.guardar(mascota) }
+                }.onSuccess { mascotaGuardada ->
+                    _mascotas.value = listOf(mascotaGuardada) + _mascotas.value.filterNot { it.id == mascotaGuardada.id }
+                    obtenerTodos()
+                    onSuccess?.invoke()
+                    return@launch
+                }.onFailure {
+                    _error.value = "No se pudo crear la publicación de mascota. Intenta de nuevo."
                 }
-                else -> "Error al guardar mascota con foto: ${e.message}"
+            } else {
+                _error.value = when (e) {
+                    is HttpException -> "Error HTTP ${e.code()} al guardar mascota con foto"
+                    else -> "Error al guardar mascota con foto: ${e.message}"
+                }
             }
         } finally {
             _isLoading.value = false

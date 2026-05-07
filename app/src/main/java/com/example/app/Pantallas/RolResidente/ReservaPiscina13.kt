@@ -172,10 +172,11 @@ fun PantallaReservaPiscina(
                             selectedContainerColor = DoradoElegante,
                             selectedLabelColor = AzulOscuro
                         ),
-                        modifier = Modifier.padding(end = 8.dp, bottom = 8.dp)
+                        modifier = Modifier.padding(end = 8.dp, bottom = 2.dp)
                     )
                 }
             }
+            Spacer(modifier = Modifier.height(2.dp))
             Text("TARDE", color = DoradoElegante, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             Row(modifier = Modifier.fillMaxWidth()) {
                 opcionesTarde.forEach { rango ->
@@ -192,13 +193,13 @@ fun PantallaReservaPiscina(
                             selectedContainerColor = DoradoElegante,
                             selectedLabelColor = AzulOscuro
                         ),
-                        modifier = Modifier.padding(end = 8.dp, bottom = 8.dp)
+                        modifier = Modifier.padding(end = 8.dp, bottom = 2.dp)
                     )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(2.dp))
 
         CampoReservaPiscina("Número de Personas *", numPersonas) {
             val soloDigitos = it.filter(Char::isDigit)

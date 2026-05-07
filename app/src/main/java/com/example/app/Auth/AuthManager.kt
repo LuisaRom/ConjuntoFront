@@ -70,7 +70,8 @@ object AuthManager {
     }
 
     fun handleForbidden() {
-        _authMessage.value = "No tienes permisos"
+        // Silenciado para evitar toasts temporales intrusivos.
+        _authMessage.value = null
     }
 
     fun clearAuthMessage() {
