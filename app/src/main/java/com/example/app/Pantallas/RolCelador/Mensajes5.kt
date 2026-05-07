@@ -22,6 +22,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import android.net.Uri
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -40,6 +41,7 @@ fun PantallaMensajesCelador(
     usuarioViewModel: UsuarioViewModel = hiltViewModel()
 ) {
     val usuarios by usuarioViewModel.usuarios.collectAsState()
+    val usuarioActual by usuarioViewModel.usuarioActual.collectAsState()
 
     LaunchedEffect(Unit) {
         usuarioViewModel.obtenerTodos()
@@ -48,7 +50,8 @@ fun PantallaMensajesCelador(
     val usuariosMensajeria = remember(usuarios) {
         usuarios.filter { usuario ->
             val rol = usuario.rol.uppercase()
-            rol == "ADMINISTRADOR" || rol == "ADMIN" || rol == "CELADOR"
+            (rol == "ADMINISTRADOR" || rol == "ADMIN" || rol == "CELADOR") &&
+                usuario.id != usuarioActual?.id
         }.sortedBy { it.usuario }
     }
 
@@ -88,7 +91,7 @@ fun PantallaMensajesCelador(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { navController.navigate("PantallaMensajes/$usuarioChat") }
+                            .clickable { navController.navigate("PantallaMensajes/${Uri.encode(usuarioChat)}") }
                             .padding(vertical = 8.dp)
                             .background(Color.White.copy(alpha = 0.06f))
                             .padding(12.dp)

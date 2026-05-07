@@ -16,11 +16,14 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Pets
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -35,6 +38,8 @@ import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
 import coil.compose.AsyncImage
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -367,27 +372,71 @@ fun PantallaMascotasResidente(
 @Composable
 private fun PublicacionMascotaFeed(mascota: Mascota) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.06f))
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.15f))
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
+        Column(modifier = Modifier.fillMaxWidth()) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    imageVector = Icons.Default.Pets,
-                    contentDescription = "Mascota",
-                    tint = DoradoElegante
+                    imageVector = Icons.Default.Person,
+                    contentDescription = "Usuario",
+                    tint = Color.White,
+                    modifier = Modifier
+                        .padding(start = 12.dp)
+                        .size(28.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(mascota.nombre, color = Color.White, fontWeight = FontWeight.Bold)
+                Column(modifier = Modifier.padding(vertical = 12.dp)) {
+                    Text(
+                        text = mascota.usuario?.nombre?.ifBlank { mascota.usuario.usuario } ?: "Residente",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = formatearFechaMascota(mascota.fechaCreacion),
+                        color = GrisClaro,
+                        fontSize = 12.sp
+                    )
+                }
             }
-            Spacer(modifier = Modifier.height(6.dp))
-            Text("Tipo: ${mascota.tipo}", color = GrisClaro, fontSize = 12.sp)
-            Text("Descripción: ${mascota.raza}", color = Color.White, fontSize = 13.sp)
+
+            val imagenPath = mascota.imagenUrl
+            if (!imagenPath.isNullOrBlank()) {
+                AsyncImage(
+                    model = imagenPath,
+                    contentDescription = "Imagen mascota",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(190.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .padding(horizontal = 12.dp)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
             Text(
-                "Publicado por: ${mascota.usuario?.nombre ?: mascota.usuario?.usuario ?: "Residente"}",
-                color = Color.LightGray,
-                fontSize = 12.sp
+                text = mascota.nombre,
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp,
+                modifier = Modifier.padding(horizontal = 12.dp)
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "Tipo: ${mascota.tipo}",
+                color = GrisClaro,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(horizontal = 12.dp)
+            )
+            Text(
+                text = mascota.raza,
+                color = Color.White,
+                fontSize = 14.sp,
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
             )
         }
     }
@@ -426,4 +475,23 @@ private fun guardarUriComoArchivoTemporal(
     } catch (_: Exception) {
         null
     }
+}
+
+private fun formatearFechaMascota(fechaRaw: String?): String {
+    if (fechaRaw.isNullOrBlank()) return "Fecha no disponible"
+    val formatos = listOf(
+        "yyyy-MM-dd'T'HH:mm:ss",
+        "yyyy-MM-dd'T'HH:mm:ss.SSS",
+        "yyyy-MM-dd HH:mm:ss",
+        "yyyy-MM-dd"
+    )
+    formatos.forEach { patron ->
+        runCatching {
+            val inFmt = SimpleDateFormat(patron, Locale.getDefault())
+            val outFmt = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+            val date = inFmt.parse(fechaRaw) ?: return@runCatching
+            return outFmt.format(date)
+        }
+    }
+    return fechaRaw
 }

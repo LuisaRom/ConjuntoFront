@@ -2,6 +2,7 @@ package com.example.app.Repository
 
 import com.example.app.Interfaces.NotificacionApiService
 import com.example.app.Model.Notificacion
+import com.example.app.Model.Usuario
 import javax.inject.Inject
 
 class NotificacionRepository @Inject constructor(
@@ -34,8 +35,11 @@ class NotificacionRepository @Inject constructor(
     }
 
     suspend fun guardar(notificacion: Notificacion): Notificacion {
+        val usuarioSanitizado = notificacion.usuario?.id?.let { Usuario(id = it) }
         val payloadPrincipal = notificacion.copy(
-            mensaje = notificacion.mensaje?.trim()
+            mensaje = notificacion.mensaje?.trim(),
+            // Evita enviar objeto usuario completo (password/otros campos) que algunos backends rechazan.
+            usuario = usuarioSanitizado
         )
         return try {
             api.guardarNotificacion(payloadPrincipal)
@@ -52,8 +56,12 @@ class NotificacionRepository @Inject constructor(
                         videoUrl = null,
                         usuariosEtiquetados = null
                     )
-                    runCatching { api.guardarNotificacion(payloadMinimo) }.getOrElse { secondError ->
-                        throw Exception("No se pudo guardar la publicación. Verifica descripción e intenta de nuevo.")
+                    runCatching { api.guardarNotificacion(payloadMinimo) }.getOrElse {
+                        // Último fallback para endpoints que solo aceptan autor por JWT.
+                        val payloadJwt = payloadMinimo.copy(usuario = null)
+                        runCatching { api.guardarNotificacion(payloadJwt) }.getOrElse {
+                            throw Exception("No se pudo guardar la publicación. Verifica descripción e intenta de nuevo.")
+                        }
                     }
                 }
                 else -> throw Exception("Error HTTP ${e.code()}: ${e.message()}")

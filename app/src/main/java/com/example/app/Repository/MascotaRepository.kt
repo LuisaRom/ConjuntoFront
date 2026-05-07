@@ -2,6 +2,7 @@ package com.example.app.Repository
 
 import com.example.app.Interfaces.MascotaApiService
 import com.example.app.Model.Mascota
+import com.example.app.Model.Usuario
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
@@ -23,8 +24,11 @@ class MascotaRepository @Inject constructor(
     }
 
     suspend fun guardar(mascota: Mascota): Mascota {
-        // El backend obtiene el usuario autenticado desde el token.
-        return api.guardarMascota(mascota.copy(usuario = null))
+        val payloadConId = mascota.copy(usuario = mascota.usuario?.id?.let { Usuario(id = it) })
+        return runCatching { api.guardarMascota(payloadConId) }.getOrElse {
+            // Fallback para backends que asignan usuario por JWT.
+            api.guardarMascota(mascota.copy(usuario = null))
+        }
     }
 
     suspend fun guardarConFoto(mascota: Mascota, fotoFile: File): Mascota {
@@ -47,13 +51,24 @@ class MascotaRepository @Inject constructor(
             )
         } catch (e: HttpException) {
             if (e.code() == 400) {
-                api.guardarMascotaMultipartImagen(
-                    nombre = nombre,
-                    tipo = tipo,
-                    raza = raza,
-                    usuarioId = usuarioId,
-                    imagen = imagenPart
-                )
+                runCatching {
+                    api.guardarMascotaMultipartImagen(
+                        nombre = nombre,
+                        tipo = tipo,
+                        raza = raza,
+                        usuarioId = usuarioId,
+                        imagen = imagenPart
+                    )
+                }.getOrElse {
+                    // Último fallback: enviar sin usuarioId para backends que lo ignoran o lo rechazan.
+                    api.guardarMascotaMultipartImagen(
+                        nombre = nombre,
+                        tipo = tipo,
+                        raza = raza,
+                        usuarioId = null,
+                        imagen = imagenPart
+                    )
+                }
             } else {
                 throw e
             }

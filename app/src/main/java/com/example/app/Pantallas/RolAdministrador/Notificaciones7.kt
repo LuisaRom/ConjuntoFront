@@ -1,5 +1,6 @@
 package com.example.app.Pantallas.RolAdministrador
 
+import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -150,7 +151,7 @@ fun PantallaNotificaciones(
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { navController.navigate("PantallaMensajes/$nombre") },
+                                    .clickable { navController.navigate("PantallaMensajes/${Uri.encode(nombre)}") },
                                 colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.06f)),
                                 shape = RoundedCornerShape(10.dp)
                             ) {

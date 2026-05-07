@@ -213,6 +213,10 @@ fun PantallaPagos(
                     Toast.makeText(context, "No se pudo identificar el usuario para generar el pago.", Toast.LENGTH_LONG).show()
                     return@MetodoPagoItem
                 }
+                if (valorNumericoPago <= 0L) {
+                    Toast.makeText(context, "El valor del pago no es válido.", Toast.LENGTH_LONG).show()
+                    return@MetodoPagoItem
+                }
                 pagoAdministracionViewModel.crearCheckoutAdministracion(
                     usuarioId = usuarioId,
                     apartamento = usuarioActual?.apartamento.orEmpty(),

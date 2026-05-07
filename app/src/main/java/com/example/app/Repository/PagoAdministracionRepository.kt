@@ -26,12 +26,34 @@ class PagoAdministracionRepository @Inject constructor(
     }
 
     suspend fun crearCheckoutAdministracion(request: CrearPagoRequest): String {
-        val response = api.crearPagoEnLinea(request)
-        return response.initPoint ?: response.redirectUrl ?: response.checkoutUrl
-            ?: throw IllegalStateException("El backend no devolvió init_point para redirección")
+        val response = runCatching { api.crearPagoEnLinea(request) }
+            .recoverCatching { api.crearPagoEnLineaCheckout(request) }
+            .recoverCatching { api.crearPagoEnLineaMercadoPago(request) }
+            .recoverCatching { api.crearPagoEnLineaMercadoPagoCrear(request) }
+            .getOrThrow()
+
+        val url = response.initPoint
+            ?: response.sandboxInitPoint
+            ?: response.redirectUrl
+            ?: response.checkoutUrl
+            ?: response.preferenceId?.let { construirUrlDesdePreferencia(it) }
+            ?: throw IllegalStateException("El backend no devolvió URL de checkout para redirección")
+
+        return normalizarCheckoutUrl(url)
     }
 
     suspend fun eliminar(id: Long) {
         api.eliminarPago(id)
+    }
+
+    private fun normalizarCheckoutUrl(url: String): String {
+        val valor = url.trim()
+        return if (valor.startsWith("http://") || valor.startsWith("https://")) valor else "https://$valor"
+    }
+
+    private fun construirUrlDesdePreferencia(preferenceId: String): String {
+        val pref = preferenceId.trim()
+        if (pref.isBlank()) throw IllegalStateException("PreferenceId vacío")
+        return "https://www.mercadopago.com/checkout/v1/redirect?pref_id=$pref"
     }
 }
