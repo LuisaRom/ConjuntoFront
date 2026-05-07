@@ -306,6 +306,7 @@ fun PantallaQuejasResidente(
                         append("\n")
                         append("Descripción: $mensaje")
                     }
+                    val marcaTiempoCreacion = marcaTiempoActualIso()
                     val queja = Queja(
                         descripcion = detalle,
                         tipo = tipo,
@@ -313,8 +314,8 @@ fun PantallaQuejasResidente(
                         torreAcusado = torreAcusado,
                         apartamentoAcusado = apartamentoAcusado.ifBlank { null },
                         mensaje = mensaje,
-                        fechaCreacion = construirFechaCreacionQueja(fecha),
-                        fecha = fecha,
+                        fechaCreacion = marcaTiempoCreacion,
+                        fecha = marcaTiempoCreacion,
                         estado = "En proceso",
                         usuario = usuarioActual
                     )
@@ -381,16 +382,8 @@ fun PantallaQuejasResidente(
     }
 }
 
-private fun construirFechaCreacionQueja(fechaSeleccionada: String): String {
-    val soloFecha = runCatching {
-        val inFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-        val outFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        outFormat.format(inFormat.parse(fechaSeleccionada) ?: Date())
-    }.getOrElse {
-        SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-    }
-    val horaActual = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
-    return "${soloFecha}T${horaActual}"
+private fun marcaTiempoActualIso(): String {
+    return SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).format(Date())
 }
 
 private fun estadoVisualQueja(estado: String?): String {

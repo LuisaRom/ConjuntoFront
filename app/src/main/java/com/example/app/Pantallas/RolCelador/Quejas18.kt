@@ -50,6 +50,8 @@ import com.example.app.ViewModel.QuejaViewModel
 import com.example.app.ui.theme.AzulOscuro
 import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @Composable
 fun PantallaQuejasCelador(
@@ -133,7 +135,7 @@ fun PantallaQuejasCelador(
                 Column {
                     Text("Categoría: ${queja.categoriaVisual()}", color = Color.White)
                     Text("Estado: ${queja.estado}", color = Color.White)
-                    Text("Fecha: ${queja.fechaCreacion ?: "No disponible"}", color = Color.White)
+                    Text("Fecha: ${fechaQuejaVisual(queja)}", color = Color.White)
                     Text("Usuario: ${queja.usuario?.nombre ?: queja.usuario?.usuario ?: "Sin usuario"}", color = Color.White)
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(queja.detalleVisual(), color = Color.White)
@@ -187,7 +189,7 @@ fun QuejaItem(queja: Queja, icono: ImageVector, onClick: () -> Unit) {
                 fontSize = 12.sp
             )
             Text(
-                text = "Fecha: ${queja.fechaCreacion ?: "No disponible"}",
+                text = "Fecha: ${fechaQuejaVisual(queja)}",
                 color = GrisClaro,
                 fontSize = 12.sp
             )
@@ -202,4 +204,28 @@ private fun iconoPorCategoria(categoria: String): ImageVector {
         "violencia" -> Icons.Default.ReportProblem
         else -> Icons.Default.ReportProblem
     }
+}
+
+private fun fechaQuejaVisual(queja: Queja): String {
+    val raw = queja.fechaCreacion?.takeIf { it.isNotBlank() }
+        ?: queja.fecha?.takeIf { it.isNotBlank() }
+        ?: return "No disponible"
+
+    val formatosEntrada = listOf(
+        "yyyy-MM-dd'T'HH:mm:ss",
+        "yyyy-MM-dd'T'HH:mm:ss.SSS",
+        "yyyy-MM-dd HH:mm:ss",
+        "dd/MM/yyyy HH:mm:ss",
+        "dd/MM/yyyy",
+        "yyyy-MM-dd"
+    )
+    val salida = SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault())
+
+    formatosEntrada.forEach { patron ->
+        runCatching {
+            val parsed = SimpleDateFormat(patron, Locale.getDefault()).parse(raw)
+            if (parsed != null) return salida.format(parsed)
+        }
+    }
+    return raw
 }

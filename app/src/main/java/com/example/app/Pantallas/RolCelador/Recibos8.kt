@@ -76,7 +76,7 @@ fun PantallaRecibosCelador(
     val scope = rememberCoroutineScope()
 
     val usuarios by usuarioViewModel.usuarios.collectAsState()
-    val residentes = usuarios.filter { it.rol?.uppercase() == "RESIDENTE" }
+    val residentes = usuarios.filter { it.rol.uppercase() == "RESIDENTE" }
 
     var enelExpanded by remember { mutableStateOf(false) }
     var vantiExpanded by remember { mutableStateOf(false) }
@@ -95,7 +95,9 @@ fun PantallaRecibosCelador(
     var epzNotificado by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        usuarioViewModel.obtenerTodos()
+        if (usuarios.isEmpty()) {
+            usuarioViewModel.obtenerTodos()
+        }
     }
 
     Column(
@@ -425,11 +427,7 @@ fun ReciboItemExpandible(
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Column {
-                                    Text(
-                                        text = residente.nombre ?: residente.usuario,
-                                        color = Color.White,
-                                        fontSize = 14.sp
-                                    )
+                                    Text(text = residente.nombre.ifBlank { residente.usuario }, color = Color.White, fontSize = 14.sp)
                                     if (!residente.torre.isNullOrBlank() || !residente.apartamento.isNullOrBlank()) {
                                         Text(
                                             text = "Torre ${residente.torre ?: ""} - Apt ${residente.apartamento ?: ""}",

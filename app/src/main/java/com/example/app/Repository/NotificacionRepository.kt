@@ -35,9 +35,7 @@ class NotificacionRepository @Inject constructor(
 
     suspend fun guardar(notificacion: Notificacion): Notificacion {
         val payloadPrincipal = notificacion.copy(
-            mensaje = notificacion.mensaje?.trim(),
-            // El backend obtiene el usuario del token; evita conflictos de deserialización.
-            usuario = null
+            mensaje = notificacion.mensaje?.trim()
         )
         return try {
             api.guardarNotificacion(payloadPrincipal)
