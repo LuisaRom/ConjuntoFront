@@ -63,7 +63,7 @@ fun PantallaQuejas(
                 it.estado.equals("finalizado", ignoreCase = true)
         }
     }
-    val quejasFinalizadas = remember(quejas) {
+    val quejasResueltas = remember(quejas) {
         quejas.filter {
             it.estado.equals("finalizada", ignoreCase = true) ||
                 it.estado.equals("finalizado", ignoreCase = true)
@@ -144,17 +144,17 @@ fun PantallaQuejas(
                     item {
                         Spacer(modifier = Modifier.height(10.dp))
                         Text(
-                            text = "Finalizadas (${quejasFinalizadas.size})",
+                            text = "Resueltas (${quejasResueltas.size})",
                             color = DoradoElegante,
                             fontWeight = FontWeight.Bold
                         )
                     }
-                    if (quejasFinalizadas.isEmpty()) {
+                    if (quejasResueltas.isEmpty()) {
                         item {
-                            Text("No hay quejas finalizadas.", color = Color.LightGray, fontSize = 13.sp)
+                            Text("No hay quejas resueltas.", color = Color.LightGray, fontSize = 13.sp)
                         }
                     } else {
-                        items(quejasFinalizadas, key = { it.id ?: it.hashCode().toLong() }) { queja ->
+                        items(quejasResueltas, key = { it.id ?: it.hashCode().toLong() }) { queja ->
                             QuejaItem(queja = queja, onClick = { quejaSeleccionada = queja })
                         }
                     }
@@ -193,7 +193,7 @@ fun PantallaQuejas(
                         Text("Categoría: ${queja.categoriaVisual()}", color = Color.White)
                     }
                     Spacer(modifier = Modifier.height(6.dp))
-                    Text("Estado: ${queja.estado}", color = Color.White)
+                    Text("Estado: ${estadoVisualAdmin(queja.estado)}", color = Color.White)
                     Text("Fecha: ${queja.fechaCreacion ?: "No disponible"}", color = Color.White)
                     Text("Usuario: ${queja.usuario?.nombre ?: queja.usuario?.usuario ?: "Sin usuario"}", color = Color.White)
                     Spacer(modifier = Modifier.height(8.dp))
@@ -270,7 +270,7 @@ fun QuejaItem(
                 )
             }
             Text(
-                text = "Estado: ${queja.estado}",
+                text = "Estado: ${estadoVisualAdmin(queja.estado)}",
                 color = GrisClaro,
                 fontSize = 12.sp
             )
@@ -292,6 +292,15 @@ fun QuejaItem(
                 maxLines = 2
             )
         }
+    }
+}
+
+private fun estadoVisualAdmin(estado: String?): String {
+    val valor = estado?.trim().orEmpty()
+    if (valor.isBlank()) return "Pendiente"
+    return when {
+        valor.equals("finalizada", ignoreCase = true) || valor.equals("finalizado", ignoreCase = true) -> "Resuelto"
+        else -> valor
     }
 }
 
