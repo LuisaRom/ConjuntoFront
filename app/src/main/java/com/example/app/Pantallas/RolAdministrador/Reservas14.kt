@@ -278,11 +278,28 @@ fun ReservaCategoria(
 }
 
 private fun torreAptoVisual(reserva: ReservaZonaComun): String {
-    val torre = reserva.usuario?.torre?.takeIf { it.isNotBlank() }
+    val torreRaw = reserva.usuario?.torre?.takeIf { it.isNotBlank() }
         ?: reserva.torre?.takeIf { it.isNotBlank() }
-        ?: "-"
-    val apto = reserva.usuario?.apartamento?.takeIf { it.isNotBlank() }
+    val aptoRaw = reserva.usuario?.apartamento?.takeIf { it.isNotBlank() }
         ?: reserva.apartamento?.takeIf { it.isNotBlank() }
-        ?: "-"
+
+    val combinado = listOfNotNull(torreRaw, aptoRaw).firstOrNull { contieneSeparadorTorreApto(it) }
+    if (combinado != null) {
+        val partes = combinado
+            .split(".", ",", "-")
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
+        if (partes.size >= 2) {
+            return "${partes[0]}-${partes[1]}"
+        }
+    }
+
+    val torre = torreRaw?.trim()?.ifBlank { "-" } ?: "-"
+    val apto = aptoRaw?.trim()?.ifBlank { "-" } ?: "-"
     return "$torre-$apto"
+}
+
+private fun contieneSeparadorTorreApto(valor: String?): Boolean {
+    if (valor.isNullOrBlank()) return false
+    return valor.contains(".") || valor.contains(",") || valor.contains("-")
 }

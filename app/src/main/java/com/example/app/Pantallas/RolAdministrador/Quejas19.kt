@@ -57,6 +57,18 @@ fun PantallaQuejas(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     var quejaSeleccionada by remember { mutableStateOf<Queja?>(null) }
+    val quejasPendientes = remember(quejas) {
+        quejas.filterNot {
+            it.estado.equals("finalizada", ignoreCase = true) ||
+                it.estado.equals("finalizado", ignoreCase = true)
+        }
+    }
+    val quejasFinalizadas = remember(quejas) {
+        quejas.filter {
+            it.estado.equals("finalizada", ignoreCase = true) ||
+                it.estado.equals("finalizado", ignoreCase = true)
+        }
+    }
 
     LaunchedEffect(Unit) {
         quejaViewModel.obtenerTodos()
@@ -112,8 +124,39 @@ fun PantallaQuejas(
                         Text("Sin quejas registradas", color = Color.Gray, fontSize = 14.sp)
                     }
                 } else {
-                    items(quejas, key = { it.id ?: it.hashCode().toLong() }) { queja ->
-                        QuejaItem(queja = queja, onClick = { quejaSeleccionada = queja })
+                    item {
+                        Text(
+                            text = "Pendientes (${quejasPendientes.size})",
+                            color = DoradoElegante,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    if (quejasPendientes.isEmpty()) {
+                        item {
+                            Text("No hay quejas pendientes.", color = Color.LightGray, fontSize = 13.sp)
+                        }
+                    } else {
+                        items(quejasPendientes, key = { it.id ?: it.hashCode().toLong() }) { queja ->
+                            QuejaItem(queja = queja, onClick = { quejaSeleccionada = queja })
+                        }
+                    }
+
+                    item {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(
+                            text = "Finalizadas (${quejasFinalizadas.size})",
+                            color = DoradoElegante,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    if (quejasFinalizadas.isEmpty()) {
+                        item {
+                            Text("No hay quejas finalizadas.", color = Color.LightGray, fontSize = 13.sp)
+                        }
+                    } else {
+                        items(quejasFinalizadas, key = { it.id ?: it.hashCode().toLong() }) { queja ->
+                            QuejaItem(queja = queja, onClick = { quejaSeleccionada = queja })
+                        }
                     }
                 }
 
