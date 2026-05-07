@@ -191,20 +191,27 @@ fun PantallaAccesos(
             title = { Text("Detalle del acceso", color = Color.White) },
             text = {
                 Column {
-                    Text("Tipo: ${acceso.tipoVisual()}", color = Color.White)
                     if (acceso.tipoVisual() == "Vehicular") {
+                        Text("Tipo: ${acceso.tipoVisual()}", color = Color.White)
+                        Text("Quién ingresa: ${acceso.nombreIngresoVisual()}", color = Color.White)
                         Text(
                             "Quién autoriza: ${acceso.usuario?.nombre ?: acceso.usuario?.usuario ?: "-"}",
                             color = Color.White
                         )
-                        Text("Quién ingresa: ${acceso.nombreIngresoVisual()}", color = Color.White)
+                        Text("Placa: ${acceso.placaVehiculo ?: "-"}", color = Color.White)
+                        Text("Torre: ${acceso.torreVisual()}", color = Color.White)
+                        Text("Apartamento: ${acceso.apartamentoVisual()}", color = Color.White)
+                        Text("Fecha: ${acceso.horaAutorizada ?: "-"}", color = Color.White)
                     } else {
                         Text("Visitante: ${acceso.nombreIngresoVisual()}", color = Color.White)
+                        Text(
+                            "Quién autoriza: ${acceso.usuario?.nombre ?: acceso.usuario?.usuario ?: "-"}",
+                            color = Color.White
+                        )
+                        Text("Torre: ${acceso.torreVisual()}", color = Color.White)
+                        Text("Apartamento: ${acceso.apartamentoVisual()}", color = Color.White)
+                        Text("Fecha: ${acceso.horaAutorizada ?: "-"}", color = Color.White)
                     }
-                    Text("Placa: ${acceso.placaVehiculo ?: "-"}", color = Color.White)
-                    Text("Torre: ${acceso.torreVisual()}", color = Color.White)
-                    Text("Apartamento: ${acceso.apartamentoVisual()}", color = Color.White)
-                    Text("Fecha: ${acceso.horaAutorizada ?: "-"}", color = Color.White)
                 }
             },
             confirmButton = {
