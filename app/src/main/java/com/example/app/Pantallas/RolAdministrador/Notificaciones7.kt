@@ -94,7 +94,7 @@ fun PantallaNotificaciones(
                     }
 
                     Button(
-                        onClick = { navController.navigate("PantallaPagos") },
+                        onClick = { navController.navigate("PantallaPagosAdmin") },
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = GrisClaro

@@ -251,7 +251,7 @@ fun PantallaDetallesPaqueteriaCelador(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
+                    .menuAnchor()
                     .padding(vertical = 4.dp),
                 label = { Text("Selecciona el residente", color = Color.White) },
                 placeholder = { Text("Buscar residente...", color = GrisClaro) },
@@ -382,7 +382,7 @@ fun PantallaDetallesPaqueteriaCelador(
                 onValueChange = {},
                 modifier = Modifier
                     .fillMaxWidth()
-                    .menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
+                    .menuAnchor()
                     .padding(vertical = 4.dp),
                 label = { Text("Selecciona la transportadora", color = Color.White) },
                 placeholder = { Text("Buscar transportadora...", color = GrisClaro) },

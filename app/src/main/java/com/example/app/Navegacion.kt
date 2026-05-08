@@ -29,6 +29,7 @@ import com.example.app.Pantallas.RolAdministrador.PantallaMensajes
 import com.example.app.Pantallas.RolAdministrador.PantallaMensajesAdmin
 import com.example.app.Pantallas.RolAdministrador.PantallaMenu
 import com.example.app.Pantallas.RolAdministrador.PantallaNotificaciones
+import com.example.app.Pantallas.RolAdministrador.PantallaPagos as PantallaPagosAdmin
 import com.example.app.Pantallas.RolAdministrador.PantallaPerfil
 import com.example.app.Pantallas.RolAdministrador.PantallaQuejas
 import com.example.app.Pantallas.RolAdministrador.PantallaReservas
@@ -60,7 +61,8 @@ import com.example.app.Pantallas.RolResidente.PantallaMascotasResidente
 import com.example.app.Pantallas.RolResidente.PantallaMenuResidente
 import com.example.app.Pantallas.RolResidente.PantallaNotificacionesResidente
 import com.example.app.Pantallas.RolResidente.PantallaNuevaPublicacion
-import com.example.app.Pantallas.RolResidente.PantallaPagos
+import com.example.app.Pantallas.RolResidente.PantallaPagos as PantallaPagosResidente
+import com.example.app.Pantallas.RolResidente.PantallaPaqueteriaResidente
 import com.example.app.Pantallas.RolResidente.PantallaPerfilResidente
 import com.example.app.Pantallas.RolResidente.PantallaQuejasResidente
 import com.example.app.Pantallas.RolResidente.PantallaRecibos
@@ -175,6 +177,9 @@ fun Navegacion(navController: NavHostController) {
         composable("PantallaMensajesAdmin") {
             RoleGuard(navController, setOf("ADMINISTRADOR")) { PantallaMensajesAdmin(navController) }
         }
+        composable("PantallaPagosAdmin") {
+            RoleGuard(navController, setOf("ADMINISTRADOR")) { PantallaPagosAdmin(navController) }
+        }
         composable("PantallaMenu") { RoleGuard(navController, setOf("ADMINISTRADOR")) { PantallaMenu(navController) } }
         composable("PantallaAccesos") { RoleGuard(navController, setOf("ADMINISTRADOR")) { PantallaAccesos(navController) } }
         composable("PantallaAccesoVehicularDetalle") {
@@ -219,9 +224,12 @@ fun Navegacion(navController: NavHostController) {
         composable("PantallaRecibos") {
             RoleGuard(navController, setOf("RESIDENTE")) { PantallaRecibos(navController) }
         }
+        composable("PantallaPaqueteriaResidente") {
+            RoleGuard(navController, setOf("RESIDENTE")) { PantallaPaqueteriaResidente(navController) }
+        }
         composable("PantallaPagos") { 
             RoleGuard(navController, setOf("RESIDENTE")) {
-                PantallaPagos(navController, usuarioViewModel)
+                PantallaPagosResidente(navController, usuarioViewModel)
             }
         }
         composable("PantallaMenuResidente") { RoleGuard(navController, setOf("RESIDENTE")) { PantallaMenuResidente(navController) } }

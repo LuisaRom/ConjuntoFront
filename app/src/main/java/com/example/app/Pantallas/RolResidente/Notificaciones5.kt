@@ -71,7 +71,10 @@ fun PantallaNotificacionesResidente(
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Button(
-                onClick = { selectedTab = "Paqueteria" },
+                onClick = {
+                    selectedTab = "Paqueteria"
+                    navController.navigate("PantallaPaqueteriaResidente")
+                },
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (selectedTab == "Paqueteria") DoradoElegante else Color.Gray
