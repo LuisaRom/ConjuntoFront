@@ -46,6 +46,7 @@ fun PantallaDetallesPaqueteriaCelador(
     
     // Estados del formulario
     var residenteSeleccionado by remember { mutableStateOf<Usuario?>(null) }
+    var textoBusquedaResidente by remember { mutableStateOf("") }
     var torreApto by remember { mutableStateOf("") }
     var numeroPaquete by remember { mutableStateOf("") }
     var transportadora by remember { mutableStateOf("") }
@@ -95,10 +96,24 @@ fun PantallaDetallesPaqueteriaCelador(
             .distinctBy { it.id ?: "${it.usuario}-${it.nombre}-${it.documento}" }
             .sortedBy { if (it.nombre.isNotBlank()) it.nombre else it.usuario }
     }
+    val residentesFiltrados = remember(residentes, textoBusquedaResidente) {
+        val criterio = textoBusquedaResidente.trim().lowercase()
+        if (criterio.isBlank()) {
+            residentes
+        } else {
+            residentes.filter { residente ->
+                val nombre = residente.nombre.ifBlank { residente.usuario }.lowercase()
+                val torre = residente.torre.lowercase()
+                val apto = residente.apartamento.lowercase()
+                nombre.contains(criterio) || torre.contains(criterio) || apto.contains(criterio) || "$torre $apto".contains(criterio)
+            }
+        }
+    }
     
     // Autocompletar torre-apto cuando se selecciona un residente
     LaunchedEffect(residenteSeleccionado) {
         residenteSeleccionado?.let { residente ->
+            textoBusquedaResidente = if (residente.nombre.isNotBlank()) residente.nombre else residente.usuario
             val torre = residente.torre ?: ""
             val apto = residente.apartamento ?: ""
             torreApto = if (torre.isNotBlank() && apto.isNotBlank()) {
@@ -217,11 +232,20 @@ fun PantallaDetallesPaqueteriaCelador(
             onExpandedChange = { expandedResidente = !expandedResidente }
         ) {
             OutlinedTextField(
-                readOnly = true,
-                value = residenteSeleccionado?.let { 
-                    "${it.nombre} - ${it.torre} - ${it.apartamento}"
-                } ?: "",
-                onValueChange = {},
+                readOnly = false,
+                value = textoBusquedaResidente,
+                onValueChange = {
+                    textoBusquedaResidente = it
+                    expandedResidente = true
+                    if (residenteSeleccionado != null) {
+                        val seleccionado = residenteSeleccionado!!
+                        val nombreSeleccionado = if (seleccionado.nombre.isNotBlank()) seleccionado.nombre else seleccionado.usuario
+                        if (!nombreSeleccionado.equals(it, ignoreCase = true)) {
+                            residenteSeleccionado = null
+                            torreApto = ""
+                        }
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
@@ -261,11 +285,15 @@ fun PantallaDetallesPaqueteriaCelador(
                                 textColor = Color.White
                             )
                         )
-                    } else if (residentes.isEmpty()) {
+                    } else if (residentesFiltrados.isEmpty()) {
                         DropdownMenuItem(
                             text = {
                                 Text(
-                                    errorUsuarios ?: "Sin residentes cargados",
+                                    if (residentes.isEmpty()) {
+                                        errorUsuarios ?: "Sin residentes cargados"
+                                    } else {
+                                        "Sin coincidencias para \"$textoBusquedaResidente\""
+                                    },
                                     color = Color.White
                                 )
                             },
@@ -277,7 +305,7 @@ fun PantallaDetallesPaqueteriaCelador(
                             )
                         )
                     } else {
-                        residentes.forEach { residente ->
+                        residentesFiltrados.forEach { residente ->
                             DropdownMenuItem(
                                 text = { 
                                     Column(
@@ -298,6 +326,7 @@ fun PantallaDetallesPaqueteriaCelador(
                                 },
                                 onClick = {
                                     residenteSeleccionado = residente
+                                    textoBusquedaResidente = if (residente.nombre.isNotBlank()) residente.nombre else residente.usuario
                                     expandedResidente = false
                                 },
                                 colors = MenuDefaults.itemColors(

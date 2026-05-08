@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -89,46 +90,51 @@ fun PantallaNotificaciones(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Column(
+            Box(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                contentAlignment = Alignment.Center
             ) {
-                Button(
-                    onClick = { selectedTab = "Mensajes" },
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (selectedTab == "Mensajes") DoradoElegante else GrisClaro
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(80.dp)
+                Column(
+                    modifier = Modifier.fillMaxWidth(0.88f),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Chat,
-                        contentDescription = "Mensajes",
-                        tint = AzulOscuro
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("Mensajes", color = AzulOscuro)
-                }
+                    Button(
+                        onClick = { selectedTab = "Mensajes" },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (selectedTab == "Mensajes") DoradoElegante else GrisClaro
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(94.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Chat,
+                            contentDescription = "Mensajes",
+                            tint = AzulOscuro
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Mensajes", color = AzulOscuro)
+                    }
 
-                Button(
-                    onClick = { selectedTab = "Pagos" },
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (selectedTab == "Pagos") DoradoElegante else GrisClaro
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(80.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Payments,
-                        contentDescription = "Pagos",
-                        tint = AzulOscuro
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("Pagos", color = AzulOscuro)
+                    Button(
+                        onClick = { selectedTab = "Pagos" },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (selectedTab == "Pagos") DoradoElegante else GrisClaro
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(94.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Payments,
+                            contentDescription = "Pagos",
+                            tint = AzulOscuro
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Pagos", color = AzulOscuro)
+                    }
                 }
             }
 

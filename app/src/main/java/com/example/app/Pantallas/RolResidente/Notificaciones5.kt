@@ -179,8 +179,7 @@ fun PantallaNotificacionesResidente(
 
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.75f),
+                .fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Button(
@@ -191,7 +190,7 @@ fun PantallaNotificacionesResidente(
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
+                    .height(72.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.Inventory,
@@ -213,7 +212,7 @@ fun PantallaNotificacionesResidente(
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
+                    .height(72.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.ReceiptLong,
@@ -235,7 +234,7 @@ fun PantallaNotificacionesResidente(
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
+                    .height(72.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.Payments,
