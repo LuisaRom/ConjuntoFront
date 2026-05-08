@@ -23,6 +23,10 @@ class UsuarioRepository @Inject constructor() {
         return api.obtenerUsuarios()
     }
 
+    suspend fun obtenerContactosMensajeria(): List<Usuario> {
+        return api.obtenerContactosMensajeria()
+    }
+
     suspend fun obtenerPorId(id: Long): Usuario {
         return api.obtenerUsuario(id)
     }

@@ -1,5 +1,6 @@
 package com.example.app.Pantallas.RolAdministrador
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -36,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavController
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.app.Auth.AuthManager
@@ -45,49 +47,47 @@ import com.example.app.ViewModel.UsuarioViewModel
 import com.example.app.ui.theme.AzulOscuro
 import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaMensajes(
-    nombre: String,
+    receptorId: Long,
     navController: NavController,
     notificacionViewModel: NotificacionViewModel = hiltViewModel(),
     usuarioViewModel: UsuarioViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
     val usuarioActual by AuthManager.currentUser.collectAsState()
     val usuarioActualVm by usuarioViewModel.usuarioActual.collectAsState()
     val usuarios by usuarioViewModel.usuarios.collectAsState()
-    val notificaciones by notificacionViewModel.notificaciones.collectAsState()
+    val mensajesChatState by notificacionViewModel.mensajesChat.collectAsState()
     var textoMensaje by remember { mutableStateOf("") }
 
-    val receptor = remember(usuarios, nombre) {
-        usuarios.firstOrNull { it.nombre.equals(nombre, true) || it.usuario.equals(nombre, true) }
+    val receptor = remember(usuarios, receptorId) {
+        usuarios.firstOrNull { it.id == receptorId }
     }
 
     LaunchedEffect(Unit) {
-        usuarioViewModel.obtenerTodos()
-        notificacionViewModel.obtenerTodos()
+        usuarioViewModel.obtenerContactosMensajeria()
+        notificacionViewModel.obtenerHistorialChat()
     }
 
     LaunchedEffect(Unit) {
         while (true) {
             delay(3000)
-            notificacionViewModel.obtenerTodosSilencioso()
+            notificacionViewModel.obtenerHistorialChatSilencioso()
         }
     }
 
     val usuarioActualId = usuarioActual?.id ?: usuarioActualVm?.id
+    val tituloChat = receptor?.nombre?.ifBlank { receptor.usuario } ?: "Mensajes"
 
-    val mensajesChat = remember(notificaciones, usuarioActualId, receptor?.id, usuarios) {
+    val mensajesChat = remember(mensajesChatState, usuarioActualId, receptorId) {
         filtrarMensajesChat(
-            notificaciones = notificaciones,
+            notificaciones = mensajesChatState,
             emisorActualId = usuarioActualId,
-            receptorId = receptor?.id,
-            usuarios = usuarios
+            receptorId = receptorId
         )
     }
 
@@ -95,7 +95,7 @@ fun PantallaMensajes(
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
-                    Text(text = nombre, color = Color.White)
+                    Text(text = tituloChat, color = Color.White)
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
@@ -183,29 +183,21 @@ fun PantallaMensajes(
                 Spacer(modifier = Modifier.width(8.dp))
                 IconButton(onClick = {
                     if (textoMensaje.isBlank()) return@IconButton
-                    val payload = construirPayloadChat(
-                        emisorId = usuarioActualId,
-                        receptorId = receptor.id ?: return@IconButton,
-                        texto = textoMensaje.trim()
+                    val mensaje = textoMensaje.trim()
+                    notificacionViewModel.enviarMensajeChat(
+                        destinatarioId = receptor.id ?: return@IconButton,
+                        mensaje = mensaje,
+                        onSuccess = { textoMensaje = "" },
+                        onError = { error ->
+                            Toast.makeText(context, error, Toast.LENGTH_LONG).show()
+                        }
                     )
-                    notificacionViewModel.guardar(
-                        Notificacion(
-                            mensaje = payload,
-                            fechaEnvio = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).format(Date()),
-                            usuario = receptor
-                        )
-                    )
-                    textoMensaje = ""
                 }) {
                     Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Enviar", tint = DoradoElegante)
                 }
             }
         }
     }
-}
-
-private fun construirPayloadChat(emisorId: Long, receptorId: Long, texto: String): String {
-    return "CHAT|from=$emisorId|to=$receptorId|msg=${texto.replace("|", "/")}"
 }
 
 private fun esMensajeChat(payload: String?): Boolean {
@@ -242,33 +234,13 @@ private fun extraerTextoChat(payload: String?): String {
 private fun filtrarMensajesChat(
     notificaciones: List<Notificacion>,
     emisorActualId: Long?,
-    receptorId: Long?,
-    usuarios: List<com.example.app.Model.Usuario>
+    receptorId: Long?
 ): List<Notificacion> {
     if (emisorActualId == null || receptorId == null) return emptyList()
-    val usuarioActual = usuarios.firstOrNull { it.id == emisorActualId }
-    val usuarioReceptor = usuarios.firstOrNull { it.id == receptorId }
-    val rolesValidos = setOf("ADMINISTRADOR", "ADMIN", "CELADOR")
-    val chatPermitido = normalizarRolChat(usuarioActual?.rol) in rolesValidos &&
-        normalizarRolChat(usuarioReceptor?.rol) in rolesValidos
-    if (!chatPermitido) return emptyList()
 
     return notificaciones.filter { noti ->
         val from = extraerEmisorId(noti.mensaje)
         val to = extraerReceptorId(noti.mensaje)
-        val participantesCorrectos =
-            (from == emisorActualId && to == receptorId) || (from == receptorId && to == emisorActualId)
-        if (!participantesCorrectos) return@filter false
-        val rolFrom = normalizarRolChat(usuarios.firstOrNull { it.id == from }?.rol)
-        val rolTo = normalizarRolChat(usuarios.firstOrNull { it.id == to }?.rol)
-        rolFrom in rolesValidos && rolTo in rolesValidos
-    }
-}
-
-private fun normalizarRolChat(rol: String?): String {
-    return when (rol?.uppercase()) {
-        "ADMINISTRADOR", "ADMIN" -> "ADMIN"
-        "CELADOR" -> "CELADOR"
-        else -> rol?.uppercase().orEmpty()
+        (from == emisorActualId && to == receptorId) || (from == receptorId && to == emisorActualId)
     }
 }

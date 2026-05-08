@@ -1,6 +1,5 @@
 package com.example.app.Pantallas.RolAdministrador
 
-import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -54,7 +53,7 @@ fun PantallaNotificaciones(
     val usuarios by usuarioViewModel.usuarios.collectAsState()
 
     LaunchedEffect(Unit) {
-        usuarioViewModel.obtenerTodos()
+        usuarioViewModel.obtenerContactosMensajeria()
     }
 
     Surface(
@@ -128,16 +127,14 @@ fun PantallaNotificaciones(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                val celadores = usuarios.filter {
-                    it.rol.equals("CELADOR", ignoreCase = true)
-                }.filter {
+                val contactos = usuarios.filter {
                     val nombre = it.nombre.ifBlank { it.usuario }
                     nombre.contains(searchQuery, ignoreCase = true)
                 }
 
-                if (celadores.isEmpty()) {
+                if (contactos.isEmpty()) {
                     Text(
-                        text = "No hay celadores disponibles para chatear.",
+                        text = "No hay administradores o celadores disponibles para chatear.",
                         color = GrisClaro,
                         style = MaterialTheme.typography.bodyLarge
                     )
@@ -145,19 +142,19 @@ fun PantallaNotificaciones(
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        items(celadores, key = { it.id ?: it.usuario.hashCode().toLong() }) { celador ->
-                            val nombre = celador.nombre.ifBlank { celador.usuario }
-                            val torreApto = "Torre ${celador.torre.ifBlank { "-" }} - Apt ${celador.apartamento.ifBlank { "-" }}"
+                        items(contactos, key = { it.id ?: it.usuario.hashCode().toLong() }) { contacto ->
+                            val nombre = contacto.nombre.ifBlank { contacto.usuario }
+                            val detalle = contacto.rol.ifBlank { "Usuario" }
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { navController.navigate("PantallaMensajes/${Uri.encode(nombre)}") },
+                                    .clickable { contacto.id?.let { navController.navigate("PantallaMensajes/$it") } },
                                 colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.06f)),
                                 shape = RoundedCornerShape(10.dp)
                             ) {
                                 Column(modifier = Modifier.padding(12.dp)) {
                                     Text(nombre, color = Color.White)
-                                    Text(torreApto, color = GrisClaro)
+                                    Text(detalle, color = GrisClaro)
                                 }
                             }
                         }

@@ -88,6 +88,20 @@ class UsuarioViewModel @Inject constructor(
             _isLoading.value = false
         }
     }
+
+    fun obtenerContactosMensajeria() = viewModelScope.launch {
+        _isLoading.value = true
+        _error.value = null
+        try {
+            val lista = repository.obtenerContactosMensajeria()
+            _usuarios.value = lista
+        } catch (e: Exception) {
+            _error.value = "Error al obtener contactos de mensajería: ${e.message}"
+            _usuarios.value = emptyList()
+        } finally {
+            _isLoading.value = false
+        }
+    }
     
     suspend fun guardarUsuario(usuario: Usuario): Usuario {
         _isLoading.value = true

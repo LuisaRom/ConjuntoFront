@@ -16,6 +16,9 @@ interface UsuarioApiService {
     @GET("api/usuarios")
     suspend fun obtenerUsuarios(): List<Usuario>
 
+    @GET("api/mensajes/contactos")
+    suspend fun obtenerContactosMensajeria(): List<Usuario>
+
     @GET("api/usuarios/{id}")
     suspend fun obtenerUsuario(@Path("id") id: Long): Usuario
 

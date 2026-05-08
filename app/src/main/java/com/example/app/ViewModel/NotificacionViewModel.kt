@@ -21,6 +21,9 @@ class NotificacionViewModel @Inject constructor(
     private val _notificaciones = MutableStateFlow<List<Notificacion>>(emptyList())
     val notificaciones: StateFlow<List<Notificacion>> = _notificaciones.asStateFlow()
 
+    private val _mensajesChat = MutableStateFlow<List<Notificacion>>(emptyList())
+    val mensajesChat: StateFlow<List<Notificacion>> = _mensajesChat.asStateFlow()
+
     private val _notificacionSeleccionada = MutableStateFlow<Notificacion?>(null)
     val notificacionSeleccionada: StateFlow<Notificacion?> = _notificacionSeleccionada.asStateFlow()
 
@@ -86,6 +89,61 @@ class NotificacionViewModel @Inject constructor(
         } catch (e: Exception) {
             android.util.Log.e("NotificacionViewModel", "Error en refresco silencioso", e)
             // Mantener datos actuales para evitar parpadeo de la UI.
+        }
+    }
+
+    fun obtenerHistorialChat() = viewModelScope.launch {
+        _isLoading.value = true
+        _error.value = null
+        try {
+            val lista = withContext(Dispatchers.IO) {
+                repository.obtenerHistorialChat()
+            }
+            _mensajesChat.value = lista.filter { it.esValida() }
+        } catch (e: Exception) {
+            android.util.Log.e("NotificacionViewModel", "Error al obtener mensajes de chat", e)
+            _error.value = "Error al obtener mensajes: ${e.message}"
+            _mensajesChat.value = emptyList()
+        } finally {
+            _isLoading.value = false
+        }
+    }
+
+    fun obtenerHistorialChatSilencioso() = viewModelScope.launch {
+        try {
+            val lista = withContext(Dispatchers.IO) {
+                repository.obtenerHistorialChat()
+            }.filter { it.esValida() }
+            if (_mensajesChat.value != lista) {
+                _mensajesChat.value = lista
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("NotificacionViewModel", "Error en refresco silencioso del chat", e)
+        }
+    }
+
+    fun enviarMensajeChat(
+        destinatarioId: Long,
+        mensaje: String,
+        onSuccess: (() -> Unit)? = null,
+        onError: ((String) -> Unit)? = null
+    ) = viewModelScope.launch {
+        _isLoading.value = true
+        _error.value = null
+        try {
+            val enviado = withContext(Dispatchers.IO) {
+                repository.enviarMensajeChat(destinatarioId, mensaje)
+            }
+            _mensajesChat.value = (_mensajesChat.value + enviado).distinctBy { it.id ?: it.hashCode().toLong() }
+            obtenerHistorialChatSilencioso()
+            onSuccess?.invoke()
+        } catch (e: Exception) {
+            android.util.Log.e("NotificacionViewModel", "Error al enviar mensaje de chat", e)
+            val textoError = "Error al enviar mensaje: ${e.message}"
+            _error.value = textoError
+            onError?.invoke(textoError)
+        } finally {
+            _isLoading.value = false
         }
     }
 

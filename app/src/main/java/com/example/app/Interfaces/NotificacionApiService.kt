@@ -1,6 +1,7 @@
 package com.example.app.Interfaces
 
 import com.example.app.Model.Notificacion
+import com.example.app.Model.ChatMensajeRequest
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -17,6 +18,12 @@ interface NotificacionApiService {
 
     @POST("/api/notificaciones")
     suspend fun guardarNotificacion(@Body notificacion: Notificacion): Notificacion
+
+    @GET("/api/notificaciones/chat/historial")
+    suspend fun obtenerHistorialChat(): List<Notificacion>
+
+    @POST("/api/notificaciones/chat/enviar")
+    suspend fun enviarMensajeChat(@Body request: ChatMensajeRequest): Notificacion
 
     @PUT("/api/notificaciones/{id}")
     suspend fun actualizarNotificacion(@Path("id") id: Long, @Body notificacion: Notificacion): Notificacion

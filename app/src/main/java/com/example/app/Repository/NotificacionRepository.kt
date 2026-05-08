@@ -1,6 +1,7 @@
 package com.example.app.Repository
 
 import com.example.app.Interfaces.NotificacionApiService
+import com.example.app.Model.ChatMensajeRequest
 import com.example.app.Model.Notificacion
 import com.example.app.Model.Usuario
 import javax.inject.Inject
@@ -31,6 +32,35 @@ class NotificacionRepository @Inject constructor(
             api.obtenerNotificacion(id)
         } catch (e: Exception) {
             throw Exception("Error al obtener notificación: ${e.message}")
+        }
+    }
+
+    suspend fun obtenerHistorialChat(): List<Notificacion> {
+        return try {
+            api.obtenerHistorialChat()
+        } catch (e: java.net.ConnectException) {
+            throw Exception("No se pudo conectar al servidor para obtener mensajes")
+        } catch (e: java.net.SocketTimeoutException) {
+            throw Exception("Tiempo de espera agotado al obtener mensajes")
+        } catch (e: retrofit2.HttpException) {
+            throw Exception("Error HTTP ${e.code()} al obtener mensajes: ${e.message()}")
+        } catch (e: Exception) {
+            throw Exception("Error al obtener mensajes: ${e.message}")
+        }
+    }
+
+    suspend fun enviarMensajeChat(destinatarioId: Long, mensaje: String): Notificacion {
+        return try {
+            api.enviarMensajeChat(ChatMensajeRequest(destinatarioId = destinatarioId, mensaje = mensaje))
+        } catch (e: java.net.ConnectException) {
+            throw Exception("No se pudo conectar al servidor para enviar el mensaje")
+        } catch (e: java.net.SocketTimeoutException) {
+            throw Exception("Tiempo de espera agotado al enviar el mensaje")
+        } catch (e: retrofit2.HttpException) {
+            val errorBody = e.response()?.errorBody()?.string().orEmpty()
+            throw Exception(errorBody.ifBlank { "Error HTTP ${e.code()} al enviar mensaje" })
+        } catch (e: Exception) {
+            throw Exception("Error al enviar mensaje: ${e.message}")
         }
     }
 

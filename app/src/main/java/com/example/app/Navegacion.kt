@@ -1,6 +1,5 @@
 package com.example.app
 
-import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -166,10 +165,10 @@ fun Navegacion(navController: NavHostController) {
                 PantallaCreacionPublicacionAdmin(navController, usuarioViewModel)
             }
         }
-        composable("PantallaMensajes/{nombre}") { backStackEntry ->
-            RoleGuard(navController, setOf("ADMINISTRADOR", "CELADOR")) {
-                val nombre = Uri.decode(backStackEntry.arguments?.getString("nombre") ?: "")
-                PantallaMensajes(nombre = nombre, navController = navController)
+        composable("PantallaMensajes/{usuarioId}") { backStackEntry ->
+            RoleGuard(navController, setOf("ADMINISTRADOR", "CELADOR", "RESIDENTE")) {
+                val usuarioId = backStackEntry.arguments?.getString("usuarioId")?.toLongOrNull() ?: 0L
+                PantallaMensajes(receptorId = usuarioId, navController = navController)
             }
         }
         composable("PantallaMenu") { RoleGuard(navController, setOf("ADMINISTRADOR")) { PantallaMenu(navController) } }
