@@ -4,6 +4,8 @@ import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
@@ -64,15 +66,16 @@ fun PantallaDetallesPaqueteriaCelador(
     val errorPaquete by paqueteriaViewModel.error.collectAsState()
     var intentoFallbackUsuarios by remember { mutableStateOf(false) }
     
-    // Cargar usuarios al iniciar
+    // Cargar usuarios al iniciar (lista completa) y filtrar residentes en app.
     LaunchedEffect(Unit) {
-        usuarioViewModel.obtenerResidentes()
+        usuarioViewModel.obtenerTodos()
         paqueteriaViewModel.obtenerTodos()
     }
 
-    // Si no cargan usuarios por permisos/ruta, intentar endpoint alterno.
+    // Si no cargan usuarios o llegan muy pocos residentes, intentar endpoints alternos.
     LaunchedEffect(isLoading, usuarios) {
-        if (!isLoading && usuarios.isEmpty() && !intentoFallbackUsuarios) {
+        val residentesDetectados = usuarios.count { esRolResidente(it.rol) }
+        if (!isLoading && (usuarios.isEmpty() || residentesDetectados <= 1) && !intentoFallbackUsuarios) {
             intentoFallbackUsuarios = true
             usuarioViewModel.obtenerContactosMensajeria()
             // Reintento con carga de residentes por rutas alternativas.
@@ -272,40 +275,40 @@ fun PantallaDetallesPaqueteriaCelador(
                 modifier = Modifier
                     .background(AzulOscuro)
             ) {
-                Column(
+                if (isLoading) {
+                    DropdownMenuItem(
+                        text = { Text("Cargando residentes...", color = Color.White) },
+                        onClick = {},
+                        colors = MenuDefaults.itemColors(
+                            textColor = Color.White
+                        )
+                    )
+                } else if (residentesFiltrados.isEmpty()) {
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                if (residentes.isEmpty()) {
+                                    errorUsuarios ?: "Sin residentes cargados"
+                                } else {
+                                    "Sin coincidencias para \"$textoBusquedaResidente\""
+                                },
+                                color = Color.White
+                            )
+                        },
+                        onClick = {
+                            usuarioViewModel.obtenerTodos()
+                            usuarioViewModel.obtenerResidentes()
+                        },
+                        colors = MenuDefaults.itemColors(
+                            textColor = Color.White
+                        )
+                    )
+                } else {
+                    LazyColumn(
                     modifier = Modifier
                         .heightIn(max = 400.dp)
-                        .verticalScroll(rememberScrollState())
                 ) {
-                    if (isLoading) {
-                        DropdownMenuItem(
-                            text = { Text("Cargando residentes...", color = Color.White) },
-                            onClick = {},
-                            colors = MenuDefaults.itemColors(
-                                textColor = Color.White
-                            )
-                        )
-                    } else if (residentesFiltrados.isEmpty()) {
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    if (residentes.isEmpty()) {
-                                        errorUsuarios ?: "Sin residentes cargados"
-                                    } else {
-                                        "Sin coincidencias para \"$textoBusquedaResidente\""
-                                    },
-                                    color = Color.White
-                                )
-                            },
-                            onClick = {
-                                usuarioViewModel.obtenerResidentes()
-                            },
-                            colors = MenuDefaults.itemColors(
-                                textColor = Color.White
-                            )
-                        )
-                    } else {
-                        residentesFiltrados.forEach { residente ->
+                        items(residentesFiltrados) { residente ->
                             DropdownMenuItem(
                                 text = { 
                                     Column(

@@ -53,7 +53,10 @@ fun PantallaRecibosCelador(
     val scope = rememberCoroutineScope()
 
     val usuarios by usuarioViewModel.usuarios.collectAsState()
-    val residentes = usuarios.filter { it.rol?.uppercase() == "RESIDENTE" }
+    val residentes = usuarios.filter { usuario ->
+        val rolNormalizado = usuario.rol.trim().uppercase()
+        rolNormalizado == "RESIDENTE" || rolNormalizado.contains("RESIDENTE")
+    }
 
     // Estados para controlar qué recibos están expandidos
     var enelExpanded by remember { mutableStateOf(false) }
@@ -75,11 +78,9 @@ fun PantallaRecibosCelador(
     var vantiNotificado by remember { mutableStateOf(false) }
     var epzNotificado by remember { mutableStateOf(false) }
 
-    // Cargar usuarios al iniciar
+    // Cargar residentes al iniciar siempre para evitar usar listas de otras pantallas.
     LaunchedEffect(Unit) {
-        if (usuarios.isEmpty()) {
-            usuarioViewModel.obtenerTodos()
-        }
+        usuarioViewModel.obtenerResidentes()
     }
 
     Column(

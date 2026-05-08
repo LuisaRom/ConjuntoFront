@@ -26,6 +26,7 @@ import com.example.app.Pantallas.RolAdministrador.PantallaDetalleReservaZonaBBQ
 import com.example.app.Pantallas.RolAdministrador.PantallaInicioAdmin
 import com.example.app.Pantallas.RolAdministrador.PantallaMascotas
 import com.example.app.Pantallas.RolAdministrador.PantallaMensajes
+import com.example.app.Pantallas.RolAdministrador.PantallaMensajesAdmin
 import com.example.app.Pantallas.RolAdministrador.PantallaMenu
 import com.example.app.Pantallas.RolAdministrador.PantallaNotificaciones
 import com.example.app.Pantallas.RolAdministrador.PantallaPerfil
@@ -170,6 +171,9 @@ fun Navegacion(navController: NavHostController) {
                 val usuarioId = backStackEntry.arguments?.getString("usuarioId")?.toLongOrNull() ?: 0L
                 PantallaMensajes(receptorId = usuarioId, navController = navController)
             }
+        }
+        composable("PantallaMensajesAdmin") {
+            RoleGuard(navController, setOf("ADMINISTRADOR")) { PantallaMensajesAdmin(navController) }
         }
         composable("PantallaMenu") { RoleGuard(navController, setOf("ADMINISTRADOR")) { PantallaMenu(navController) } }
         composable("PantallaAccesos") { RoleGuard(navController, setOf("ADMINISTRADOR")) { PantallaAccesos(navController) } }

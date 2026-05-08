@@ -3,6 +3,7 @@ package com.example.app.Repository
 import com.example.app.Interfaces.PagoAdministracionApiService
 import com.example.app.Model.CrearPagoRequest
 import com.example.app.Model.PagoAdministracion
+import retrofit2.HttpException
 import javax.inject.Inject
 
 class PagoAdministracionRepository @Inject constructor(
@@ -30,7 +31,17 @@ class PagoAdministracionRepository @Inject constructor(
             .recoverCatching { api.crearPagoEnLineaCheckout(request) }
             .recoverCatching { api.crearPagoEnLineaMercadoPago(request) }
             .recoverCatching { api.crearPagoEnLineaMercadoPagoCrear(request) }
-            .getOrThrow()
+            .recoverCatching { api.crearPagoEnLineaMercadoPagoDash(request) }
+            .recoverCatching { api.crearPagoEnLineaMercadoPagoDashCrear(request) }
+            .getOrElse { error ->
+                if (error is HttpException && error.code() == 404) {
+                    throw IllegalStateException(
+                        "El backend no tiene habilitada la ruta de checkout de Mercado Pago (404). " +
+                            "Verifica el endpoint de prueba en el backend."
+                    )
+                }
+                throw error
+            }
 
         val url = response.initPoint
             ?: response.sandboxInitPoint
@@ -54,6 +65,6 @@ class PagoAdministracionRepository @Inject constructor(
     private fun construirUrlDesdePreferencia(preferenceId: String): String {
         val pref = preferenceId.trim()
         if (pref.isBlank()) throw IllegalStateException("PreferenceId vacío")
-        return "https://www.mercadopago.com/checkout/v1/redirect?pref_id=$pref"
+        return "https://www.mercadopago.com.co/checkout/v1/redirect?pref_id=$pref"
     }
 }

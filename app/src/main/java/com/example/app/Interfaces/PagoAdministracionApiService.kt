@@ -40,6 +40,12 @@ interface PagoAdministracionApiService {
     @POST("/api/pagos/mercadopago/crear")
     suspend fun crearPagoEnLineaMercadoPagoCrear(@Body request: CrearPagoRequest): CheckoutAdministracionResponse
 
+    @POST("/api/pagos/mercado-pago")
+    suspend fun crearPagoEnLineaMercadoPagoDash(@Body request: CrearPagoRequest): CheckoutAdministracionResponse
+
+    @POST("/api/pagos/mercado-pago/crear")
+    suspend fun crearPagoEnLineaMercadoPagoDashCrear(@Body request: CrearPagoRequest): CheckoutAdministracionResponse
+
     @DELETE("/api/pagos/{id}")
     suspend fun eliminarPago(@Path("id") id: Long)
 }
