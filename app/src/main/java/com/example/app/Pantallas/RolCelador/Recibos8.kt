@@ -76,7 +76,15 @@ fun PantallaRecibosCelador(
     val scope = rememberCoroutineScope()
 
     val usuarios by usuarioViewModel.usuarios.collectAsState()
-    val residentes = usuarios.filter { it.rol.uppercase() == "RESIDENTE" }
+    val isLoadingUsuarios by usuarioViewModel.isLoading.collectAsState()
+    var intentoFallbackUsuarios by remember { mutableStateOf(false) }
+    val residentes = remember(usuarios) {
+        usuarios
+            .filter { esRolResidente(it.rol) && it.id != null }
+            .distinctBy { it.id }
+            .sortedBy { it.nombre.ifBlank { it.usuario } }
+    }
+    val residentesIds = remember(residentes) { residentes.mapNotNull { it.id }.toSet() }
 
     var enelExpanded by remember { mutableStateOf(false) }
     var vantiExpanded by remember { mutableStateOf(false) }
@@ -97,6 +105,13 @@ fun PantallaRecibosCelador(
     LaunchedEffect(Unit) {
         if (usuarios.isEmpty()) {
             usuarioViewModel.obtenerTodos()
+        }
+    }
+
+    LaunchedEffect(isLoadingUsuarios, usuarios) {
+        if (!isLoadingUsuarios && usuarios.isEmpty() && !intentoFallbackUsuarios) {
+            intentoFallbackUsuarios = true
+            usuarioViewModel.obtenerContactosMensajeria()
         }
     }
 
@@ -133,11 +148,12 @@ fun PantallaRecibosCelador(
             onSeleccionarResidente = { id ->
                 val nuevoSet = if (enelSeleccionados.contains(id)) enelSeleccionados - id else enelSeleccionados + id
                 enelSeleccionados = nuevoSet
-                if (enelTodosSeleccionado) enelTodosSeleccionado = false
+                enelTodosSeleccionado = residentesIds.isNotEmpty() && nuevoSet.containsAll(residentesIds)
             },
             onSeleccionarTodos = {
-                enelTodosSeleccionado = !enelTodosSeleccionado
-                enelSeleccionados = if (enelTodosSeleccionado) residentes.mapNotNull { it.id }.toSet() else emptySet()
+                val seleccionarTodos = !enelTodosSeleccionado
+                enelTodosSeleccionado = seleccionarTodos
+                enelSeleccionados = if (seleccionarTodos) residentesIds else emptySet()
             },
             onEnviarNotificaciones = {
                 scope.launch {
@@ -188,11 +204,12 @@ fun PantallaRecibosCelador(
             onSeleccionarResidente = { id ->
                 val nuevoSet = if (vantiSeleccionados.contains(id)) vantiSeleccionados - id else vantiSeleccionados + id
                 vantiSeleccionados = nuevoSet
-                if (vantiTodosSeleccionado) vantiTodosSeleccionado = false
+                vantiTodosSeleccionado = residentesIds.isNotEmpty() && nuevoSet.containsAll(residentesIds)
             },
             onSeleccionarTodos = {
-                vantiTodosSeleccionado = !vantiTodosSeleccionado
-                vantiSeleccionados = if (vantiTodosSeleccionado) residentes.mapNotNull { it.id }.toSet() else emptySet()
+                val seleccionarTodos = !vantiTodosSeleccionado
+                vantiTodosSeleccionado = seleccionarTodos
+                vantiSeleccionados = if (seleccionarTodos) residentesIds else emptySet()
             },
             onEnviarNotificaciones = {
                 scope.launch {
@@ -243,11 +260,12 @@ fun PantallaRecibosCelador(
             onSeleccionarResidente = { id ->
                 val nuevoSet = if (epzSeleccionados.contains(id)) epzSeleccionados - id else epzSeleccionados + id
                 epzSeleccionados = nuevoSet
-                if (epzTodosSeleccionado) epzTodosSeleccionado = false
+                epzTodosSeleccionado = residentesIds.isNotEmpty() && nuevoSet.containsAll(residentesIds)
             },
             onSeleccionarTodos = {
-                epzTodosSeleccionado = !epzTodosSeleccionado
-                epzSeleccionados = if (epzTodosSeleccionado) residentes.mapNotNull { it.id }.toSet() else emptySet()
+                val seleccionarTodos = !epzTodosSeleccionado
+                epzTodosSeleccionado = seleccionarTodos
+                epzSeleccionados = if (seleccionarTodos) residentesIds else emptySet()
             },
             onEnviarNotificaciones = {
                 scope.launch {
@@ -285,6 +303,11 @@ fun PantallaRecibosCelador(
             tieneNotificacion = epzNotificado
         )
     }
+}
+
+private fun esRolResidente(rol: String?): Boolean {
+    val valor = rol.orEmpty().trim().uppercase()
+    return valor == "RESIDENTE" || valor.contains("RESIDENTE")
 }
 
 @Composable

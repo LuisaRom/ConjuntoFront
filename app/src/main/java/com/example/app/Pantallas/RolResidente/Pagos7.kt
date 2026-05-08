@@ -43,6 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.app.R
+import com.example.app.Auth.AuthManager
 import com.example.app.ViewModel.UsuarioViewModel
 import com.example.app.ViewModel.PagoAdministracionViewModel
 import com.example.app.ui.theme.AzulOscuro
@@ -58,6 +59,8 @@ import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
 
+private const val URL_MERCADO_PAGO_PRUEBA = "https://www.mercadopago.com.co"
+
 @Composable
 fun PantallaPagos(
     navController: NavController,
@@ -66,22 +69,24 @@ fun PantallaPagos(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val usuarioSesion by AuthManager.currentUser.collectAsState()
     val usuarioActual by usuarioViewModel.usuarioActual.collectAsState()
+    val usuarioPago = usuarioActual ?: usuarioSesion
     val checkoutUrl by pagoAdministracionViewModel.checkoutUrl.collectAsState()
     val isLoading by pagoAdministracionViewModel.isLoading.collectAsState()
     val error by pagoAdministracionViewModel.error.collectAsState()
     var metodoSeleccionado by remember { mutableStateOf("EFECTIVO") }
     
     // Estado para los campos del formulario
-    val torreApartamento = remember(usuarioActual) {
-        if (usuarioActual?.torre != null && usuarioActual?.apartamento != null) {
-            "${usuarioActual?.torre} - ${usuarioActual?.apartamento}"
+    val torreApartamento = remember(usuarioPago) {
+        if (usuarioPago?.torre != null && usuarioPago?.apartamento != null) {
+            "${usuarioPago?.torre} - ${usuarioPago?.apartamento}"
         } else {
             ""
         }
     }
-    val nombre = remember(usuarioActual) { usuarioActual?.nombre ?: "" }
-    val id = remember(usuarioActual) { usuarioActual?.id?.toString() ?: "" }
+    val nombre = remember(usuarioPago) { usuarioPago?.nombre ?: "" }
+    val id = remember(usuarioPago) { usuarioPago?.id?.toString() ?: "" }
     
     // Fecha actual formateada
     val fechaActual = remember {
@@ -117,14 +122,8 @@ fun PantallaPagos(
     LaunchedEffect(checkoutUrl) {
         val url = checkoutUrl ?: return@LaunchedEffect
         try {
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-            val canOpen = intent.resolveActivity(context.packageManager) != null
-            if (canOpen) {
-                context.startActivity(intent)
-                Toast.makeText(context, "Redirigiendo a Pago en línea...", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(context, "No se encontró una app para abrir el enlace de pago.", Toast.LENGTH_LONG).show()
-            }
+            abrirUrlDePago(context, url)
+            Toast.makeText(context, "Redirigiendo a Mercado Pago...", Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
             Toast.makeText(context, "No se pudo abrir el checkout: ${e.message}", Toast.LENGTH_LONG).show()
         } finally {
@@ -134,7 +133,16 @@ fun PantallaPagos(
 
     LaunchedEffect(error) {
         val mensajeError = error ?: return@LaunchedEffect
-        Toast.makeText(context, mensajeError, Toast.LENGTH_LONG).show()
+        if (metodoSeleccionado == "Pago en línea") {
+            Toast.makeText(
+                context,
+                "No se pudo iniciar el checkout automático. Abriendo Mercado Pago en modo prueba.",
+                Toast.LENGTH_LONG
+            ).show()
+            abrirUrlDePago(context, URL_MERCADO_PAGO_PRUEBA)
+        } else {
+            Toast.makeText(context, mensajeError, Toast.LENGTH_LONG).show()
+        }
         pagoAdministracionViewModel.clearError()
     }
 
@@ -208,9 +216,14 @@ fun PantallaPagos(
                 enabled = !isLoading
             ) {
                 metodoSeleccionado = "Pago en línea"
-                val usuarioId = usuarioActual?.id
+                val usuarioId = usuarioPago?.id
                 if (usuarioId == null) {
-                    Toast.makeText(context, "No se pudo identificar el usuario para generar el pago.", Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        context,
+                        "No se pudo identificar el usuario. Abriendo Mercado Pago en modo prueba.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                    abrirUrlDePago(context, URL_MERCADO_PAGO_PRUEBA)
                     return@MetodoPagoItem
                 }
                 if (valorNumericoPago <= 0L) {
@@ -219,7 +232,7 @@ fun PantallaPagos(
                 }
                 pagoAdministracionViewModel.crearCheckoutAdministracion(
                     usuarioId = usuarioId,
-                    apartamento = usuarioActual?.apartamento.orEmpty(),
+                    apartamento = usuarioPago?.apartamento.orEmpty(),
                     valor = valorNumericoPago,
                     descripcion = "Pago administración"
                 )
@@ -240,6 +253,16 @@ fun PantallaPagos(
                 Text("Iniciando pago en línea...", color = GrisClaro, fontSize = 13.sp)
             }
         }
+    }
+}
+
+private fun abrirUrlDePago(context: android.content.Context, url: String) {
+    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+    val canOpen = intent.resolveActivity(context.packageManager) != null
+    if (canOpen) {
+        context.startActivity(intent)
+    } else {
+        Toast.makeText(context, "No se encontró una app para abrir Mercado Pago.", Toast.LENGTH_LONG).show()
     }
 }
 

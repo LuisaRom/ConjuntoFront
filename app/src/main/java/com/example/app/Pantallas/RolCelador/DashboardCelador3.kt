@@ -370,18 +370,17 @@ fun PublicacionItemCelador(
             // Imagen si existe
             val imagenPath = notificacion.imagenUrl
             if (imagenPath != null && imagenPath.isNotBlank()) {
-                val file = remember(imagenPath) { File(imagenPath) }
-                val fileExists = remember(file) {
-                    try {
-                        file.exists() && file.canRead()
-                    } catch (e: Exception) {
-                        false
+                val imagenSource: Any? = remember(imagenPath) {
+                    if (imagenPath.startsWith("http://") || imagenPath.startsWith("https://")) {
+                        imagenPath
+                    } else {
+                        File(imagenPath).takeIf { it.exists() && it.canRead() }
                     }
                 }
 
-                if (fileExists) {
+                if (imagenSource != null) {
                     Image(
-                        painter = rememberAsyncImagePainter(file),
+                        painter = rememberAsyncImagePainter(imagenSource),
                         contentDescription = "Imagen de la publicación",
                         contentScale = ContentScale.FillWidth,
                         modifier = Modifier

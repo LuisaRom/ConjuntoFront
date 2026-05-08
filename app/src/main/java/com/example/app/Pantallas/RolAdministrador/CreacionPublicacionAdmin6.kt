@@ -575,13 +575,19 @@ fun PantallaCreacionPublicacionAdmin(
                             else -> null
                         }
                         
-                        // Solo enviar imagenUrl si hay una imagen seleccionada
+                        // El backend solo acepta URLs publicas; los archivos locales se previsualizan,
+                        // pero no se envian para evitar rechazos del guardado.
+                        val imagenParaBackend = imagenSeleccionada
+                            ?.takeIf { it.startsWith("http://") || it.startsWith("https://") }
+                        val videoParaBackend = videoPath
+                            ?.takeIf { it.startsWith("http://") || it.startsWith("https://") }
+
                         val notificacion = Notificacion(
                             mensaje = descripcion,
                             fechaEnvio = fechaActual,
                             usuario = usuarioActual,
-                            imagenUrl = imagenSeleccionada?.takeIf { it.isNotBlank() },
-                            videoUrl = videoPath,
+                            imagenUrl = imagenParaBackend,
+                            videoUrl = videoParaBackend,
                             usuariosEtiquetados = usuariosEtiquetadosJson
                         )
                         
@@ -589,32 +595,31 @@ fun PantallaCreacionPublicacionAdmin(
                         android.util.Log.d("CreacionPublicacion", "Guardando notificación: mensaje=$descripcion, usuario=${usuarioActual?.id}, imagenUrl=${imagenSeleccionada}, videoUrl=$videoPath, etiquetas=${usuariosEtiquetados.size}")
                         
                         coroutineScope.launch {
-                            try {
-                                notificacionViewModel.guardar(notificacion)
-                                mensajeExito = "Publicación creada exitosamente"
-                                mensajeError = null
-                                
-                        // Limpiar campos después de guardar
-                        descripcion = ""
-                        imagenSeleccionada = null
-                        imagenUri = null
-                        videoSeleccionado = null
-                        videoFile = null
-                        usuariosEtiquetados = emptyList()
-                        imageFile = null
-                                
-                                // Refrescar y volver al dashboard de forma segura.
-                                kotlinx.coroutines.delay(500)
-                                notificacionViewModel.obtenerTodos()
-                                navController.navigate("PantallaDashboardAdmin") {
-                                    popUpTo("PantallaDashboardAdmin") { inclusive = false }
-                                    launchSingleTop = true
+                            notificacionViewModel.guardar(
+                                notificacion = notificacion,
+                                onSuccess = {
+                                    mensajeExito = "Publicación creada exitosamente"
+                                    mensajeError = null
+
+                                    // Limpiar campos después de guardar
+                                    descripcion = ""
+                                    imagenSeleccionada = null
+                                    imagenUri = null
+                                    videoSeleccionado = null
+                                    videoFile = null
+                                    usuariosEtiquetados = emptyList()
+                                    imageFile = null
+
+                                    navController.navigate("PantallaDashboardAdmin") {
+                                        popUpTo("PantallaDashboardAdmin") { inclusive = false }
+                                        launchSingleTop = true
+                                    }
+                                },
+                                onError = { errorGuardado ->
+                                    mensajeError = errorGuardado
+                                    mensajeExito = null
                                 }
-                            } catch (e: Exception) {
-                                mensajeError = "Error al guardar publicación: ${e.message}"
-                                mensajeExito = null
-                                e.printStackTrace() // Para debugging
-                            }
+                            )
                         }
                     }
                 },

@@ -18,6 +18,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Inventory
+import androidx.compose.material.icons.filled.ReceiptLong
+import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -171,23 +174,58 @@ fun PantallaNotificacionesResidente(
         Spacer(modifier = Modifier.height(16.dp))
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf("Paqueteria", "Recibos", "Pagos").forEach { tab ->
-                val isSelected = selectedTab == tab
-                Button(
-                    onClick = {
-                        selectedTab = tab
-                        when (tab) {
-                            "Recibos" -> navController.navigate("PantallaRecibos")
-                            "Pagos" -> navController.navigate("PantallaPagos")
-                        }
-                    },
-                    shape = RoundedCornerShape(50),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isSelected) DoradoElegante else Color.Gray
-                    )
-                ) {
-                    Text(tab, color = if (isSelected) AzulOscuro else Color.White)
-                }
+            Button(
+                onClick = { selectedTab = "Paqueteria" },
+                shape = RoundedCornerShape(50),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (selectedTab == "Paqueteria") DoradoElegante else Color.Gray
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Inventory,
+                    contentDescription = "Paquetería",
+                    tint = if (selectedTab == "Paqueteria") AzulOscuro else Color.White
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Paquetería", color = if (selectedTab == "Paqueteria") AzulOscuro else Color.White)
+            }
+
+            Button(
+                onClick = {
+                    selectedTab = "Recibos"
+                    navController.navigate("PantallaRecibos")
+                },
+                shape = RoundedCornerShape(50),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (selectedTab == "Recibos") DoradoElegante else Color.Gray
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ReceiptLong,
+                    contentDescription = "Recibos",
+                    tint = if (selectedTab == "Recibos") AzulOscuro else Color.White
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Recibos", color = if (selectedTab == "Recibos") AzulOscuro else Color.White)
+            }
+
+            Button(
+                onClick = {
+                    selectedTab = "Pagos"
+                    navController.navigate("PantallaPagos")
+                },
+                shape = RoundedCornerShape(50),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (selectedTab == "Pagos") DoradoElegante else Color.Gray
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Payments,
+                    contentDescription = "Pagos",
+                    tint = if (selectedTab == "Pagos") AzulOscuro else Color.White
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Pagos", color = if (selectedTab == "Pagos") AzulOscuro else Color.White)
             }
         }
 

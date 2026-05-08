@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -48,6 +49,8 @@ import com.example.app.ui.theme.AzulOscuro
 import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
 import kotlinx.coroutines.delay
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -89,6 +92,18 @@ fun PantallaMensajes(
             emisorActualId = usuarioActualId,
             receptorId = receptorId
         )
+    }
+    val listState = rememberLazyListState()
+
+    val ultimaMarcaMensaje = remember(mensajesChat) {
+        val ultimo = mensajesChat.lastOrNull()
+        "${ultimo?.id}-${ultimo?.fechaEnvio}-${mensajesChat.size}"
+    }
+
+    LaunchedEffect(ultimaMarcaMensaje) {
+        if (mensajesChat.isNotEmpty()) {
+            listState.animateScrollToItem(mensajesChat.lastIndex)
+        }
     }
 
     Scaffold(
@@ -138,6 +153,7 @@ fun PantallaMensajes(
                     .weight(1f)
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
+                state = listState,
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(mensajesChat, key = { it.id ?: it.hashCode().toLong() }) { mensaje ->
@@ -238,9 +254,43 @@ private fun filtrarMensajesChat(
 ): List<Notificacion> {
     if (emisorActualId == null || receptorId == null) return emptyList()
 
-    return notificaciones.filter { noti ->
-        val from = extraerEmisorId(noti.mensaje)
-        val to = extraerReceptorId(noti.mensaje)
-        (from == emisorActualId && to == receptorId) || (from == receptorId && to == emisorActualId)
+    return notificaciones
+        .filter { noti ->
+            val from = extraerEmisorId(noti.mensaje)
+            val to = extraerReceptorId(noti.mensaje)
+            (from == emisorActualId && to == receptorId) || (from == receptorId && to == emisorActualId)
+        }
+        // Asegura orden cronológico ascendente para que el último mensaje quede al final.
+        .sortedWith(
+            compareBy<Notificacion>(
+                { timestampOrdenMensaje(it.fechaEnvio) },
+                { it.id ?: Long.MAX_VALUE }
+            )
+        )
+}
+
+private fun timestampOrdenMensaje(fecha: String?): Long {
+    if (fecha.isNullOrBlank()) return Long.MAX_VALUE
+
+    val formatos = listOf(
+        "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+        "yyyy-MM-dd'T'HH:mm:ssXXX",
+        "yyyy-MM-dd'T'HH:mm:ss.SSS",
+        "yyyy-MM-dd'T'HH:mm:ss",
+        "yyyy-MM-dd HH:mm:ss",
+        "yyyy-MM-dd"
+    )
+
+    for (patron in formatos) {
+        try {
+            val parser = SimpleDateFormat(patron, Locale.getDefault())
+            val date = parser.parse(fecha)
+            if (date != null) return date.time
+        } catch (_: Exception) {
+            // Continuar con el siguiente formato.
+        }
     }
+
+    // Si no se puede parsear, se deja al final para no romper el orden del chat.
+    return Long.MAX_VALUE
 }

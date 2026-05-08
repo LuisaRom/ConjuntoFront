@@ -22,9 +22,22 @@ interface MascotaApiService {
     @POST("/api/mascotas/crear")
     suspend fun guardarMascota(@Body mascota: Mascota): Mascota
 
+    @POST("/api/mascotas")
+    suspend fun guardarMascotaBase(@Body mascota: Mascota): Mascota
+
     @Multipart
     @POST("/api/mascotas/crear")
     suspend fun guardarMascotaMultipart(
+        @Part("nombre") nombre: RequestBody,
+        @Part("tipo") tipo: RequestBody,
+        @Part("raza") raza: RequestBody,
+        @Part("usuarioId") usuarioId: RequestBody?,
+        @Part foto: MultipartBody.Part
+    ): Mascota
+
+    @Multipart
+    @POST("/api/mascotas")
+    suspend fun guardarMascotaMultipartBase(
         @Part("nombre") nombre: RequestBody,
         @Part("tipo") tipo: RequestBody,
         @Part("raza") raza: RequestBody,

@@ -610,8 +610,8 @@ fun PantallaNuevaPublicacion(
                                     usuariosEtiquetados = emptyList()
                                     imageFile = null
 
-                                    navController.navigate("PantallaDashboardResidente") {
-                                        popUpTo("PantallaDashboardResidente") { inclusive = false }
+                                    navController.navigate("PantallaInicioResidentes") {
+                                        popUpTo("PantallaInicioResidentes") { inclusive = false }
                                         launchSingleTop = true
                                     }
                                 },

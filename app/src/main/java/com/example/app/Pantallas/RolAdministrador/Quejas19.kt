@@ -17,7 +17,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.filled.RecordVoiceOver
 import androidx.compose.material.icons.filled.Warning
@@ -57,18 +56,6 @@ fun PantallaQuejas(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     var quejaSeleccionada by remember { mutableStateOf<Queja?>(null) }
-    val quejasPendientes = remember(quejas) {
-        quejas.filterNot {
-            it.estado.equals("finalizada", ignoreCase = true) ||
-                it.estado.equals("finalizado", ignoreCase = true)
-        }
-    }
-    val quejasResueltas = remember(quejas) {
-        quejas.filter {
-            it.estado.equals("finalizada", ignoreCase = true) ||
-                it.estado.equals("finalizado", ignoreCase = true)
-        }
-    }
 
     LaunchedEffect(Unit) {
         quejaViewModel.obtenerTodos()
@@ -124,39 +111,8 @@ fun PantallaQuejas(
                         Text("Sin quejas registradas", color = Color.Gray, fontSize = 14.sp)
                     }
                 } else {
-                    item {
-                        Text(
-                            text = "Pendientes (${quejasPendientes.size})",
-                            color = DoradoElegante,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                    if (quejasPendientes.isEmpty()) {
-                        item {
-                            Text("No hay quejas pendientes.", color = Color.LightGray, fontSize = 13.sp)
-                        }
-                    } else {
-                        items(quejasPendientes, key = { it.id ?: it.hashCode().toLong() }) { queja ->
-                            QuejaItem(queja = queja, onClick = { quejaSeleccionada = queja })
-                        }
-                    }
-
-                    item {
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Text(
-                            text = "Resueltas (${quejasResueltas.size})",
-                            color = DoradoElegante,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                    if (quejasResueltas.isEmpty()) {
-                        item {
-                            Text("No hay quejas resueltas.", color = Color.LightGray, fontSize = 13.sp)
-                        }
-                    } else {
-                        items(quejasResueltas, key = { it.id ?: it.hashCode().toLong() }) { queja ->
-                            QuejaItem(queja = queja, onClick = { quejaSeleccionada = queja })
-                        }
+                    items(quejas, key = { it.id ?: it.hashCode().toLong() }) { queja ->
+                        QuejaItem(queja = queja, onClick = { quejaSeleccionada = queja })
                     }
                 }
 
@@ -270,9 +226,22 @@ fun QuejaItem(
                 )
             }
             Text(
-                text = "Estado: ${estadoVisualAdmin(queja.estado)}",
+                text = "Estado:",
                 color = GrisClaro,
                 fontSize = 12.sp
+            )
+            Text(
+                text = estadoVisualAdmin(queja.estado),
+                color = Color.White,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .padding(top = 2.dp, bottom = 2.dp)
+                    .background(
+                        color = colorEstadoQueja(queja.estado),
+                        shape = RoundedCornerShape(50)
+                    )
+                    .padding(horizontal = 8.dp, vertical = 3.dp)
             )
             Text(
                 text = "Fecha: ${queja.fechaCreacion ?: "No disponible"}",
@@ -301,6 +270,17 @@ private fun estadoVisualAdmin(estado: String?): String {
     return when {
         valor.equals("finalizada", ignoreCase = true) || valor.equals("finalizado", ignoreCase = true) -> "Resuelto"
         else -> valor
+    }
+}
+
+private fun colorEstadoQueja(estado: String?): Color {
+    return if (
+        estado.equals("finalizada", ignoreCase = true) ||
+        estado.equals("finalizado", ignoreCase = true)
+    ) {
+        Color(0xFF2E7D32)
+    } else {
+        Color(0xFFB26A00)
     }
 }
 

@@ -25,10 +25,14 @@ class MascotaRepository @Inject constructor(
 
     suspend fun guardar(mascota: Mascota): Mascota {
         val payloadConId = mascota.copy(usuario = mascota.usuario?.id?.let { Usuario(id = it) })
-        return runCatching { api.guardarMascota(payloadConId) }.getOrElse {
-            // Fallback para backends que asignan usuario por JWT.
-            api.guardarMascota(mascota.copy(usuario = null))
-        }
+        return runCatching { api.guardarMascota(payloadConId) }
+            .recoverCatching { api.guardarMascotaBase(payloadConId) }
+            .recoverCatching {
+                // Fallback para backends que asignan usuario por JWT.
+                api.guardarMascota(mascota.copy(usuario = null))
+            }
+            .recoverCatching { api.guardarMascotaBase(mascota.copy(usuario = null)) }
+            .getOrThrow()
     }
 
     suspend fun guardarConFoto(mascota: Mascota, fotoFile: File): Mascota {
@@ -50,7 +54,7 @@ class MascotaRepository @Inject constructor(
                 foto = fotoPart
             )
         } catch (e: HttpException) {
-            if (e.code() == 400) {
+            if (e.code() == 400 || e.code() == 404 || e.code() == 405) {
                 runCatching {
                     api.guardarMascotaMultipartImagen(
                         nombre = nombre,
@@ -67,6 +71,14 @@ class MascotaRepository @Inject constructor(
                         raza = raza,
                         usuarioId = null,
                         imagen = imagenPart
+                    )
+                }.recoverCatching {
+                    api.guardarMascotaMultipartBase(
+                        nombre = nombre,
+                        tipo = tipo,
+                        raza = raza,
+                        usuarioId = usuarioId,
+                        foto = fotoPart
                     )
                 }
             } else {

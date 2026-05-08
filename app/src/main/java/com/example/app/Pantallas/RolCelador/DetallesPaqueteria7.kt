@@ -57,17 +57,40 @@ fun PantallaDetallesPaqueteriaCelador(
     // Estados del ViewModel
     val usuarios by usuarioViewModel.usuarios.collectAsState()
     val isLoading by usuarioViewModel.isLoading.collectAsState()
+    val errorUsuarios by usuarioViewModel.error.collectAsState()
+    val paquetes by paqueteriaViewModel.paquetes.collectAsState()
     val isLoadingPaquete by paqueteriaViewModel.isLoading.collectAsState()
     val errorPaquete by paqueteriaViewModel.error.collectAsState()
+    var intentoFallbackUsuarios by remember { mutableStateOf(false) }
     
     // Cargar usuarios al iniciar
     LaunchedEffect(Unit) {
         usuarioViewModel.obtenerTodos()
+        paqueteriaViewModel.obtenerTodos()
+    }
+
+    // Si no cargan usuarios por permisos/ruta, intentar endpoint alterno.
+    LaunchedEffect(isLoading, usuarios) {
+        if (!isLoading && usuarios.isEmpty() && !intentoFallbackUsuarios) {
+            intentoFallbackUsuarios = true
+            usuarioViewModel.obtenerContactosMensajeria()
+        }
     }
     
-    // Filtrar solo residentes
-    val residentes = usuarios.filter { 
-        it.rol.uppercase().contains("RESIDENTE")
+    // Filtrar residentes desde usuarios y fallback desde paquetes existentes.
+    val residentes = remember(usuarios, paquetes) {
+        val residentesUsuarios = usuarios.filter { esRolResidente(it.rol) }
+        val residentesDesdePaquetes = paquetes
+            .mapNotNull { it.usuario }
+            .filter { usuario ->
+                esRolResidente(usuario.rol) ||
+                    usuario.torre.isNotBlank() ||
+                    usuario.apartamento.isNotBlank()
+            }
+
+        (residentesUsuarios + residentesDesdePaquetes)
+            .distinctBy { it.id ?: "${it.usuario}-${it.nombre}-${it.documento}" }
+            .sortedBy { if (it.nombre.isNotBlank()) it.nombre else it.usuario }
     }
     
     // Autocompletar torre-apto cuando se selecciona un residente
@@ -237,8 +260,15 @@ fun PantallaDetallesPaqueteriaCelador(
                         )
                     } else if (residentes.isEmpty()) {
                         DropdownMenuItem(
-                            text = { Text("Sin residentes cargados", color = Color.White) },
-                            onClick = {},
+                            text = {
+                                Text(
+                                    errorUsuarios ?: "Sin residentes cargados",
+                                    color = Color.White
+                                )
+                            },
+                            onClick = {
+                                usuarioViewModel.obtenerTodos()
+                            },
                             colors = MenuDefaults.itemColors(
                                 textColor = Color.White
                             )
@@ -275,6 +305,15 @@ fun PantallaDetallesPaqueteriaCelador(
                     }
                 }
             }
+        }
+
+        if (!errorUsuarios.isNullOrBlank() && residentes.isEmpty()) {
+            Text(
+                text = errorUsuarios ?: "",
+                color = Color(0xFFFFB4AB),
+                fontSize = 12.sp,
+                modifier = Modifier.padding(top = 4.dp)
+            )
         }
         
         Spacer(modifier = Modifier.height(8.dp))
@@ -382,6 +421,11 @@ fun PantallaDetallesPaqueteriaCelador(
             }
         }
     }
+}
+
+private fun esRolResidente(rol: String?): Boolean {
+    val valor = rol.orEmpty().trim().uppercase()
+    return valor == "RESIDENTE" || valor.contains("RESIDENTE")
 }
 
 @Composable

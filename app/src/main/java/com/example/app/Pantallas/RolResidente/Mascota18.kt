@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.app.Auth.AuthManager
 import com.example.app.Model.Mascota
 import com.example.app.ViewModel.MascotaViewModel
 import com.example.app.ViewModel.UsuarioViewModel
@@ -49,7 +50,9 @@ fun PantallaMascotasResidente(
     usuarioViewModel: UsuarioViewModel = hiltViewModel()
 ) {
     val mascotas by mascotaViewModel.mascotas.collectAsState()
+    val usuarioSesion by AuthManager.currentUser.collectAsState()
     val usuarioActual by usuarioViewModel.usuarioActual.collectAsState()
+    val usuarioPublicador = usuarioActual ?: usuarioSesion
     val isLoading by mascotaViewModel.isLoading.collectAsState()
     val error by mascotaViewModel.error.collectAsState()
     val context = LocalContext.current
@@ -329,8 +332,17 @@ fun PantallaMascotasResidente(
                             nombre = nombre.trim(),
                             tipo = tipo.trim(),
                             raza = razaPayload,
-                            usuario = usuarioActual
+                            usuario = usuarioPublicador?.id?.let { com.example.app.Model.Usuario(id = it) }
                         )
+                        if (mascota.usuario?.id == null) {
+                            Toast.makeText(
+                                context,
+                                "No se pudo identificar al residente. Cierra sesión e inicia nuevamente.",
+                                Toast.LENGTH_LONG
+                            ).show()
+                            mensajeError = "No se pudo identificar al residente para guardar la publicación"
+                            return@Button
+                        }
                         val fotoFile = fotoUri?.let { guardarUriComoArchivoTemporal(context, it) }
                         val onSuccess = {
                             showSheet = false

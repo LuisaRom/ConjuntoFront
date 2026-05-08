@@ -39,11 +39,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.example.app.Model.Mascota
 import com.example.app.ViewModel.MascotaViewModel
 import com.example.app.ui.theme.AzulOscuro
@@ -188,6 +190,20 @@ private fun PublicacionMascotaItem(
             Text("Raza", color = Color.LightGray, fontSize = 12.sp)
             Text(mascota.raza, color = Color.White)
 
+            val imagenUrl = resolverUrlImagenMascota(mascota.imagenUrl)
+            if (!imagenUrl.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                AsyncImage(
+                    model = imagenUrl,
+                    contentDescription = "Imagen de mascota",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(190.dp)
+                        .background(Color.White.copy(alpha = 0.05f), androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
+                )
+            }
+
             Spacer(modifier = Modifier.height(6.dp))
             Text("Residente", color = Color.LightGray, fontSize = 12.sp)
             Text(
@@ -210,4 +226,13 @@ private fun PublicacionMascotaItem(
             }
         }
     }
+}
+
+private fun resolverUrlImagenMascota(path: String?): String? {
+    if (path.isNullOrBlank()) return null
+    val limpio = path.trim()
+    if (limpio.startsWith("http://") || limpio.startsWith("https://") || limpio.startsWith("content://")) {
+        return limpio
+    }
+    return "https://conjuntoback.onrender.com/${limpio.removePrefix("/")}"
 }
