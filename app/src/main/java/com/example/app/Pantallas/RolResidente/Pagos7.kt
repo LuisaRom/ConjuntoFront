@@ -277,6 +277,15 @@ fun MetodoPagoItem(
     }
 }
 
+private fun abrirUrlDePago(context: android.content.Context, url: String) {
+    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+    val canOpen = intent.resolveActivity(context.packageManager) != null
+    if (!canOpen) {
+        throw IllegalStateException("No se encontró una app para abrir el enlace de pago.")
+    }
+    context.startActivity(intent)
+}
+
 @Composable
 fun Campo(label: String, valor: String) {
     Column(modifier = Modifier.padding(vertical = 4.dp)) {
