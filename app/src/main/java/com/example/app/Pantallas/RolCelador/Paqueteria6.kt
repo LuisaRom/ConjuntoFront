@@ -19,7 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckBox
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.Add
@@ -52,8 +52,8 @@ import com.example.app.ViewModel.PaqueteriaViewModel
 import com.example.app.ui.theme.AzulOscuro
 import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @Composable
 fun PantallaPaqueteriaCelador(
@@ -62,17 +62,17 @@ fun PantallaPaqueteriaCelador(
 ) {
     val paquetes by paqueteriaViewModel.paquetes.collectAsState()
     val isLoading by paqueteriaViewModel.isLoading.collectAsState()
-    
+
     // Cargar paquetes al iniciar
     DisposableEffect(Unit) {
         paqueteriaViewModel.obtenerTodos()
         onDispose { }
     }
-    
+
     // Separar paquetes por estado
     val paquetesPendientes = paquetes.filter { it.estado == "PENDIENTE" }
     val paquetesEntregados = paquetes.filter { it.estado == "ENTREGADO" }
-    
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -81,7 +81,7 @@ fun PantallaPaqueteriaCelador(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                imageVector = Icons.Default.ArrowBack,
                 contentDescription = "Volver",
                 tint = GrisClaro,
                 modifier = Modifier.clickable { navController.popBackStack() }
@@ -93,7 +93,7 @@ fun PantallaPaqueteriaCelador(
                 color = GrisClaro
             )
         }
-        
+
         Spacer(modifier = Modifier.height(16.dp))
 
         // Botón para agregar nuevo paquete
@@ -202,7 +202,7 @@ fun PaqueteCardCompleto(
     onClick: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -270,11 +270,11 @@ fun PaqueteCardCompleto(
                     )
                 }
             }
-            
+
             // Contenido expandible
             if (expanded) {
                 Spacer(modifier = Modifier.height(12.dp))
-                
+
                 // Información del destinatario
                 if (paquete.usuario != null) {
                     Text(
@@ -291,7 +291,7 @@ fun PaqueteCardCompleto(
                         fontWeight = FontWeight.SemiBold
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    
+
                     // Torre y Apartamento
                     if (!paquete.usuario.torre.isNullOrBlank() || !paquete.usuario.apartamento.isNullOrBlank()) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -309,7 +309,7 @@ fun PaqueteCardCompleto(
                         }
                         Spacer(modifier = Modifier.height(4.dp))
                     }
-                    
+
                     // Teléfono del destinatario
                     if (!paquete.usuario.telefono.isNullOrBlank()) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -326,7 +326,7 @@ fun PaqueteCardCompleto(
                         }
                         Spacer(modifier = Modifier.height(8.dp))
                     }
-                    
+
                     // Documento del destinatario (si está disponible)
                     if (!paquete.usuario.documento.isNullOrBlank()) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -344,7 +344,7 @@ fun PaqueteCardCompleto(
                         Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
-                
+
                 // Información de la transportadora
                 Text(
                     text = "Transportadora",
@@ -360,7 +360,7 @@ fun PaqueteCardCompleto(
                     fontWeight = FontWeight.SemiBold
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                
+
                 // Fecha de recepción
                 if (!paquete.fechaRecepcion.isNullOrBlank()) {
                     Text(
@@ -385,10 +385,20 @@ fun PaqueteCardCompleto(
 fun formatearFechaPaquete(fechaISO: String?): String {
     if (fechaISO.isNullOrBlank()) return "No disponible"
     return try {
-        val formatter = DateTimeFormatter.ISO_DATE_TIME
-        val fecha = LocalDateTime.parse(fechaISO, formatter)
-        val formatterSalida = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
-        fecha.format(formatterSalida)
+        val formatosEntrada = listOf(
+            "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+            "yyyy-MM-dd'T'HH:mm:ssXXX",
+            "yyyy-MM-dd'T'HH:mm:ss.SSS",
+            "yyyy-MM-dd'T'HH:mm:ss"
+        )
+
+        val fechaParseada = formatosEntrada.firstNotNullOfOrNull { patron ->
+            runCatching {
+                SimpleDateFormat(patron, Locale.getDefault()).parse(fechaISO)
+            }.getOrNull()
+        } ?: return fechaISO
+
+        SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(fechaParseada)
     } catch (e: Exception) {
         fechaISO
     }
