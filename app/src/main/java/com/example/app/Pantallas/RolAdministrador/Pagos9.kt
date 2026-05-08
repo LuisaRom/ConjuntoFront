@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Person
@@ -40,11 +41,10 @@ import com.example.app.ViewModel.UsuarioViewModel
 import com.example.app.ui.theme.AzulOscuro
 import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
-import java.time.LocalDate
-import java.time.OffsetDateTime
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun PantallaPagos(
@@ -74,10 +74,10 @@ fun PantallaPagos(
             .filter { it.usuario?.id != null }
             .groupBy { it.usuario?.id!! }
             .mapValues { (_, lista) ->
-                lista.maxByOrNull { convertirFechaPagoALocalDate(it.fechaPago) ?: LocalDate.MIN }
+                lista.maxByOrNull { convertirFechaPago(it.fechaPago)?.time ?: Long.MIN_VALUE }
             }
     }
-    val hoy = remember { LocalDate.now() }
+    val hoy = remember { Calendar.getInstance() }
     val alDia = remember(residentes, pagoPorResidente, hoy) {
         residentes.filter { residente ->
             val pago = pagoPorResidente[residente.id]
@@ -217,33 +217,43 @@ fun UsuarioPago(usuario: Usuario, enMora: Boolean) {
 }
 
 private fun esPagoDelMesActual(pago: PagoAdministracion): Boolean {
-    val fecha = convertirFechaPagoALocalDate(pago.fechaPago) ?: return false
-    val hoy = LocalDate.now()
-    return fecha.year == hoy.year && fecha.monthValue == hoy.monthValue
+    val fecha = convertirFechaPago(pago.fechaPago) ?: return false
+    val calFecha = Calendar.getInstance().apply { time = fecha }
+    val hoy = Calendar.getInstance()
+    return calFecha.get(Calendar.YEAR) == hoy.get(Calendar.YEAR) &&
+        calFecha.get(Calendar.MONTH) == hoy.get(Calendar.MONTH)
 }
 
-private fun estaAlDiaSegunRegla(pagoDelMes: PagoAdministracion?, hoy: LocalDate): Boolean {
+private fun estaAlDiaSegunRegla(pagoDelMes: PagoAdministracion?, hoy: Calendar): Boolean {
     // Hasta el día 5 sigue al día incluso si no ha pagado.
-    if (hoy.dayOfMonth <= 5 && pagoDelMes == null) return true
-    val fechaPago = convertirFechaPagoALocalDate(pagoDelMes?.fechaPago) ?: return false
-    return fechaPago.dayOfMonth <= 5
+    if (hoy.get(Calendar.DAY_OF_MONTH) <= 5 && pagoDelMes == null) return true
+    val fechaPago = convertirFechaPago(pagoDelMes?.fechaPago) ?: return false
+    val calPago = Calendar.getInstance().apply { time = fechaPago }
+    return calPago.get(Calendar.DAY_OF_MONTH) <= 5
 }
 
-private fun convertirFechaPagoALocalDate(fecha: String?): LocalDate? {
+private fun convertirFechaPago(fecha: String?): Date? {
     if (fecha.isNullOrBlank()) return null
 
-    return try {
-        OffsetDateTime.parse(fecha).toLocalDate()
-    } catch (_: DateTimeParseException) {
-        try {
-            LocalDate.parse(fecha, DateTimeFormatter.ISO_LOCAL_DATE)
-        } catch (_: DateTimeParseException) {
-            try {
-                val instant = java.time.Instant.parse(fecha)
-                instant.atZone(ZoneId.systemDefault()).toLocalDate()
-            } catch (_: Exception) {
-                null
-            }
-        }
+    val formatos = listOf(
+        "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+        "yyyy-MM-dd'T'HH:mm:ssXXX",
+        "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+        "yyyy-MM-dd'T'HH:mm:ss'Z'",
+        "yyyy-MM-dd'T'HH:mm:ss.SSS",
+        "yyyy-MM-dd'T'HH:mm:ss",
+        "yyyy-MM-dd HH:mm:ss",
+        "yyyy-MM-dd"
+    )
+
+    formatos.forEach { patron ->
+        runCatching {
+            SimpleDateFormat(patron, Locale.getDefault()).parse(fecha)
+        }.getOrNull()?.let { return it }
     }
+
+    return runCatching {
+        // Fallback para timestamps en milisegundos como texto
+        fecha.toLongOrNull()?.let { Date(it) }
+    }.getOrNull()
 }
