@@ -62,10 +62,9 @@ fun PantallaNotificacionesResidente(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    var selectedTab by remember { mutableStateOf("Mensajes") }
+    var selectedTab by remember { mutableStateOf("Paqueteria") }
     
     val usuarioActual by usuarioViewModel.usuarioActual.collectAsState()
-    val usuarios by usuarioViewModel.usuarios.collectAsState()
     val notificaciones by notificacionViewModel.notificaciones.collectAsState()
     val paquetes by paqueteriaViewModel.paquetes.collectAsState()
     val isLoadingNotificaciones by notificacionViewModel.isLoading.collectAsState()
@@ -75,7 +74,6 @@ fun PantallaNotificacionesResidente(
     LaunchedEffect(Unit) {
         android.util.Log.d("NotificacionesResidente", "Cargando notificaciones y paquetes...")
         android.util.Log.d("NotificacionesResidente", "Usuario actual: ${usuarioActual?.nombre} (ID: ${usuarioActual?.id})")
-        usuarioViewModel.obtenerContactosMensajeria()
         notificacionViewModel.obtenerTodos()
         paqueteriaViewModel.obtenerTodos()
     }
@@ -84,7 +82,6 @@ fun PantallaNotificacionesResidente(
     LaunchedEffect(usuarioActual?.id) {
         if (usuarioActual?.id != null) {
             android.util.Log.d("NotificacionesResidente", "Usuario actualizado - Cargando notificaciones para usuario: id=${usuarioActual?.id}, nombre=${usuarioActual?.nombre}")
-            usuarioViewModel.obtenerContactosMensajeria()
             notificacionViewModel.obtenerTodos()
             paqueteriaViewModel.obtenerTodos()
         } else {
@@ -174,7 +171,7 @@ fun PantallaNotificacionesResidente(
         Spacer(modifier = Modifier.height(16.dp))
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf("Mensajes", "Paqueteria", "Recibos", "Pagos").forEach { tab ->
+            listOf("Paqueteria", "Recibos", "Pagos").forEach { tab ->
                 val isSelected = selectedTab == tab
                 Button(
                     onClick = {
@@ -194,41 +191,7 @@ fun PantallaNotificacionesResidente(
             }
         }
 
-        if (selectedTab == "Mensajes") {
-            Spacer(modifier = Modifier.height(24.dp))
-            Text(
-                "Administradores y celadores",
-                color = Color.White,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-
-            if (usuarios.isEmpty()) {
-                Text(
-                    "No hay administradores o celadores disponibles para chatear.",
-                    color = GrisClaro
-                )
-            } else {
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    items(usuarios, key = { it.id ?: it.usuario.hashCode().toLong() }) { usuario ->
-                        val nombre = usuario.nombre.ifBlank { usuario.usuario }
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { usuario.id?.let { navController.navigate("PantallaMensajes/$it") } },
-                            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.06f)),
-                            shape = RoundedCornerShape(10.dp)
-                        ) {
-                            Column(modifier = Modifier.padding(12.dp)) {
-                                Text(nombre, color = Color.White)
-                                Text(usuario.rol.ifBlank { "Usuario" }, color = GrisClaro)
-                            }
-                        }
-                    }
-                }
-            }
-        } else if (selectedTab == "Paqueteria") {
+        if (selectedTab == "Paqueteria") {
             Spacer(modifier = Modifier.height(24.dp))
             Text(
                 "Paquetes Pendientes (${paquetesPendientes.size})",

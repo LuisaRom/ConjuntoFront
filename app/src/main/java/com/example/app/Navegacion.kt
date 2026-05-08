@@ -166,7 +166,7 @@ fun Navegacion(navController: NavHostController) {
             }
         }
         composable("PantallaMensajes/{usuarioId}") { backStackEntry ->
-            RoleGuard(navController, setOf("ADMINISTRADOR", "CELADOR", "RESIDENTE")) {
+            RoleGuard(navController, setOf("ADMINISTRADOR", "CELADOR")) {
                 val usuarioId = backStackEntry.arguments?.getString("usuarioId")?.toLongOrNull() ?: 0L
                 PantallaMensajes(receptorId = usuarioId, navController = navController)
             }
