@@ -34,6 +34,8 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -113,6 +115,8 @@ fun PantallaRecibosCelador(
         if (!isLoadingUsuarios && usuarios.isEmpty() && !intentoFallbackUsuarios) {
             intentoFallbackUsuarios = true
             usuarioViewModel.obtenerContactosMensajeria()
+            delay(300)
+            usuarioViewModel.obtenerResidentes()
         }
     }
 
@@ -137,6 +141,15 @@ fun PantallaRecibosCelador(
         }
 
         Spacer(modifier = Modifier.height(24.dp))
+
+        if (residentes.isNotEmpty()) {
+            Text(
+                text = "Residentes disponibles: ${residentes.size}",
+                color = GrisClaro,
+                fontSize = 12.sp
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+        }
 
         if (!errorUsuarios.isNullOrBlank() && residentes.isEmpty()) {
             Text(
@@ -334,6 +347,25 @@ fun ReciboItemExpandible(
     onEnviarNotificaciones: () -> Unit,
     tieneNotificacion: Boolean
 ) {
+    var filtroResidente by remember { mutableStateOf("") }
+    val residentesFiltrados = remember(residentes, filtroResidente) {
+        val criterio = filtroResidente.trim().lowercase()
+        if (criterio.isBlank()) {
+            residentes
+        } else {
+            residentes.filter { residente ->
+                val nombre = residente.nombre.ifBlank { residente.usuario }.lowercase()
+                val torre = residente.torre.lowercase()
+                val apto = residente.apartamento.lowercase()
+                val torreApto = "$torre $apto"
+                nombre.contains(criterio) ||
+                    torre.contains(criterio) ||
+                    apto.contains(criterio) ||
+                    torreApto.contains(criterio)
+            }
+        }
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -418,6 +450,24 @@ fun ReciboItemExpandible(
 
                 Divider(color = GrisClaro.copy(alpha = 0.3f), thickness = 1.dp)
                 Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = filtroResidente,
+                    onValueChange = { filtroResidente = it },
+                    label = { Text("Buscar por nombre, torre o apto", color = GrisClaro) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        focusedLabelColor = DoradoElegante,
+                        unfocusedLabelColor = GrisClaro,
+                        focusedBorderColor = DoradoElegante,
+                        unfocusedBorderColor = GrisClaro,
+                        focusedContainerColor = AzulOscuro,
+                        unfocusedContainerColor = AzulOscuro
+                    )
+                )
+                Spacer(modifier = Modifier.height(8.dp))
 
                 LazyColumn(
                     modifier = Modifier
@@ -425,7 +475,7 @@ fun ReciboItemExpandible(
                         .heightIn(max = 300.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    items(residentes) { residente ->
+                    items(residentesFiltrados) { residente ->
                         if (residente.id != null) {
                             val id = residente.id
                             val isChecked = todosSeleccionado || id in seleccionados

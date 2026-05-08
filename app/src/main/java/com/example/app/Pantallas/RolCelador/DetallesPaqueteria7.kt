@@ -74,6 +74,9 @@ fun PantallaDetallesPaqueteriaCelador(
         if (!isLoading && usuarios.isEmpty() && !intentoFallbackUsuarios) {
             intentoFallbackUsuarios = true
             usuarioViewModel.obtenerContactosMensajeria()
+            // Reintento con carga de residentes por rutas alternativas.
+            kotlinx.coroutines.delay(300)
+            usuarioViewModel.obtenerResidentes()
         }
     }
     

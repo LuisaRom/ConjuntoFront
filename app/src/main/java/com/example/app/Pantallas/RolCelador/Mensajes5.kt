@@ -87,6 +87,11 @@ fun PantallaMensajesCelador(
             LazyColumn {
                 items(usuariosMensajeria, key = { it.id ?: it.usuario.hashCode().toLong() }) { usuario ->
                     val usuarioChat = usuario.usuario.ifBlank { usuario.nombre }
+                    val rolUsuario = when (usuario.rol.uppercase()) {
+                        "ADMINISTRADOR", "ADMIN" -> "Admin"
+                        "CELADOR" -> "Celador"
+                        else -> usuario.rol.ifBlank { "Usuario" }
+                    }
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -96,6 +101,7 @@ fun PantallaMensajesCelador(
                             .padding(12.dp)
                     ) {
                         Text(usuarioChat, color = Color.White)
+                        Text(rolUsuario, color = GrisClaro, fontSize = 12.sp)
                     }
                 }
             }

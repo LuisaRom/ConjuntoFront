@@ -31,6 +31,10 @@ class UsuarioRepository @Inject constructor() {
         return runCatching { api.obtenerResidentes() }
             .recoverCatching { api.obtenerResidentesAlt() }
             .recoverCatching { api.obtenerResidentesPost() }
+            .recoverCatching { api.obtenerUsuariosPorRol("RESIDENTE") }
+            .recoverCatching { api.obtenerUsuariosPorRol("residente") }
+            .recoverCatching { api.obtenerUsuariosPorRolQuery("RESIDENTE") }
+            .recoverCatching { api.obtenerUsuariosPorRolQuery("residente") }
             .recoverCatching {
                 // Último fallback: cargar todos y filtrar residentes en app.
                 api.obtenerUsuarios().filter { usuario ->

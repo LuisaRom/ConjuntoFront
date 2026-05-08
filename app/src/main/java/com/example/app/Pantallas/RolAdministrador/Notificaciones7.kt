@@ -89,15 +89,18 @@ fun PantallaNotificaciones(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
                 Button(
                     onClick = { selectedTab = "Mensajes" },
-                    shape = RoundedCornerShape(50),
+                    shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (selectedTab == "Mensajes") DoradoElegante else GrisClaro
                     ),
                     modifier = Modifier
-                        .weight(1f)
+                        .fillMaxWidth()
                         .height(80.dp)
                 ) {
                     Icon(
@@ -111,12 +114,12 @@ fun PantallaNotificaciones(
 
                 Button(
                     onClick = { selectedTab = "Pagos" },
-                    shape = RoundedCornerShape(50),
+                    shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (selectedTab == "Pagos") DoradoElegante else GrisClaro
                     ),
                     modifier = Modifier
-                        .weight(1f)
+                        .fillMaxWidth()
                         .height(80.dp)
                 ) {
                     Icon(

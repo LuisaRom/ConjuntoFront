@@ -10,6 +10,7 @@ import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface UsuarioApiService {
 
@@ -27,6 +28,12 @@ interface UsuarioApiService {
 
     @POST("api/usuarios/residentes")
     suspend fun obtenerResidentesPost(): List<Usuario>
+
+    @GET("api/usuarios/rol/{rol}")
+    suspend fun obtenerUsuariosPorRol(@Path("rol") rol: String): List<Usuario>
+
+    @GET("api/usuarios")
+    suspend fun obtenerUsuariosPorRolQuery(@Query("rol") rol: String): List<Usuario>
 
     @GET("api/usuarios/{id}")
     suspend fun obtenerUsuario(@Path("id") id: Long): Usuario

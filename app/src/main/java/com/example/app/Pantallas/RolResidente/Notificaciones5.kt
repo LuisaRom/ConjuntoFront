@@ -3,6 +3,8 @@ package com.example.app.Pantallas.RolResidente
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -159,6 +161,7 @@ fun PantallaNotificacionesResidente(
             .fillMaxSize()
             .background(AzulOscuro)
             .padding(16.dp)
+            .verticalScroll(rememberScrollState())
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
@@ -174,7 +177,9 @@ fun PantallaNotificacionesResidente(
         Spacer(modifier = Modifier.height(16.dp))
 
         Column(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.75f),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Button(
@@ -183,7 +188,9 @@ fun PantallaNotificacionesResidente(
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (selectedTab == "Paqueteria") DoradoElegante else Color.Gray
                 ),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
             ) {
                 Icon(
                     imageVector = Icons.Default.Inventory,
@@ -203,7 +210,9 @@ fun PantallaNotificacionesResidente(
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (selectedTab == "Recibos") DoradoElegante else Color.Gray
                 ),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
             ) {
                 Icon(
                     imageVector = Icons.Default.ReceiptLong,
@@ -223,7 +232,9 @@ fun PantallaNotificacionesResidente(
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (selectedTab == "Pagos") DoradoElegante else Color.Gray
                 ),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
             ) {
                 Icon(
                     imageVector = Icons.Default.Payments,
