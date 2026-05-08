@@ -25,14 +25,20 @@ class MascotaRepository @Inject constructor(
 
     suspend fun guardar(mascota: Mascota): Mascota {
         val payloadConId = mascota.copy(usuario = mascota.usuario?.id?.let { Usuario(id = it) })
-        return runCatching { api.guardarMascota(payloadConId) }
-            .recoverCatching { api.guardarMascotaBase(payloadConId) }
-            .recoverCatching {
-                // Fallback para backends que asignan usuario por JWT.
-                api.guardarMascota(mascota.copy(usuario = null))
+        return try {
+            api.guardarMascota(payloadConId)
+        } catch (_: Exception) {
+            try {
+                api.guardarMascotaBase(payloadConId)
+            } catch (_: Exception) {
+                try {
+                    // Fallback para backends que asignan usuario por JWT.
+                    api.guardarMascota(mascota.copy(usuario = null))
+                } catch (_: Exception) {
+                    api.guardarMascotaBase(mascota.copy(usuario = null))
+                }
             }
-            .recoverCatching { api.guardarMascotaBase(mascota.copy(usuario = null)) }
-            .getOrThrow()
+        }
     }
 
     suspend fun guardarConFoto(mascota: Mascota, fotoFile: File): Mascota {
@@ -55,7 +61,7 @@ class MascotaRepository @Inject constructor(
             )
         } catch (e: HttpException) {
             if (e.code() == 400 || e.code() == 404 || e.code() == 405) {
-                runCatching {
+                try {
                     api.guardarMascotaMultipartImagen(
                         nombre = nombre,
                         tipo = tipo,
@@ -63,23 +69,25 @@ class MascotaRepository @Inject constructor(
                         usuarioId = usuarioId,
                         imagen = imagenPart
                     )
-                }.getOrElse {
-                    // Último fallback: enviar sin usuarioId para backends que lo ignoran o lo rechazan.
-                    api.guardarMascotaMultipartImagen(
-                        nombre = nombre,
-                        tipo = tipo,
-                        raza = raza,
-                        usuarioId = null,
-                        imagen = imagenPart
-                    )
-                }.recoverCatching {
-                    api.guardarMascotaMultipartBase(
-                        nombre = nombre,
-                        tipo = tipo,
-                        raza = raza,
-                        usuarioId = usuarioId,
-                        foto = fotoPart
-                    )
+                } catch (_: Exception) {
+                    try {
+                        // Fallback: enviar sin usuarioId para backends que lo ignoran o lo rechazan.
+                        api.guardarMascotaMultipartImagen(
+                            nombre = nombre,
+                            tipo = tipo,
+                            raza = raza,
+                            usuarioId = null,
+                            imagen = imagenPart
+                        )
+                    } catch (_: Exception) {
+                        api.guardarMascotaMultipartBase(
+                            nombre = nombre,
+                            tipo = tipo,
+                            raza = raza,
+                            usuarioId = usuarioId,
+                            foto = fotoPart
+                        )
+                    }
                 }
             } else {
                 throw e
