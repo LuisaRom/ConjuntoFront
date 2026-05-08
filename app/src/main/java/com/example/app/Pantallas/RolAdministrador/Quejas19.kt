@@ -132,7 +132,11 @@ fun PantallaQuejas(
 
     if (quejaSeleccionada != null) {
         val queja = quejaSeleccionada!!
-        val finalizada = queja.estado.equals("finalizada", ignoreCase = true)
+        val finalizada =
+            queja.estado.equals("finalizada", ignoreCase = true) ||
+                queja.estado.equals("finalizado", ignoreCase = true) ||
+                queja.estado.equals("resuelto", ignoreCase = true) ||
+                queja.estado.equals("resuelta", ignoreCase = true)
         AlertDialog(
             onDismissRequest = { quejaSeleccionada = null },
             title = { Text("Detalle de queja", color = Color.White) },

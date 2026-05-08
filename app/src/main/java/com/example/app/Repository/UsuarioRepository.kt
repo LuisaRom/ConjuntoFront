@@ -27,6 +27,20 @@ class UsuarioRepository @Inject constructor() {
         return api.obtenerContactosMensajeria()
     }
 
+    suspend fun obtenerResidentes(): List<Usuario> {
+        return runCatching { api.obtenerResidentes() }
+            .recoverCatching { api.obtenerResidentesAlt() }
+            .recoverCatching { api.obtenerResidentesPost() }
+            .recoverCatching {
+                // Último fallback: cargar todos y filtrar residentes en app.
+                api.obtenerUsuarios().filter { usuario ->
+                    val rol = usuario.rol.trim().uppercase()
+                    rol == "RESIDENTE" || rol.contains("RESIDENTE")
+                }
+            }
+            .getOrThrow()
+    }
+
     suspend fun obtenerPorId(id: Long): Usuario {
         return api.obtenerUsuario(id)
     }

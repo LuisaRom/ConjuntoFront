@@ -438,10 +438,10 @@ fun PublicacionItem(
             val imagenPath = notificacion.imagenUrl
             if (imagenPath != null && imagenPath.isNotBlank()) {
                 val imagenSource: Any? = remember(imagenPath) {
-                    if (imagenPath.startsWith("http://") || imagenPath.startsWith("https://")) {
-                        imagenPath
-                    } else {
-                        File(imagenPath).takeIf { it.exists() && it.canRead() }
+                    when {
+                        imagenPath.startsWith("http://") || imagenPath.startsWith("https://") -> imagenPath
+                        imagenPath.startsWith("/") && !imagenPath.startsWith("/storage/") -> "https://conjuntoback.onrender.com${imagenPath}"
+                        else -> File(imagenPath).takeIf { it.exists() && it.canRead() }
                     }
                 }
 

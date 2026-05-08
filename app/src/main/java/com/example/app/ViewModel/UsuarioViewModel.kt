@@ -102,6 +102,20 @@ class UsuarioViewModel @Inject constructor(
             _isLoading.value = false
         }
     }
+
+    fun obtenerResidentes() = viewModelScope.launch {
+        _isLoading.value = true
+        _error.value = null
+        try {
+            val lista = repository.obtenerResidentes()
+            _usuarios.value = lista
+        } catch (e: Exception) {
+            _error.value = "Error al obtener residentes: ${e.message}"
+            _usuarios.value = emptyList()
+        } finally {
+            _isLoading.value = false
+        }
+    }
     
     suspend fun guardarUsuario(usuario: Usuario): Usuario {
         _isLoading.value = true

@@ -9,6 +9,7 @@ import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.HttpException
 import java.io.File
+import java.util.Locale
 import javax.inject.Inject
 
 class MascotaRepository @Inject constructor(
@@ -47,7 +48,12 @@ class MascotaRepository @Inject constructor(
         val tipo = mascota.tipo.toRequestBody(textPlain)
         val raza = mascota.raza.toRequestBody(textPlain)
         val usuarioId = mascota.usuario?.id?.toString()?.toRequestBody(textPlain)
-        val fotoRequest = fotoFile.asRequestBody("image/*".toMediaTypeOrNull())
+        val mimeFoto = when (fotoFile.extension.lowercase(Locale.getDefault())) {
+            "png" -> "image/png"
+            "webp" -> "image/webp"
+            else -> "image/jpeg"
+        }
+        val fotoRequest = fotoFile.asRequestBody(mimeFoto.toMediaTypeOrNull())
         val fotoPart = MultipartBody.Part.createFormData("foto", fotoFile.name, fotoRequest)
         val imagenPart = MultipartBody.Part.createFormData("imagen", fotoFile.name, fotoRequest)
 
@@ -60,7 +66,7 @@ class MascotaRepository @Inject constructor(
                 foto = fotoPart
             )
         } catch (e: HttpException) {
-            if (e.code() == 400 || e.code() == 404 || e.code() == 405) {
+            if (e.code() == 400 || e.code() == 404 || e.code() == 405 || e.code() == 415) {
                 try {
                     api.guardarMascotaMultipartImagen(
                         nombre = nombre,

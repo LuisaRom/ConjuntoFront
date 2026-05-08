@@ -173,20 +173,24 @@ fun PantallaNotificacionesResidente(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
             Button(
                 onClick = { selectedTab = "Paqueteria" },
-                shape = RoundedCornerShape(50),
+                shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (selectedTab == "Paqueteria") DoradoElegante else Color.Gray
-                )
+                ),
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Icon(
                     imageVector = Icons.Default.Inventory,
                     contentDescription = "Paquetería",
                     tint = if (selectedTab == "Paqueteria") AzulOscuro else Color.White
                 )
-                Spacer(modifier = Modifier.width(6.dp))
+                Spacer(modifier = Modifier.width(8.dp))
                 Text("Paquetería", color = if (selectedTab == "Paqueteria") AzulOscuro else Color.White)
             }
 
@@ -195,17 +199,18 @@ fun PantallaNotificacionesResidente(
                     selectedTab = "Recibos"
                     navController.navigate("PantallaRecibos")
                 },
-                shape = RoundedCornerShape(50),
+                shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (selectedTab == "Recibos") DoradoElegante else Color.Gray
-                )
+                ),
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Icon(
                     imageVector = Icons.Default.ReceiptLong,
                     contentDescription = "Recibos",
                     tint = if (selectedTab == "Recibos") AzulOscuro else Color.White
                 )
-                Spacer(modifier = Modifier.width(6.dp))
+                Spacer(modifier = Modifier.width(8.dp))
                 Text("Recibos", color = if (selectedTab == "Recibos") AzulOscuro else Color.White)
             }
 
@@ -214,17 +219,18 @@ fun PantallaNotificacionesResidente(
                     selectedTab = "Pagos"
                     navController.navigate("PantallaPagos")
                 },
-                shape = RoundedCornerShape(50),
+                shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (selectedTab == "Pagos") DoradoElegante else Color.Gray
-                )
+                ),
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Icon(
                     imageVector = Icons.Default.Payments,
                     contentDescription = "Pagos",
                     tint = if (selectedTab == "Pagos") AzulOscuro else Color.White
                 )
-                Spacer(modifier = Modifier.width(6.dp))
+                Spacer(modifier = Modifier.width(8.dp))
                 Text("Pagos", color = if (selectedTab == "Pagos") AzulOscuro else Color.White)
             }
         }

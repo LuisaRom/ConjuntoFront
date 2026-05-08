@@ -575,12 +575,10 @@ fun PantallaCreacionPublicacionAdmin(
                             else -> null
                         }
                         
-                        // El backend solo acepta URLs publicas; los archivos locales se previsualizan,
-                        // pero no se envian para evitar rechazos del guardado.
-                        val imagenParaBackend = imagenSeleccionada
-                            ?.takeIf { it.startsWith("http://") || it.startsWith("https://") }
-                        val videoParaBackend = videoPath
-                            ?.takeIf { it.startsWith("http://") || it.startsWith("https://") }
+                        // Se envía la ruta disponible (local o remota) para que el backend la persista.
+                        // Así la imagen/video adjuntos puedan renderizarse después en el feed.
+                        val imagenParaBackend = imagenSeleccionada?.takeIf { it.isNotBlank() }
+                        val videoParaBackend = videoPath?.takeIf { it.isNotBlank() }
 
                         val notificacion = Notificacion(
                             mensaje = descripcion,

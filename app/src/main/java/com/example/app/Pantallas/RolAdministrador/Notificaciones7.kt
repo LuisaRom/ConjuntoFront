@@ -95,7 +95,10 @@ fun PantallaNotificaciones(
                     shape = RoundedCornerShape(50),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (selectedTab == "Mensajes") DoradoElegante else GrisClaro
-                    )
+                    ),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(80.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Chat,
@@ -111,7 +114,10 @@ fun PantallaNotificaciones(
                     shape = RoundedCornerShape(50),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (selectedTab == "Pagos") DoradoElegante else GrisClaro
-                    )
+                    ),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(80.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Payments,
@@ -144,7 +150,9 @@ fun PantallaNotificaciones(
 
                 val contactos = usuarios.filter {
                     val nombre = it.nombre.ifBlank { it.usuario }
-                    nombre.contains(searchQuery, ignoreCase = true)
+                    val rol = it.rol.uppercase()
+                    val esRolPermitido = rol == "ADMINISTRADOR" || rol == "ADMIN" || rol == "CELADOR"
+                    esRolPermitido && nombre.contains(searchQuery, ignoreCase = true)
                 }
 
                 if (contactos.isEmpty()) {

@@ -77,6 +77,7 @@ fun PantallaRecibosCelador(
 
     val usuarios by usuarioViewModel.usuarios.collectAsState()
     val isLoadingUsuarios by usuarioViewModel.isLoading.collectAsState()
+    val errorUsuarios by usuarioViewModel.error.collectAsState()
     var intentoFallbackUsuarios by remember { mutableStateOf(false) }
     val residentes = remember(usuarios) {
         usuarios
@@ -104,7 +105,7 @@ fun PantallaRecibosCelador(
 
     LaunchedEffect(Unit) {
         if (usuarios.isEmpty()) {
-            usuarioViewModel.obtenerTodos()
+            usuarioViewModel.obtenerResidentes()
         }
     }
 
@@ -136,6 +137,15 @@ fun PantallaRecibosCelador(
         }
 
         Spacer(modifier = Modifier.height(24.dp))
+
+        if (!errorUsuarios.isNullOrBlank() && residentes.isEmpty()) {
+            Text(
+                text = errorUsuarios ?: "",
+                color = Color(0xFFFFB4AB),
+                fontSize = 12.sp,
+                modifier = Modifier.padding(bottom = 10.dp)
+            )
+        }
 
         ReciboItemExpandible(
             logoResId = R.drawable.logoenel,

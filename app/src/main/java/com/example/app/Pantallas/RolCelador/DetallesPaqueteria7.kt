@@ -65,7 +65,7 @@ fun PantallaDetallesPaqueteriaCelador(
     
     // Cargar usuarios al iniciar
     LaunchedEffect(Unit) {
-        usuarioViewModel.obtenerTodos()
+        usuarioViewModel.obtenerResidentes()
         paqueteriaViewModel.obtenerTodos()
     }
 
@@ -267,7 +267,7 @@ fun PantallaDetallesPaqueteriaCelador(
                                 )
                             },
                             onClick = {
-                                usuarioViewModel.obtenerTodos()
+                                usuarioViewModel.obtenerResidentes()
                             },
                             colors = MenuDefaults.itemColors(
                                 textColor = Color.White
