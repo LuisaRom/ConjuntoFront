@@ -4,17 +4,13 @@ import com.google.gson.annotations.SerializedName
 
 data class CrearPagoRequest(
     @SerializedName("monto")
-    val monto: Long? = null,
+    val monto: Long,
     @SerializedName("valor")
-    val valor: Long? = null,
+    val valor: Long,
     @SerializedName("concepto")
-    val concepto: String? = null,
+    val concepto: String,
     @SerializedName("descripcion")
-    val descripcion: String? = null,
+    val descripcion: String,
     @SerializedName("periodo")
-    val periodo: String? = null,
-    @SerializedName("usuarioId")
-    val usuarioId: Long? = null,
-    @SerializedName("apartamento")
-    val apartamento: String? = null
+    val periodo: String
 )

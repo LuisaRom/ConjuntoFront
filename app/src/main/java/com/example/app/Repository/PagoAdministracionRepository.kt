@@ -7,12 +7,16 @@ import com.example.app.Model.ConfirmarPagoResponse
 import com.example.app.Model.CrearPagoRequest
 import com.example.app.Model.EstadoPagoAdmin
 import com.example.app.Model.PagoAdministracion
+import com.google.gson.Gson
+import com.google.gson.JsonObject
 import retrofit2.HttpException
 import javax.inject.Inject
 
 class PagoAdministracionRepository @Inject constructor(
     private val api: PagoAdministracionApiService
 ) {
+
+    private val gson = Gson()
 
     suspend fun obtenerTodos(): List<PagoAdministracion> {
         return runCatching { api.obtenerMisPagos() }
@@ -27,19 +31,18 @@ class PagoAdministracionRepository @Inject constructor(
     }
 
     suspend fun crearCheckoutAdministracion(request: CrearPagoRequest): CheckoutAdministracionResponse {
-        val response = runCatching { api.crearCheckoutAdministracion(request) }
-            .recoverCatching { api.crearPagoEnLinea(request) }
-            .recoverCatching { api.crearPagoEnLineaCheckout(request) }
-            .recoverCatching { api.crearPagoEnLineaMercadoPago(request) }
-            .getOrElse { error ->
-                if (error is HttpException && error.code() == 404) {
-                    throw IllegalStateException(
-                        "El backend no tiene habilitada la ruta de checkout de Mercado Pago (404)."
-                    )
-                }
-                throw error
+        return try {
+            api.crearCheckoutAdministracion(request)
+        } catch (error: HttpException) {
+            if (error.code() == 404) {
+                runCatching { api.crearPagoEnLinea(request) }
+                    .recoverCatching { api.crearPagoEnLineaCheckout(request) }
+                    .recoverCatching { api.crearPagoEnLineaMercadoPago(request) }
+                    .getOrElse { throw IllegalStateException(extraerMensajeHttp(error), error) }
+            } else {
+                throw IllegalStateException(extraerMensajeHttp(error), error)
             }
-        return response
+        }
     }
 
     suspend fun extraerUrlCheckout(response: CheckoutAdministracionResponse): String {
@@ -53,7 +56,11 @@ class PagoAdministracionRepository @Inject constructor(
     }
 
     suspend fun confirmarPago(referenciaExterna: String): ConfirmarPagoResponse {
-        return api.confirmarPago(ConfirmarPagoRequest(referenciaExterna = referenciaExterna.trim()))
+        return try {
+            api.confirmarPago(ConfirmarPagoRequest(referenciaExterna = referenciaExterna.trim()))
+        } catch (error: HttpException) {
+            throw IllegalStateException(extraerMensajeHttp(error), error)
+        }
     }
 
     suspend fun obtenerEstadoPagosAdmin(): List<EstadoPagoAdmin> {
@@ -62,6 +69,20 @@ class PagoAdministracionRepository @Inject constructor(
 
     suspend fun eliminar(id: Long) {
         api.eliminarPago(id)
+    }
+
+    private fun extraerMensajeHttp(error: HttpException): String {
+        val cuerpo = error.response()?.errorBody()?.string().orEmpty().trim()
+        if (cuerpo.isBlank()) {
+            return "Error del servidor (${error.code()})"
+        }
+        return runCatching {
+            val json = gson.fromJson(cuerpo, JsonObject::class.java)
+            json.get("mensaje")?.asString
+                ?: json.get("message")?.asString
+                ?: json.get("error")?.asString
+        }.getOrNull()?.takeIf { it.isNotBlank() }
+            ?: cuerpo.removeSurrounding("\"")
     }
 
     private fun normalizarCheckoutUrl(url: String): String {

@@ -93,7 +93,7 @@ class PagoAdministracionViewModel @Inject constructor(
             }
             _checkoutUrl.value = url
         } catch (e: Exception) {
-            _error.value = "Error al iniciar checkout: ${e.message}"
+            _error.value = e.message?.substringAfter(": ")?.ifBlank { e.message } ?: "Error al iniciar checkout"
         } finally {
             _isLoading.value = false
         }
