@@ -79,8 +79,8 @@ class PagoAdministracionRepository @Inject constructor(
         return runCatching {
             val json = gson.fromJson(cuerpo, JsonObject::class.java)
             json.get("mensaje")?.asString
-                ?: json.get("message")?.asString
                 ?: json.get("error")?.asString
+                ?: json.get("message")?.asString
         }.getOrNull()?.takeIf { it.isNotBlank() }
             ?: cuerpo.removeSurrounding("\"")
     }
