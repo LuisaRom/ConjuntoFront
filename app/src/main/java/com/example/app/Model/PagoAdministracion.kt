@@ -7,16 +7,32 @@ data class PagoAdministracion(
     val id: Long? = null,
 
     @SerializedName("monto")
-    val monto: BigDecimal,
+    val monto: BigDecimal? = null,
 
     @SerializedName("fechaPago")
-    val fechaPago: String?,  // Formato ISO 8601
+    val fechaPago: String? = null,
 
     @SerializedName("metodoPago")
-    val metodoPago: String,
+    val metodoPago: String? = null,
+
+    @SerializedName("estadoPago")
+    val estadoPago: String? = null,
+
+    @SerializedName("concepto")
+    val concepto: String? = null,
+
+    @SerializedName("periodo")
+    val periodo: String? = null,
+
+    @SerializedName("referenciaExterna")
+    val referenciaExterna: String? = null,
+
+    @SerializedName("checkoutUrl")
+    val checkoutUrl: String? = null,
 
     @SerializedName("usuario")
-    val usuario: Usuario? = null
-)
+    val usuario: Usuario? = null,
 
-//Preguntar al profe porque no deja poner enumclass y si es mejor dejarlo y agregar un nuevo archivo o asi como esta
+    @SerializedName("usuarioNombre")
+    val usuarioNombre: String? = null
+)

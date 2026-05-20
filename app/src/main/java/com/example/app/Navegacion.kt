@@ -9,6 +9,7 @@ import androidx.navigation.NavHostController
 // ⛔️ NO usar androidx.navigation.Navigation en Compose
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navDeepLink
 import com.example.app.Auth.AuthManager
 
 import com.example.app.Pantallas.PantallaLogin
@@ -227,7 +228,14 @@ fun Navegacion(navController: NavHostController) {
         composable("PantallaPaqueteriaResidente") {
             RoleGuard(navController, setOf("RESIDENTE")) { PantallaPaqueteriaResidente(navController) }
         }
-        composable("PantallaPagos") { 
+        composable(
+            route = "PantallaPagos",
+            deepLinks = listOf(
+                navDeepLink {
+                    uriPattern = "https://conjuntoback.onrender.com/pagos/resultado?ref={referenciaExterna}"
+                }
+            )
+        ) {
             RoleGuard(navController, setOf("RESIDENTE")) {
                 PantallaPagosResidente(navController, usuarioViewModel)
             }

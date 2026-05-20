@@ -11,6 +11,12 @@ data class CheckoutAdministracionResponse(
     val redirectUrl: String? = null,
     @SerializedName(value = "sandbox_init_point", alternate = ["sandboxInitPoint"])
     val sandboxInitPoint: String? = null,
-    @SerializedName(value = "preferenceId", alternate = ["preference_id", "id", "preference"])
-    val preferenceId: String? = null
+    @SerializedName(value = "preferenceId", alternate = ["preference_id", "mercadoPagoPreferenceId", "preference"])
+    val preferenceId: String? = null,
+    @SerializedName("referenciaExterna")
+    val referenciaExterna: String? = null,
+    @SerializedName("estado")
+    val estado: String? = null,
+    @SerializedName("mensaje")
+    val mensaje: String? = null
 )

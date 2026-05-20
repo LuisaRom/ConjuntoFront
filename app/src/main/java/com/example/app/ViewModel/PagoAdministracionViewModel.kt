@@ -2,7 +2,9 @@ package com.example.app.ViewModel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.app.Model.ConfirmarPagoResponse
 import com.example.app.Model.CrearPagoRequest
+import com.example.app.Model.EstadoPagoAdmin
 import com.example.app.Model.PagoAdministracion
 import com.example.app.Repository.PagoAdministracionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -12,6 +14,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.time.YearMonth
 import javax.inject.Inject
 
 @HiltViewModel
@@ -31,6 +34,12 @@ class PagoAdministracionViewModel @Inject constructor(
     private val _checkoutUrl = MutableStateFlow<String?>(null)
     val checkoutUrl: StateFlow<String?> = _checkoutUrl.asStateFlow()
 
+    private val _confirmacionPago = MutableStateFlow<ConfirmarPagoResponse?>(null)
+    val confirmacionPago: StateFlow<ConfirmarPagoResponse?> = _confirmacionPago.asStateFlow()
+
+    private val _estadoPagosAdmin = MutableStateFlow<List<EstadoPagoAdmin>>(emptyList())
+    val estadoPagosAdmin: StateFlow<List<EstadoPagoAdmin>> = _estadoPagosAdmin.asStateFlow()
+
     fun obtenerTodos() = viewModelScope.launch {
         _isLoading.value = true
         _error.value = null
@@ -41,21 +50,6 @@ class PagoAdministracionViewModel @Inject constructor(
             _pagos.value = lista
         } catch (e: Exception) {
             _error.value = "Error al obtener pagos: ${e.message}"
-        } finally {
-            _isLoading.value = false
-        }
-    }
-
-    fun guardar(pago: PagoAdministracion) = viewModelScope.launch {
-        _isLoading.value = true
-        _error.value = null
-        try {
-            val pagoGuardado = withContext(Dispatchers.IO) {
-                repository.guardar(pago)
-            }
-            obtenerTodos()
-        } catch (e: Exception) {
-            _error.value = "Error al guardar pago: ${e.message}"
         } finally {
             _isLoading.value = false
         }
@@ -76,37 +70,26 @@ class PagoAdministracionViewModel @Inject constructor(
         }
     }
 
-    fun obtenerPorId(id: Long) = viewModelScope.launch {
-        _isLoading.value = true
-        _error.value = null
-        try {
-            withContext(Dispatchers.IO) {
-                repository.obtenerPorId(id)
-            }
-        } catch (e: Exception) {
-            _error.value = "Error al obtener pago: ${e.message}"
-        } finally {
-            _isLoading.value = false
-        }
-    }
-
     fun crearCheckoutAdministracion(
-        usuarioId: Long,
-        apartamento: String,
         valor: Long,
-        descripcion: String
+        descripcion: String,
+        periodo: String = YearMonth.now().toString()
     ) = viewModelScope.launch {
         _isLoading.value = true
         _error.value = null
         try {
             val request = CrearPagoRequest(
-                usuarioId = usuarioId,
-                apartamento = apartamento,
+                monto = valor,
                 valor = valor,
-                descripcion = descripcion
+                concepto = descripcion,
+                descripcion = descripcion,
+                periodo = periodo
             )
-            val url = withContext(Dispatchers.IO) {
+            val response = withContext(Dispatchers.IO) {
                 repository.crearCheckoutAdministracion(request)
+            }
+            val url = withContext(Dispatchers.IO) {
+                repository.extraerUrlCheckout(response)
             }
             _checkoutUrl.value = url
         } catch (e: Exception) {
@@ -118,6 +101,43 @@ class PagoAdministracionViewModel @Inject constructor(
 
     fun consumirCheckoutUrl() {
         _checkoutUrl.value = null
+    }
+
+    fun confirmarPago(referenciaExterna: String) = viewModelScope.launch {
+        _isLoading.value = true
+        _error.value = null
+        _confirmacionPago.value = null
+        try {
+            val resultado = withContext(Dispatchers.IO) {
+                repository.confirmarPago(referenciaExterna)
+            }
+            _confirmacionPago.value = resultado
+            obtenerTodos()
+        } catch (e: Exception) {
+            _error.value = "Error al confirmar pago: ${e.message}"
+        } finally {
+            _isLoading.value = false
+        }
+    }
+
+    fun obtenerEstadoPagosAdmin() = viewModelScope.launch {
+        _isLoading.value = true
+        _error.value = null
+        try {
+            val lista = withContext(Dispatchers.IO) {
+                repository.obtenerEstadoPagosAdmin()
+            }
+            _estadoPagosAdmin.value = lista
+        } catch (e: Exception) {
+            _error.value = "Error al obtener estado de pagos: ${e.message}"
+            _estadoPagosAdmin.value = emptyList()
+        } finally {
+            _isLoading.value = false
+        }
+    }
+
+    fun consumirConfirmacionPago() {
+        _confirmacionPago.value = null
     }
 
     fun clearError() {

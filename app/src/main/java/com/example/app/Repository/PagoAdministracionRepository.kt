@@ -1,7 +1,11 @@
 package com.example.app.Repository
 
 import com.example.app.Interfaces.PagoAdministracionApiService
+import com.example.app.Model.CheckoutAdministracionResponse
+import com.example.app.Model.ConfirmarPagoRequest
+import com.example.app.Model.ConfirmarPagoResponse
 import com.example.app.Model.CrearPagoRequest
+import com.example.app.Model.EstadoPagoAdmin
 import com.example.app.Model.PagoAdministracion
 import retrofit2.HttpException
 import javax.inject.Inject
@@ -22,35 +26,38 @@ class PagoAdministracionRepository @Inject constructor(
         return api.obtenerPago(id)
     }
 
-    suspend fun guardar(pagoAdministracion: PagoAdministracion): PagoAdministracion {
-        return api.guardarPago(pagoAdministracion)
-    }
-
-    suspend fun crearCheckoutAdministracion(request: CrearPagoRequest): String {
-        val response = runCatching { api.crearPagoEnLinea(request) }
+    suspend fun crearCheckoutAdministracion(request: CrearPagoRequest): CheckoutAdministracionResponse {
+        val response = runCatching { api.crearCheckoutAdministracion(request) }
+            .recoverCatching { api.crearPagoEnLinea(request) }
             .recoverCatching { api.crearPagoEnLineaCheckout(request) }
             .recoverCatching { api.crearPagoEnLineaMercadoPago(request) }
-            .recoverCatching { api.crearPagoEnLineaMercadoPagoCrear(request) }
-            .recoverCatching { api.crearPagoEnLineaMercadoPagoDash(request) }
-            .recoverCatching { api.crearPagoEnLineaMercadoPagoDashCrear(request) }
             .getOrElse { error ->
                 if (error is HttpException && error.code() == 404) {
                     throw IllegalStateException(
-                        "El backend no tiene habilitada la ruta de checkout de Mercado Pago (404). " +
-                            "Verifica el endpoint de prueba en el backend."
+                        "El backend no tiene habilitada la ruta de checkout de Mercado Pago (404)."
                     )
                 }
                 throw error
             }
+        return response
+    }
 
+    suspend fun extraerUrlCheckout(response: CheckoutAdministracionResponse): String {
         val url = response.initPoint
             ?: response.sandboxInitPoint
-            ?: response.redirectUrl
             ?: response.checkoutUrl
+            ?: response.redirectUrl
             ?: response.preferenceId?.let { construirUrlDesdePreferencia(it) }
             ?: throw IllegalStateException("El backend no devolvió URL de checkout para redirección")
-
         return normalizarCheckoutUrl(url)
+    }
+
+    suspend fun confirmarPago(referenciaExterna: String): ConfirmarPagoResponse {
+        return api.confirmarPago(ConfirmarPagoRequest(referenciaExterna = referenciaExterna.trim()))
+    }
+
+    suspend fun obtenerEstadoPagosAdmin(): List<EstadoPagoAdmin> {
+        return api.obtenerEstadoPagosAdmin()
     }
 
     suspend fun eliminar(id: Long) {

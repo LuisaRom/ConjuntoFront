@@ -1,8 +1,11 @@
 package com.example.app.Interfaces
 
-import com.example.app.Model.PagoAdministracion
 import com.example.app.Model.CheckoutAdministracionResponse
+import com.example.app.Model.ConfirmarPagoRequest
+import com.example.app.Model.ConfirmarPagoResponse
 import com.example.app.Model.CrearPagoRequest
+import com.example.app.Model.EstadoPagoAdmin
+import com.example.app.Model.PagoAdministracion
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -25,8 +28,8 @@ interface PagoAdministracionApiService {
     @GET("/api/pagos/{id}")
     suspend fun obtenerPago(@Path("id") id: Long): PagoAdministracion
 
-    @POST("/api/pagos")
-    suspend fun guardarPago(@Body pago: PagoAdministracion): PagoAdministracion
+    @POST("/api/pagos/checkout/administracion")
+    suspend fun crearCheckoutAdministracion(@Body request: CrearPagoRequest): CheckoutAdministracionResponse
 
     @POST("/api/pagos/crear")
     suspend fun crearPagoEnLinea(@Body request: CrearPagoRequest): CheckoutAdministracionResponse
@@ -37,14 +40,11 @@ interface PagoAdministracionApiService {
     @POST("/api/pagos/mercadopago")
     suspend fun crearPagoEnLineaMercadoPago(@Body request: CrearPagoRequest): CheckoutAdministracionResponse
 
-    @POST("/api/pagos/mercadopago/crear")
-    suspend fun crearPagoEnLineaMercadoPagoCrear(@Body request: CrearPagoRequest): CheckoutAdministracionResponse
+    @POST("/api/pagos/confirmar")
+    suspend fun confirmarPago(@Body request: ConfirmarPagoRequest): ConfirmarPagoResponse
 
-    @POST("/api/pagos/mercado-pago")
-    suspend fun crearPagoEnLineaMercadoPagoDash(@Body request: CrearPagoRequest): CheckoutAdministracionResponse
-
-    @POST("/api/pagos/mercado-pago/crear")
-    suspend fun crearPagoEnLineaMercadoPagoDashCrear(@Body request: CrearPagoRequest): CheckoutAdministracionResponse
+    @GET("/api/pagos/admin/estado-pagos")
+    suspend fun obtenerEstadoPagosAdmin(): List<EstadoPagoAdmin>
 
     @DELETE("/api/pagos/{id}")
     suspend fun eliminarPago(@Path("id") id: Long)

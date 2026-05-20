@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.app.R
 import com.example.app.Auth.AuthManager
+import com.example.app.Payment.PaymentReturnHandler
 import com.example.app.ViewModel.UsuarioViewModel
 import com.example.app.ViewModel.PagoAdministracionViewModel
 import com.example.app.ui.theme.AzulOscuro
@@ -57,6 +58,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
+import java.time.YearMonth
 import java.util.*
 
 @Composable
@@ -73,7 +75,11 @@ fun PantallaPagos(
     val checkoutUrl by pagoAdministracionViewModel.checkoutUrl.collectAsState()
     val isLoading by pagoAdministracionViewModel.isLoading.collectAsState()
     val error by pagoAdministracionViewModel.error.collectAsState()
+    val confirmacionPago by pagoAdministracionViewModel.confirmacionPago.collectAsState()
+    val pagos by pagoAdministracionViewModel.pagos.collectAsState()
+    val pendingReferencia by PaymentReturnHandler.pendingReferencia.collectAsState()
     var metodoSeleccionado by remember { mutableStateOf("EFECTIVO") }
+    var confirmandoRetorno by remember { mutableStateOf(false) }
     
     // Estado para los campos del formulario
     val torreApartamento = remember(usuarioPago) {
@@ -129,8 +135,30 @@ fun PantallaPagos(
         }
     }
 
+    LaunchedEffect(pendingReferencia) {
+        val ref = pendingReferencia ?: return@LaunchedEffect
+        confirmandoRetorno = true
+        metodoSeleccionado = "Pago en línea"
+        pagoAdministracionViewModel.confirmarPago(ref)
+        PaymentReturnHandler.consumeReferencia()
+    }
+
+    LaunchedEffect(confirmacionPago) {
+        val resultado = confirmacionPago ?: return@LaunchedEffect
+        confirmandoRetorno = false
+        val mensaje = resultado.mensaje.orEmpty().ifBlank {
+            when (resultado.estadoPago?.uppercase()) {
+                "APROBADO" -> "Pago realizado con éxito"
+                "RECHAZADO" -> "El pago fue rechazado"
+                else -> "El pago sigue pendiente de confirmación"
+            }
+        }
+        Toast.makeText(context, mensaje, Toast.LENGTH_LONG).show()
+    }
+
     LaunchedEffect(error) {
         val mensajeError = error ?: return@LaunchedEffect
+        confirmandoRetorno = false
         Toast.makeText(context, mensajeError, Toast.LENGTH_LONG).show()
         pagoAdministracionViewModel.clearError()
     }
@@ -154,6 +182,30 @@ fun PantallaPagos(
         }
 
         Spacer(modifier = Modifier.height(24.dp))
+
+        if (confirmandoRetorno && isLoading) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(bottom = 12.dp)
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(18.dp),
+                    color = DoradoElegante,
+                    strokeWidth = 2.dp
+                )
+                Text("Confirmando pago con Mercado Pago...", color = GrisClaro, fontSize = 13.sp)
+            }
+        }
+
+        confirmacionPago?.let { resultado ->
+            ResultadoConfirmacionPago(
+                estadoPago = resultado.estadoPago.orEmpty().ifBlank { "DESCONOCIDO" },
+                mensaje = resultado.mensaje.orEmpty().ifBlank { "Sin mensaje adicional del servidor." },
+                onCerrar = { pagoAdministracionViewModel.consumirConfirmacionPago() }
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+        }
 
         Campo("Torre - Apartamento", torreApartamento)
         Campo("Nombre", nombre)
@@ -219,10 +271,9 @@ fun PantallaPagos(
                     return@MetodoPagoItem
                 }
                 pagoAdministracionViewModel.crearCheckoutAdministracion(
-                    usuarioId = usuarioId,
-                    apartamento = usuarioPago?.apartamento.orEmpty(),
                     valor = valorNumericoPago,
-                    descripcion = "Pago administración"
+                    descripcion = "Pago administración",
+                    periodo = YearMonth.now().toString()
                 )
             }
         }
@@ -241,6 +292,56 @@ fun PantallaPagos(
                 Text("Iniciando pago en línea...", color = GrisClaro, fontSize = 13.sp)
             }
         }
+
+        if (pagos.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(20.dp))
+            Text("Mis pagos registrados", color = Color.White, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(8.dp))
+            pagos.take(5).forEach { pago ->
+                val estado = pago.estadoPago.orEmpty().ifBlank { "PENDIENTE" }
+                val periodo = pago.periodo.orEmpty().ifBlank { "-" }
+                Text(
+                    text = "Periodo $periodo · $estado · ${pago.monto ?: "-"} COP",
+                    color = GrisClaro,
+                    fontSize = 13.sp,
+                    modifier = Modifier.padding(vertical = 4.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ResultadoConfirmacionPago(
+    estadoPago: String,
+    mensaje: String,
+    onCerrar: () -> Unit
+) {
+    val esExitoso = estadoPago.contains("APROB", ignoreCase = true)
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.White.copy(alpha = 0.06f), RoundedCornerShape(12.dp))
+            .padding(16.dp)
+    ) {
+        Text(
+            text = if (esExitoso) "Pago confirmado" else "Resultado del pago",
+            color = if (esExitoso) Color(0xFF93E9BE) else Color(0xFFFFB4AB),
+            fontWeight = FontWeight.Bold,
+            fontSize = 16.sp
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(text = "Estado: $estadoPago", color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(text = mensaje, color = GrisClaro, fontSize = 13.sp)
+        Spacer(modifier = Modifier.height(10.dp))
+        Text(
+            text = "Cerrar",
+            color = DoradoElegante,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.clickable { onCerrar() }
+        )
     }
 }
 
