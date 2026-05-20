@@ -46,8 +46,8 @@ class PagoAdministracionRepository @Inject constructor(
     }
 
     suspend fun extraerUrlCheckout(response: CheckoutAdministracionResponse): String {
-        val url = response.initPoint
-            ?: response.sandboxInitPoint
+        val url = response.sandboxInitPoint
+            ?: response.initPoint
             ?: response.checkoutUrl
             ?: response.redirectUrl
             ?: response.preferenceId?.let { construirUrlDesdePreferencia(it) }
