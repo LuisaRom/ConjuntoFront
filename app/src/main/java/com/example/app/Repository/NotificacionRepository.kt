@@ -2,8 +2,14 @@ package com.example.app.Repository
 
 import com.example.app.Interfaces.NotificacionApiService
 import com.example.app.Model.ChatMensajeRequest
+import com.example.app.Model.EnviarReciboRequest
 import com.example.app.Model.Notificacion
 import com.example.app.Model.Usuario
+import com.example.app.Model.mensajeRecibo
+import retrofit2.HttpException
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import javax.inject.Inject
 
 class NotificacionRepository @Inject constructor(
@@ -61,6 +67,38 @@ class NotificacionRepository @Inject constructor(
             throw Exception(errorBody.ifBlank { "Error HTTP ${e.code()} al enviar mensaje" })
         } catch (e: Exception) {
             throw Exception("Error al enviar mensaje: ${e.message}")
+        }
+    }
+
+    suspend fun enviarRecibo(
+        destinatarioId: Long,
+        tipoRecibo: String,
+        mensaje: String = mensajeRecibo(tipoRecibo)
+    ): Notificacion {
+        val request = EnviarReciboRequest(
+            destinatarioId = destinatarioId,
+            tipoRecibo = tipoRecibo.uppercase(),
+            mensaje = mensaje
+        )
+        return try {
+            api.enviarRecibo(request)
+        } catch (error: HttpException) {
+            if (error.code() == 404) {
+                guardar(
+                    Notificacion(
+                        mensaje = mensaje,
+                        fechaEnvio = fechaActualIso(),
+                        usuario = Usuario(id = destinatarioId),
+                        destinatarioId = destinatarioId,
+                        tipoRecibo = tipoRecibo.uppercase(),
+                        tipoNotificacion = "RECIBO"
+                    )
+                )
+            } else {
+                throw Exception(extraerMensajeHttp(error))
+            }
+        } catch (error: Exception) {
+            throw Exception("Error al enviar recibo: ${error.message}")
         }
     }
 
@@ -128,5 +166,14 @@ class NotificacionRepository @Inject constructor(
         } catch (e: Exception) {
             throw Exception("Error al eliminar publicación: ${e.message}")
         }
+    }
+
+    private fun fechaActualIso(): String {
+        return SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).format(Date())
+    }
+
+    private fun extraerMensajeHttp(error: HttpException): String {
+        val cuerpo = error.response()?.errorBody()?.string().orEmpty().trim()
+        return cuerpo.ifBlank { "Error del servidor (${error.code()})" }
     }
 }

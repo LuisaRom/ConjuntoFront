@@ -29,7 +29,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.example.app.Model.Notificacion
 import com.example.app.Model.Usuario
 import com.example.app.R
 import com.example.app.ViewModel.NotificacionViewModel
@@ -39,9 +38,6 @@ import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 @Composable
 fun PantallaRecibosCelador(
@@ -139,66 +135,11 @@ fun PantallaRecibosCelador(
             onEnviarNotificaciones = {
                 scope.launch {
                     try {
-                        val destinatarios = if (enelTodosSeleccionado) {
-                            residentes
-                        } else {
-                            residentes.filter { it.id in enelSeleccionados }
-                        }
-
-                        if (destinatarios.isEmpty()) {
-                            Toast.makeText(context, "Por favor selecciona al menos un residente", Toast.LENGTH_SHORT).show()
-                            return@launch
-                        }
-
-                        android.util.Log.d("Recibos", "Enviando notificaciones de ENEL a ${destinatarios.size} residente(s)")
-                        val fechaActual = obtenerFechaActualISO()
-                        var enviadas = 0
-
-                        // Enviar notificaciones de forma secuencial para evitar saturar el servidor
-                        for (residente in destinatarios) {
-                            if (residente.id != null) {
-                                try {
-                                    android.util.Log.d("Recibos", "=== CREANDO NOTIFICACIÓN ENEL ===")
-                                    android.util.Log.d("Recibos", "Residente destino - ID: ${residente.id}, Nombre: ${residente.nombre}, Rol: ${residente.rol}, Documento: ${residente.documento}")
-
-                                    val mensajeNotificacion = "Tienes un recibo de ENEL disponible en la portería. Por favor pasa a recogerlo."
-                                    android.util.Log.d("Recibos", "Mensaje: $mensajeNotificacion")
-
-                                    val notificacion = Notificacion(
-                                        mensaje = mensajeNotificacion,
-                                        fechaEnvio = fechaActual,
-                                        usuario = residente  // Usuario completo con todos sus campos
-                                    )
-
-                                    android.util.Log.d("Recibos", "Notificación creada - Mensaje: ${notificacion.mensaje}, UsuarioId: ${notificacion.usuario?.id}, UsuarioNombre: ${notificacion.usuario?.nombre}")
-
-                                    // Guardar la notificación usando el ViewModel en un try-catch para evitar crashes
-                                    try {
-                                        notificacionViewModel.guardar(notificacion)
-                                        // Esperar más tiempo entre cada envío para evitar timeouts
-                                        delay(1500)
-                                        enviadas++
-                                        android.util.Log.d("Recibos", "=== NOTIFICACIÓN ENEL GUARDADA EXITOSAMENTE ===")
-                                        android.util.Log.d("Recibos", "Notificación enviada a ${residente.nombre} (ID: ${residente.id})")
-                                    } catch (e: Exception) {
-                                        android.util.Log.e("Recibos", "Error al guardar notificación ENEL para ${residente.nombre}: ${e.message}", e)
-                                        // Continuar con el siguiente residente aunque falle uno
-                                    }
-                                } catch (e: Exception) {
-                                    android.util.Log.e("Recibos", "=== ERROR AL CREAR NOTIFICACIÓN ENEL ===")
-                                    android.util.Log.e("Recibos", "Error al crear notificación de ENEL para ${residente.nombre}", e)
-                                    // Continuar con el siguiente residente
-                                }
-                            } else {
-                                android.util.Log.e("Recibos", "ADVERTENCIA: Residente ${residente.nombre} no tiene ID válido")
-                            }
-                        }
-
-                        // Refrescar la lista de notificaciones después de enviar todas
-                        notificacionViewModel.obtenerTodos()
-
-                        enelNotificado = true
-                        android.util.Log.d("Recibos", "Total notificaciones de ENEL enviadas: $enviadas")
+                        val destinatarios = if (enelTodosSeleccionado) residentes
+                        else residentes.filter { it.id in enelSeleccionados }
+                        val enviadas = enviarRecibosCelador(context, notificacionViewModel, destinatarios, "ENEL")
+                        if (enviadas < 0) return@launch
+                        enelNotificado = enviadas > 0
                         Toast.makeText(context, "Notificaciones enviadas a $enviadas residente(s)", Toast.LENGTH_SHORT).show()
                     } catch (e: Exception) {
                         android.util.Log.e("Recibos", "Error al enviar notificaciones de ENEL", e)
@@ -244,66 +185,11 @@ fun PantallaRecibosCelador(
             onEnviarNotificaciones = {
                 scope.launch {
                     try {
-                        val destinatarios = if (vantiTodosSeleccionado) {
-                            residentes
-                        } else {
-                            residentes.filter { it.id in vantiSeleccionados }
-                        }
-
-                        if (destinatarios.isEmpty()) {
-                            Toast.makeText(context, "Por favor selecciona al menos un residente", Toast.LENGTH_SHORT).show()
-                            return@launch
-                        }
-
-                        android.util.Log.d("Recibos", "Enviando notificaciones de VANTI a ${destinatarios.size} residente(s)")
-                        val fechaActual = obtenerFechaActualISO()
-                        var enviadas = 0
-
-                        // Enviar notificaciones de forma secuencial para evitar saturar el servidor
-                        for (residente in destinatarios) {
-                            if (residente.id != null) {
-                                try {
-                                    android.util.Log.d("Recibos", "=== CREANDO NOTIFICACIÓN VANTI ===")
-                                    android.util.Log.d("Recibos", "Residente destino - ID: ${residente.id}, Nombre: ${residente.nombre}, Rol: ${residente.rol}, Documento: ${residente.documento}")
-
-                                    val mensajeNotificacion = "Tienes un recibo de VANTI disponible en la portería. Por favor pasa a recogerlo."
-                                    android.util.Log.d("Recibos", "Mensaje: $mensajeNotificacion")
-
-                                    val notificacion = Notificacion(
-                                        mensaje = mensajeNotificacion,
-                                        fechaEnvio = fechaActual,
-                                        usuario = residente  // Usuario completo con todos sus campos
-                                    )
-
-                                    android.util.Log.d("Recibos", "Notificación creada - Mensaje: ${notificacion.mensaje}, UsuarioId: ${notificacion.usuario?.id}, UsuarioNombre: ${notificacion.usuario?.nombre}")
-
-                                    // Guardar la notificación usando el ViewModel en un try-catch para evitar crashes
-                                    try {
-                                        notificacionViewModel.guardar(notificacion)
-                                        // Esperar más tiempo entre cada envío para evitar timeouts
-                                        delay(1500)
-                                        enviadas++
-                                        android.util.Log.d("Recibos", "=== NOTIFICACIÓN VANTI GUARDADA EXITOSAMENTE ===")
-                                        android.util.Log.d("Recibos", "Notificación enviada a ${residente.nombre} (ID: ${residente.id})")
-                                    } catch (e: Exception) {
-                                        android.util.Log.e("Recibos", "Error al guardar notificación VANTI para ${residente.nombre}: ${e.message}", e)
-                                        // Continuar con el siguiente residente aunque falle uno
-                                    }
-                                } catch (e: Exception) {
-                                    android.util.Log.e("Recibos", "=== ERROR AL CREAR NOTIFICACIÓN VANTI ===")
-                                    android.util.Log.e("Recibos", "Error al crear notificación de VANTI para ${residente.nombre}", e)
-                                    // Continuar con el siguiente residente
-                                }
-                            } else {
-                                android.util.Log.e("Recibos", "ADVERTENCIA: Residente ${residente.nombre} no tiene ID válido")
-                            }
-                        }
-
-                        // Esperar un momento para asegurar que todas las notificaciones se guardaron
-                        kotlinx.coroutines.delay(500)
-
-                        vantiNotificado = true
-                        android.util.Log.d("Recibos", "Total notificaciones de VANTI enviadas: $enviadas")
+                        val destinatarios = if (vantiTodosSeleccionado) residentes
+                        else residentes.filter { it.id in vantiSeleccionados }
+                        val enviadas = enviarRecibosCelador(context, notificacionViewModel, destinatarios, "VANTI")
+                        if (enviadas < 0) return@launch
+                        vantiNotificado = enviadas > 0
                         Toast.makeText(context, "Notificaciones enviadas a $enviadas residente(s)", Toast.LENGTH_SHORT).show()
                     } catch (e: Exception) {
                         android.util.Log.e("Recibos", "Error al enviar notificaciones de VANTI", e)
@@ -349,66 +235,11 @@ fun PantallaRecibosCelador(
             onEnviarNotificaciones = {
                 scope.launch {
                     try {
-                        val destinatarios = if (epzTodosSeleccionado) {
-                            residentes
-                        } else {
-                            residentes.filter { it.id in epzSeleccionados }
-                        }
-
-                        if (destinatarios.isEmpty()) {
-                            Toast.makeText(context, "Por favor selecciona al menos un residente", Toast.LENGTH_SHORT).show()
-                            return@launch
-                        }
-
-                        android.util.Log.d("Recibos", "Enviando notificaciones de EPZ a ${destinatarios.size} residente(s)")
-                        val fechaActual = obtenerFechaActualISO()
-                        var enviadas = 0
-
-                        // Enviar notificaciones de forma secuencial para evitar saturar el servidor
-                        for (residente in destinatarios) {
-                            if (residente.id != null) {
-                                try {
-                                    android.util.Log.d("Recibos", "=== CREANDO NOTIFICACIÓN EPZ ===")
-                                    android.util.Log.d("Recibos", "Residente destino - ID: ${residente.id}, Nombre: ${residente.nombre}, Rol: ${residente.rol}, Documento: ${residente.documento}")
-
-                                    val mensajeNotificacion = "Tienes un recibo de EPZ disponible en la portería. Por favor pasa a recogerlo."
-                                    android.util.Log.d("Recibos", "Mensaje: $mensajeNotificacion")
-
-                                    val notificacion = Notificacion(
-                                        mensaje = mensajeNotificacion,
-                                        fechaEnvio = fechaActual,
-                                        usuario = residente  // Usuario completo con todos sus campos
-                                    )
-
-                                    android.util.Log.d("Recibos", "Notificación creada - Mensaje: ${notificacion.mensaje}, UsuarioId: ${notificacion.usuario?.id}, UsuarioNombre: ${notificacion.usuario?.nombre}")
-
-                                    // Guardar la notificación usando el ViewModel en un try-catch para evitar crashes
-                                    try {
-                                        notificacionViewModel.guardar(notificacion)
-                                        // Esperar más tiempo entre cada envío para evitar timeouts
-                                        delay(1500)
-                                        enviadas++
-                                        android.util.Log.d("Recibos", "=== NOTIFICACIÓN EPZ GUARDADA EXITOSAMENTE ===")
-                                        android.util.Log.d("Recibos", "Notificación enviada a ${residente.nombre} (ID: ${residente.id})")
-                                    } catch (e: Exception) {
-                                        android.util.Log.e("Recibos", "Error al guardar notificación EPZ para ${residente.nombre}: ${e.message}", e)
-                                        // Continuar con el siguiente residente aunque falle uno
-                                    }
-                                } catch (e: Exception) {
-                                    android.util.Log.e("Recibos", "=== ERROR AL CREAR NOTIFICACIÓN EPZ ===")
-                                    android.util.Log.e("Recibos", "Error al crear notificación de EPZ para ${residente.nombre}", e)
-                                    // Continuar con el siguiente residente
-                                }
-                            } else {
-                                android.util.Log.e("Recibos", "ADVERTENCIA: Residente ${residente.nombre} no tiene ID válido")
-                            }
-                        }
-
-                        // Esperar un momento para asegurar que todas las notificaciones se guardaron
-                        kotlinx.coroutines.delay(500)
-
-                        epzNotificado = true
-                        android.util.Log.d("Recibos", "Total notificaciones de EPZ enviadas: $enviadas")
+                        val destinatarios = if (epzTodosSeleccionado) residentes
+                        else residentes.filter { it.id in epzSeleccionados }
+                        val enviadas = enviarRecibosCelador(context, notificacionViewModel, destinatarios, "EPZ")
+                        if (enviadas < 0) return@launch
+                        epzNotificado = enviadas > 0
                         Toast.makeText(context, "Notificaciones enviadas a $enviadas residente(s)", Toast.LENGTH_SHORT).show()
                     } catch (e: Exception) {
                         android.util.Log.e("Recibos", "Error al enviar notificaciones de EPZ", e)
@@ -617,7 +448,28 @@ fun ReciboItemExpandible(
     }
 }
 
-private fun obtenerFechaActualISO(): String {
-    val formatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
-    return formatter.format(Date())
+private suspend fun enviarRecibosCelador(
+    context: android.content.Context,
+    notificacionViewModel: NotificacionViewModel,
+    destinatarios: List<Usuario>,
+    tipoRecibo: String
+): Int {
+    val validos = destinatarios.filter { it.id != null }
+    if (validos.isEmpty()) {
+        Toast.makeText(context, "Por favor selecciona al menos un residente", Toast.LENGTH_SHORT).show()
+        return -1
+    }
+    var enviadas = 0
+    for (residente in validos) {
+        try {
+            notificacionViewModel.enviarRecibo(residente.id!!, tipoRecibo)
+            delay(800)
+            enviadas++
+            android.util.Log.d("Recibos", "Recibo $tipoRecibo enviado a ${residente.nombre} (ID: ${residente.id})")
+        } catch (e: Exception) {
+            android.util.Log.e("Recibos", "Error enviando $tipoRecibo a ${residente.nombre}", e)
+        }
+    }
+    notificacionViewModel.obtenerTodos()
+    return enviadas
 }

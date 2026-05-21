@@ -44,7 +44,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import com.example.app.Auth.AuthManager
 import com.example.app.Model.Notificacion
+import com.example.app.Model.filtrarRecibosResidente
 import com.example.app.ViewModel.NotificacionViewModel
 import com.example.app.ViewModel.UsuarioViewModel
 import com.example.app.ui.theme.AzulOscuro
@@ -65,6 +67,7 @@ fun PantallaRecibos(
     usuarioViewModel: UsuarioViewModel = hiltViewModel()
 ) {
     val usuarioActual by usuarioViewModel.usuarioActual.collectAsState()
+    val usuarioSesion by AuthManager.currentUser.collectAsState()
     val notificaciones by notificacionViewModel.notificaciones.collectAsState()
     val isLoading by notificacionViewModel.isLoading.collectAsState()
 
@@ -108,55 +111,17 @@ fun PantallaRecibos(
         }
     }
 
-    // Inferir usuario actual desde las notificaciones de recibos si es null
-    val usuarioIdEfectivo = remember(notificaciones, usuarioActual?.id) {
-        if (usuarioActual?.id != null) {
-            usuarioActual?.id
-        } else {
-            // Intentar inferir desde las notificaciones de recibos
-            val recibos = notificaciones.filter { esNotificacionRecibo(it.mensaje) && it.usuario?.id != null }
-            val userIds = recibos.mapNotNull { it.usuario?.id }
-            val userIdMasComun = userIds.groupingBy { it }.eachCount().maxByOrNull { it.value }?.key
-            if (userIdMasComun != null) {
-                Log.d("Recibos", "Usuario inferido desde notificaciones de recibos: ID=$userIdMasComun")
-            }
-            userIdMasComun
-        }
-    }
-    
-    // Filtrar notificaciones de recibos para el usuario actual (o inferido)
+    val usuarioIdEfectivo = usuarioActual?.id ?: usuarioSesion?.id
+
     val notificacionesRecibos = remember(notificaciones, usuarioIdEfectivo) {
-        Log.d("Recibos", "=== FILTRANDO NOTIFICACIONES DE RECIBOS ===")
-        Log.d("Recibos", "Total notificaciones: ${notificaciones.size}")
-        Log.d("Recibos", "Usuario actual ID: ${usuarioActual?.id}, Nombre: ${usuarioActual?.nombre}")
-        Log.d("Recibos", "Usuario efectivo ID: $usuarioIdEfectivo")
-        
-        val filtradas = notificaciones.filter { notificacion ->
-            val esRecibo = esNotificacionRecibo(notificacion.mensaje)
-            val esParaUsuario = if (usuarioIdEfectivo != null) {
-                notificacion.usuario?.id == usuarioIdEfectivo
-            } else {
-                false
-            }
-            
-            Log.d("Recibos", "Notificación ID=${notificacion.id}")
-            Log.d("Recibos", "  - Mensaje: ${notificacion.mensaje}")
-            Log.d("Recibos", "  - Usuario ID: ${notificacion.usuario?.id}, Nombre: ${notificacion.usuario?.nombre}")
-            Log.d("Recibos", "  - Es recibo: $esRecibo")
-            Log.d("Recibos", "  - Es para usuario: $esParaUsuario")
-            Log.d("Recibos", "  - Incluir: ${esRecibo && esParaUsuario}")
-            
-            esRecibo && esParaUsuario
-        }
-        
-        Log.d("Recibos", "Notificaciones de recibos filtradas: ${filtradas.size}")
+        val filtradas = filtrarRecibosResidente(notificaciones, usuarioIdEfectivo)
+        Log.d("Recibos", "Recibos para residente $usuarioIdEfectivo: ${filtradas.size} de ${notificaciones.size}")
         filtradas
     }
 
-    // Agrupar notificaciones por tipo de recibo
-    val notificacionesEnel = notificacionesRecibos.filter { it.mensaje?.contains("ENEL", ignoreCase = true) == true }
-    val notificacionesVanti = notificacionesRecibos.filter { it.mensaje?.contains("VANTI", ignoreCase = true) == true }
-    val notificacionesEpz = notificacionesRecibos.filter { it.mensaje?.contains("EPZ", ignoreCase = true) == true }
+    val notificacionesEnel = notificacionesRecibos.filter { tipoReciboDeNotificacion(it) == "ENEL" }
+    val notificacionesVanti = notificacionesRecibos.filter { tipoReciboDeNotificacion(it) == "VANTI" }
+    val notificacionesEpz = notificacionesRecibos.filter { tipoReciboDeNotificacion(it) == "EPZ" }
 
     Column(
         modifier = Modifier
@@ -340,34 +305,15 @@ fun ReciboNotificacionItem(
     }
 }
 
-// Función para identificar notificaciones de recibos
-fun esNotificacionRecibo(mensaje: String?): Boolean {
-    if (mensaje.isNullOrBlank()) {
-        Log.d("Recibos", "Mensaje es null o blank")
-        return false
+private fun tipoReciboDeNotificacion(notificacion: Notificacion): String? {
+    notificacion.tipoRecibo?.uppercase()?.let { return it }
+    val mensaje = notificacion.mensaje?.uppercase().orEmpty()
+    return when {
+        mensaje.contains("ENEL") -> "ENEL"
+        mensaje.contains("VANTI") -> "VANTI"
+        mensaje.contains("EPZ") -> "EPZ"
+        else -> null
     }
-    val mensajeLower = mensaje.lowercase()
-    
-    // Verificar que contenga "recibo" y uno de los tipos de recibo (ENEL, VANTI, EPZ)
-    val tieneRecibo = mensajeLower.contains("recibo")
-    val tieneEnel = mensajeLower.contains("enel")
-    val tieneVanti = mensajeLower.contains("vanti")
-    val tieneEpz = mensajeLower.contains("epz")
-    val tieneTipoRecibo = tieneEnel || tieneVanti || tieneEpz
-    
-    // El mensaje debe contener "recibo" y alguno de los tipos
-    val esRecibo = tieneRecibo && tieneTipoRecibo
-    
-    Log.d("Recibos", "Verificando si es recibo - Mensaje completo: $mensaje")
-    Log.d("Recibos", "  - Mensaje lowercase: $mensajeLower")
-    Log.d("Recibos", "  - Tiene 'recibo': $tieneRecibo")
-    Log.d("Recibos", "  - Tiene 'enel': $tieneEnel")
-    Log.d("Recibos", "  - Tiene 'vanti': $tieneVanti")
-    Log.d("Recibos", "  - Tiene 'epz': $tieneEpz")
-    Log.d("Recibos", "  - Tiene tipo recibo (ENEL/VANTI/EPZ): $tieneTipoRecibo")
-    Log.d("Recibos", "  - Es recibo: $esRecibo")
-    
-    return esRecibo
 }
 
 // Función para formatear la fecha del recibo

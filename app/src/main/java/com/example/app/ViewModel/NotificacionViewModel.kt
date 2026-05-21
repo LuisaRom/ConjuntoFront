@@ -147,6 +147,32 @@ class NotificacionViewModel @Inject constructor(
         }
     }
 
+    suspend fun enviarRecibo(destinatarioId: Long, tipoRecibo: String) {
+        withContext(Dispatchers.IO) {
+            repository.enviarRecibo(destinatarioId, tipoRecibo)
+        }
+    }
+
+    fun enviarReciboResidente(
+        destinatarioId: Long,
+        tipoRecibo: String,
+        onSuccess: (() -> Unit)? = null,
+        onError: ((String) -> Unit)? = null
+    ) = viewModelScope.launch {
+        _isLoading.value = true
+        _error.value = null
+        try {
+            enviarRecibo(destinatarioId, tipoRecibo)
+            onSuccess?.invoke()
+        } catch (e: Exception) {
+            val mensaje = "Error al enviar recibo: ${e.message}"
+            _error.value = mensaje
+            onError?.invoke(mensaje)
+        } finally {
+            _isLoading.value = false
+        }
+    }
+
     fun guardar(
         notificacion: Notificacion,
         onSuccess: (() -> Unit)? = null,

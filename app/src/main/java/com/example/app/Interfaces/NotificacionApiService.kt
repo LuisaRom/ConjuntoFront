@@ -1,5 +1,6 @@
 package com.example.app.Interfaces
 
+import com.example.app.Model.EnviarReciboRequest
 import com.example.app.Model.Notificacion
 import com.example.app.Model.ChatMensajeRequest
 import retrofit2.http.Body
@@ -18,6 +19,9 @@ interface NotificacionApiService {
 
     @POST("/api/notificaciones")
     suspend fun guardarNotificacion(@Body notificacion: Notificacion): Notificacion
+
+    @POST("/api/notificaciones/recibos/enviar")
+    suspend fun enviarRecibo(@Body request: EnviarReciboRequest): Notificacion
 
     @GET("/api/notificaciones/chat/historial")
     suspend fun obtenerHistorialChat(): List<Notificacion>
