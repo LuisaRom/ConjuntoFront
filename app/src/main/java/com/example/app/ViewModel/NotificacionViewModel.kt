@@ -86,6 +86,7 @@ class NotificacionViewModel @Inject constructor(
                 _notificaciones.value = listaValida
             }
             _notificacionesNoLeidas.value = listaValida.size
+            _error.value = null
         } catch (e: Exception) {
             android.util.Log.e("NotificacionViewModel", "Error en refresco silencioso", e)
             // Mantener datos actuales para evitar parpadeo de la UI.

@@ -6,6 +6,7 @@ import com.example.app.Model.EnviarReciboRequest
 import com.example.app.Model.Notificacion
 import com.example.app.Model.Usuario
 import com.example.app.Model.mensajeRecibo
+import com.example.app.Model.paraApi
 import retrofit2.HttpException
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -83,15 +84,12 @@ class NotificacionRepository @Inject constructor(
         return try {
             api.enviarRecibo(request)
         } catch (error: HttpException) {
-            if (error.code() == 404) {
+            if (error.code() in listOf(400, 404, 405)) {
                 guardar(
                     Notificacion(
                         mensaje = mensaje,
                         fechaEnvio = fechaActualIso(),
-                        usuario = Usuario(id = destinatarioId),
-                        destinatarioId = destinatarioId,
-                        tipoRecibo = tipoRecibo.uppercase(),
-                        tipoNotificacion = "RECIBO"
+                        usuario = Usuario(id = destinatarioId)
                     )
                 )
             } else {
@@ -103,12 +101,7 @@ class NotificacionRepository @Inject constructor(
     }
 
     suspend fun guardar(notificacion: Notificacion): Notificacion {
-        val usuarioSanitizado = notificacion.usuario?.id?.let { Usuario(id = it) }
-        val payloadPrincipal = notificacion.copy(
-            mensaje = notificacion.mensaje?.trim(),
-            // Evita enviar objeto usuario completo (password/otros campos) que algunos backends rechazan.
-            usuario = usuarioSanitizado
-        )
+        val payloadPrincipal = notificacion.toPayloadGuardar()
         return try {
             api.guardarNotificacion(payloadPrincipal)
         } catch (e: java.net.ConnectException) {
@@ -122,10 +115,11 @@ class NotificacionRepository @Inject constructor(
                     val payloadMinimo = payloadPrincipal.copy(
                         imagenUrl = null,
                         videoUrl = null,
-                        usuariosEtiquetados = null
+                        usuariosEtiquetados = null,
+                        destinatarioId = null,
+                        tipoRecibo = null
                     )
                     runCatching { api.guardarNotificacion(payloadMinimo) }.getOrElse {
-                        // Último fallback para endpoints que solo aceptan autor por JWT.
                         val payloadJwt = payloadMinimo.copy(usuario = null)
                         runCatching { api.guardarNotificacion(payloadJwt) }.getOrElse {
                             throw Exception("No se pudo guardar la publicación. Verifica descripción e intenta de nuevo.")
@@ -167,6 +161,9 @@ class NotificacionRepository @Inject constructor(
             throw Exception("Error al eliminar publicación: ${e.message}")
         }
     }
+
+    /** Payload compatible con POST /api/notificaciones (sin campos extra de recibos). */
+    private fun Notificacion.toPayloadGuardar(): Notificacion = paraApi()
 
     private fun fechaActualIso(): String {
         return SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).format(Date())
