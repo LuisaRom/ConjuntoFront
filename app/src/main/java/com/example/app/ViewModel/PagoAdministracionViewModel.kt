@@ -12,6 +12,7 @@ import com.example.app.Model.MONTO_ADMINISTRACION
 import com.example.app.Model.PagoAdministracion
 import com.example.app.Model.periodoCheckoutActual
 import com.example.app.Repository.PagoAdministracionRepository
+import com.example.app.Repository.PagoAdministracionRepository.ResultadoPreparacionCheckout
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -88,10 +89,28 @@ class PagoAdministracionViewModel @Inject constructor(
                 return@launch
             }
 
+            val periodo = periodoCheckoutActual()
+
+            val preparacion = withContext(Dispatchers.IO) {
+                repository.prepararCheckoutPeriodo(periodo)
+            }
+            when (preparacion) {
+                is ResultadoPreparacionCheckout.YaPagado -> {
+                    _error.value = "Ya tienes un pago registrado para el periodo $periodo."
+                    return@launch
+                }
+                is ResultadoPreparacionCheckout.AbrirUrlExistente -> {
+                    Log.d("PagosCheckout", "Reutilizando checkout existente: ${preparacion.url}")
+                    _checkoutUrl.value = preparacion.url
+                    return@launch
+                }
+                ResultadoPreparacionCheckout.ContinuarCreacion -> Unit
+            }
+
             val request = CrearPagoRequest(
                 monto = MONTO_ADMINISTRACION,
                 concepto = CONCEPTO_PAGO_ADMINISTRACION,
-                periodo = periodoCheckoutActual() // yyyy-MM (equivalente a YearMonth.now().toString())
+                periodo = periodo
             )
 
             val response = withContext(Dispatchers.IO) {
@@ -102,9 +121,24 @@ class PagoAdministracionViewModel @Inject constructor(
             }
             Log.d("PagosCheckout", "Abriendo checkout en navegador: $url")
             _checkoutUrl.value = url
+            obtenerTodos()
         } catch (e: Exception) {
             Log.e("PagosCheckout", "Error al iniciar checkout", e)
-            _error.value = e.message?.ifBlank { "Error al iniciar checkout" } ?: "Error al iniciar checkout"
+            val mensaje = e.message.orEmpty()
+            if (mensaje.contains("base de datos", ignoreCase = true) ||
+                mensaje.contains("registrar", ignoreCase = true)
+            ) {
+                runCatching {
+                    withContext(Dispatchers.IO) {
+                        repository.resolverCheckoutPeriodoActual()
+                    }
+                }.getOrNull()?.let { urlRecuperada ->
+                    Log.d("PagosCheckout", "Checkout recuperado tras error: $urlRecuperada")
+                    _checkoutUrl.value = urlRecuperada
+                    return@launch
+                }
+            }
+            _error.value = mensaje.ifBlank { "Error al iniciar checkout" }
         } finally {
             _isLoading.value = false
         }

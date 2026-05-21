@@ -141,3 +141,27 @@ data class EstadoPagoAdmin(
 fun periodoCheckoutActual(): String {
     return SimpleDateFormat("yyyy-MM", Locale.US).format(Calendar.getInstance().time)
 }
+
+fun normalizarPeriodoPago(periodo: String?): String {
+    val valor = periodo?.trim().orEmpty()
+    if (valor.length >= 7) return valor.substring(0, 7)
+    return valor
+}
+
+fun esPagoAprobado(estadoPago: String?): Boolean {
+    val estado = estadoPago.orEmpty().uppercase()
+    return estado.contains("APROB") || estado == "PAGADO" || estado == "PAGADO_EN_MORA"
+}
+
+fun esPagoPendienteCheckout(estadoPago: String?): Boolean {
+    val estado = estadoPago.orEmpty().uppercase()
+    if (estado.isBlank()) return true
+    return estado.contains("PEND") ||
+        estado.contains("INICI") ||
+        estado.contains("CREAD") ||
+        estado == "EN_PROCESO"
+}
+
+fun PagoAdministracion.urlCheckoutDisponible(): String? {
+    return checkoutUrl?.trim()?.takeIf { it.isNotBlank() }
+}

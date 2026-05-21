@@ -9,6 +9,11 @@ import com.example.app.Model.ConfirmarPagoResponse
 import com.example.app.Model.CrearPagoRequest
 import com.example.app.Model.EstadoPagoAdmin
 import com.example.app.Model.PagoAdministracion
+import com.example.app.Model.esPagoAprobado
+import com.example.app.Model.esPagoPendienteCheckout
+import com.example.app.Model.normalizarPeriodoPago
+import com.example.app.Model.periodoCheckoutActual
+import com.example.app.Model.urlCheckoutDisponible
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import retrofit2.HttpException
@@ -31,6 +36,41 @@ class PagoAdministracionRepository @Inject constructor(
 
     suspend fun obtenerPorId(id: Long): PagoAdministracion {
         return api.obtenerPago(id)
+    }
+
+    suspend fun buscarPagoPeriodoActual(periodo: String = periodoCheckoutActual()): PagoAdministracion? {
+        val periodoNorm = normalizarPeriodoPago(periodo)
+        return obtenerTodos()
+            .filter { normalizarPeriodoPago(it.periodo) == periodoNorm }
+            .maxByOrNull { it.id ?: 0L }
+    }
+
+    suspend fun resolverCheckoutPeriodoActual(periodo: String = periodoCheckoutActual()): String? {
+        val pago = buscarPagoPeriodoActual(periodo) ?: return null
+        return pago.urlCheckoutDisponible()?.let { normalizarCheckoutUrl(it) }
+    }
+
+    suspend fun prepararCheckoutPeriodo(periodo: String = periodoCheckoutActual()): ResultadoPreparacionCheckout {
+        val pago = buscarPagoPeriodoActual(periodo)
+        if (pago == null) return ResultadoPreparacionCheckout.ContinuarCreacion
+
+        if (esPagoAprobado(pago.estadoPago)) {
+            return ResultadoPreparacionCheckout.YaPagado
+        }
+
+        pago.urlCheckoutDisponible()?.let { url ->
+            return ResultadoPreparacionCheckout.AbrirUrlExistente(normalizarCheckoutUrl(url))
+        }
+
+        if (esPagoPendienteCheckout(pago.estadoPago) && pago.id != null) {
+            Log.w(tag, "Eliminando pago pendiente incompleto id=${pago.id} periodo=$periodo")
+            runCatching { eliminar(pago.id) }
+                .onFailure { e ->
+                    Log.e(tag, "No se pudo eliminar pago pendiente id=${pago.id}", e)
+                }
+        }
+
+        return ResultadoPreparacionCheckout.ContinuarCreacion
     }
 
     suspend fun crearCheckoutAdministracion(request: CrearPagoRequest): CheckoutAdministracionResponse {
@@ -61,6 +101,7 @@ class PagoAdministracionRepository @Inject constructor(
         if (response.isSuccessful) {
             val body = response.body()
                 ?: throw IllegalStateException("El servidor respondió sin datos de checkout")
+            validarRespuestaCheckout(body)
             Log.d(
                 tag,
                 "initPoint=${body.initPoint}, checkoutUrl=${body.checkoutUrl}, " +
@@ -104,11 +145,50 @@ class PagoAdministracionRepository @Inject constructor(
                 Log.d(tag, "Response fallback (completo): ${gson.toJson(fallback)}")
                 return fallback
             }
+            500, 409, 422 -> {
+                val mensaje = extraerMensajeHttp(cuerpoError, response.code())
+                if (esErrorRegistroBd(mensaje)) {
+                    resolverCheckoutPeriodoActual(request.periodo)?.let { url ->
+                        Log.w(tag, "Recuperado checkout existente tras error de BD: $url")
+                        return CheckoutAdministracionResponse(checkoutUrl = url, initPoint = url)
+                    }
+                }
+                throw IllegalStateException(mensaje, HttpException(response))
+            }
             else -> throw IllegalStateException(
                 extraerMensajeHttp(cuerpoError, response.code()),
                 HttpException(response)
             )
         }
+    }
+
+    private fun validarRespuestaCheckout(body: CheckoutAdministracionResponse) {
+        val mensaje = body.mensaje?.trim().orEmpty()
+        val tieneUrl = !body.initPoint.isNullOrBlank() ||
+            !body.checkoutUrl.isNullOrBlank() ||
+            !body.sandboxInitPoint.isNullOrBlank() ||
+            !body.redirectUrl.isNullOrBlank() ||
+            !body.preferenceId.isNullOrBlank()
+
+        if (tieneUrl) return
+
+        if (mensaje.isNotBlank()) {
+            throw IllegalStateException(mensaje)
+        }
+        throw IllegalStateException("El servidor no devolvió la URL de Mercado Pago.")
+    }
+
+    private fun esErrorRegistroBd(mensaje: String): Boolean {
+        val texto = mensaje.lowercase()
+        return texto.contains("base de datos") ||
+            texto.contains("registrar el pago") ||
+            texto.contains("registro") && texto.contains("pago")
+    }
+
+    sealed class ResultadoPreparacionCheckout {
+        data object ContinuarCreacion : ResultadoPreparacionCheckout()
+        data object YaPagado : ResultadoPreparacionCheckout()
+        data class AbrirUrlExistente(val url: String) : ResultadoPreparacionCheckout()
     }
 
     suspend fun extraerUrlCheckout(response: CheckoutAdministracionResponse): String {
