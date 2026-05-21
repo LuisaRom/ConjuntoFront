@@ -1,14 +1,16 @@
 package com.example.app.ViewModel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import android.util.Log
 import com.example.app.Auth.AuthManager
+import com.example.app.Model.CONCEPTO_PAGO_ADMINISTRACION
 import com.example.app.Model.ConfirmarPagoResponse
 import com.example.app.Model.CrearPagoRequest
-import com.example.app.Model.periodoPagoMesActual
 import com.example.app.Model.EstadoPagoAdmin
+import com.example.app.Model.MONTO_ADMINISTRACION
 import com.example.app.Model.PagoAdministracion
+import com.example.app.Model.periodoCheckoutActual
 import com.example.app.Repository.PagoAdministracionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -72,13 +74,7 @@ class PagoAdministracionViewModel @Inject constructor(
         }
     }
 
-    fun crearCheckoutAdministracion(
-        usuarioId: Long,
-        apartamento: String,
-        valor: Long,
-        descripcion: String = "Pago administración",
-        periodo: String = periodoPagoMesActual()
-    ) = viewModelScope.launch {
+    fun crearCheckoutAdministracion() = viewModelScope.launch {
         _isLoading.value = true
         _error.value = null
         try {
@@ -92,17 +88,12 @@ class PagoAdministracionViewModel @Inject constructor(
                 return@launch
             }
 
-            val concepto = descripcion.trim().ifBlank { "Pago administración" }
-            val apto = apartamento.trim().ifBlank { "0" }
             val request = CrearPagoRequest(
-                usuarioId = usuarioId,
-                apartamento = apto,
-                monto = valor,
-                valor = valor,
-                concepto = concepto,
-                descripcion = concepto,
-                periodo = periodo
+                monto = MONTO_ADMINISTRACION,
+                concepto = CONCEPTO_PAGO_ADMINISTRACION,
+                periodo = periodoCheckoutActual() // yyyy-MM (equivalente a YearMonth.now().toString())
             )
+
             val response = withContext(Dispatchers.IO) {
                 repository.crearCheckoutAdministracion(request)
             }

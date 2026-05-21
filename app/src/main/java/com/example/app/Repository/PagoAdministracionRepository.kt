@@ -54,52 +54,60 @@ class PagoAdministracionRepository @Inject constructor(
             throw IllegalStateException("El token JWT expiró. Inicia sesión de nuevo.")
         }
 
-        return try {
-            val response = api.crearCheckoutAdministracion(request)
-            Log.d(tag, "Response 200 OK (completo): ${gson.toJson(response)}")
+        val response = api.crearCheckout(request)
+        val cuerpoError = response.errorBody()?.string().orEmpty()
+        Log.d(tag, "Response HTTP ${response.code()} body=${if (response.isSuccessful) gson.toJson(response.body()) else cuerpoError}")
+
+        if (response.isSuccessful) {
+            val body = response.body()
+                ?: throw IllegalStateException("El servidor respondió sin datos de checkout")
             Log.d(
                 tag,
-                "initPoint=${response.initPoint}, checkoutUrl=${response.checkoutUrl}, " +
-                    "sandboxInitPoint=${response.sandboxInitPoint}, redirectUrl=${response.redirectUrl}"
+                "initPoint=${body.initPoint}, checkoutUrl=${body.checkoutUrl}, " +
+                    "sandboxInitPoint=${body.sandboxInitPoint}, redirectUrl=${body.redirectUrl}"
             )
-            response
-        } catch (error: HttpException) {
-            val cuerpo = error.response()?.errorBody()?.string().orEmpty()
-            Log.e(tag, "Response HTTP ${error.code()} body=$cuerpo")
+            return body
+        }
 
-            when (error.code()) {
-                400 -> {
-                    Log.e(tag, "400 Bad Request. Revisa usuarioId, apartamento, monto y periodo en el body.")
-                    throw IllegalStateException(
-                        extraerMensajeHttp(error).ifBlank {
-                            "Datos de pago inválidos (400). Verifica monto y periodo."
-                        }
-                    )
-                }
-                401 -> {
-                    val jwtExpirado = AuthManager.isTokenExpired()
-                    Log.e(tag, "401 Unauthorized. JWT expirado según payload: $jwtExpirado")
-                    AuthManager.handleUnauthorized()
-                    throw IllegalStateException(
-                        if (jwtExpirado) {
-                            "Sesión expirada (JWT vencido). Inicia sesión de nuevo."
-                        } else {
-                            extraerMensajeHttp(error).ifBlank { "No autorizado (401). Verifica tu sesión." }
-                        }
-                    )
-                }
-                404 -> {
-                    Log.w(tag, "404 en checkout/administracion, probando rutas alternas...")
-                    runCatching { api.crearPagoEnLinea(request) }
-                        .recoverCatching { api.crearPagoEnLineaCheckout(request) }
-                        .recoverCatching { api.crearPagoEnLineaMercadoPago(request) }
-                        .getOrElse { throw IllegalStateException(extraerMensajeHttp(error), error) }
-                        .also { fallback ->
-                            Log.d(tag, "Response fallback (completo): ${gson.toJson(fallback)}")
-                        }
-                }
-                else -> throw IllegalStateException(extraerMensajeHttp(error), error)
+        when (response.code()) {
+            400 -> {
+                Log.e(tag, "400 Bad Request. Revisa monto (${request.monto}) y periodo (${request.periodo}).")
+                throw IllegalStateException(
+                    extraerMensajeHttp(cuerpoError, response.code()).ifBlank {
+                        "Datos de pago inválidos (400). Verifica monto y periodo."
+                    }
+                )
             }
+            401 -> {
+                val jwtExpirado = AuthManager.isTokenExpired()
+                Log.e(tag, "401 Unauthorized. JWT expirado según payload: $jwtExpirado")
+                AuthManager.handleUnauthorized()
+                throw IllegalStateException(
+                    if (jwtExpirado) {
+                        "Sesión expirada (JWT vencido). Inicia sesión de nuevo."
+                    } else {
+                        extraerMensajeHttp(cuerpoError, response.code()).ifBlank { "No autorizado (401). Verifica tu sesión." }
+                    }
+                )
+            }
+            404 -> {
+                Log.w(tag, "404 en checkout/administracion, probando rutas alternas...")
+                val fallback = runCatching { api.crearPagoEnLinea(request) }
+                    .recoverCatching { api.crearPagoEnLineaCheckout(request) }
+                    .recoverCatching { api.crearPagoEnLineaMercadoPago(request) }
+                    .getOrElse {
+                        throw IllegalStateException(
+                            extraerMensajeHttp(cuerpoError, response.code()),
+                            HttpException(response)
+                        )
+                    }
+                Log.d(tag, "Response fallback (completo): ${gson.toJson(fallback)}")
+                return fallback
+            }
+            else -> throw IllegalStateException(
+                extraerMensajeHttp(cuerpoError, response.code()),
+                HttpException(response)
+            )
         }
     }
 
@@ -131,20 +139,25 @@ class PagoAdministracionRepository @Inject constructor(
         api.eliminarPago(id)
     }
 
-    private fun extraerMensajeHttp(error: HttpException): String {
-        val cuerpo = error.response()?.errorBody()?.string().orEmpty().trim()
-        if (cuerpo.isBlank()) {
-            return "Error del servidor (${error.code()})"
+    private fun extraerMensajeHttp(cuerpo: String, codigo: Int): String {
+        val texto = cuerpo.trim()
+        if (texto.isBlank()) {
+            return "Error del servidor ($codigo)"
         }
         return runCatching {
-            val json = gson.fromJson(cuerpo, JsonObject::class.java)
+            val json = gson.fromJson(texto, JsonObject::class.java)
             json.get("mensaje")?.asString
                 ?: json.get("error")?.asString
                 ?: json.get("message")?.asString
                 ?: json.get("detalle")?.asString
                 ?: json.get("detail")?.asString
         }.getOrNull()?.takeIf { it.isNotBlank() }
-            ?: cuerpo.removeSurrounding("\"")
+            ?: texto.removeSurrounding("\"")
+    }
+
+    private fun extraerMensajeHttp(error: HttpException): String {
+        val cuerpo = error.response()?.errorBody()?.string().orEmpty()
+        return extraerMensajeHttp(cuerpo, error.code())
     }
 
     private fun normalizarCheckoutUrl(url: String): String {

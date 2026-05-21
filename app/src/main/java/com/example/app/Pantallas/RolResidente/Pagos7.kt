@@ -46,7 +46,8 @@ import com.example.app.R
 import com.example.app.Auth.AuthManager
 import com.example.app.Payment.PaymentReturnHandler
 import com.example.app.ViewModel.UsuarioViewModel
-import com.example.app.Model.apartamentoParaPago
+import com.example.app.Model.MONTO_ADMINISTRACION
+import com.example.app.Model.MONTO_ADMINISTRACION_TEXTO
 import com.example.app.ViewModel.PagoAdministracionViewModel
 import com.example.app.ui.theme.AzulOscuro
 import com.example.app.ui.theme.DoradoElegante
@@ -107,11 +108,8 @@ fun PantallaPagos(
         meses[Calendar.getInstance().get(Calendar.MONTH)]
     }
     
-    // Monto por defecto
-    val monto = remember { "200.000 COP" }
-    val valorNumericoPago = remember(monto) {
-        monto.filter { it.isDigit() }.toLongOrNull() ?: 0L
-    }
+    val monto = remember { MONTO_ADMINISTRACION_TEXTO }
+    val valorNumericoPago = remember { MONTO_ADMINISTRACION }
     // Se incluirá en el PDF y en pago en línea cuando el flujo de reservas lo alimente.
     val totalServiciosAdicionales = remember { "0 COP" }
     
@@ -257,19 +255,6 @@ fun PantallaPagos(
                 enabled = !isLoading
             ) {
                 metodoSeleccionado = "Pago en línea"
-                val usuarioId = usuarioPago?.id
-                if (usuarioId == null) {
-                    Toast.makeText(
-                        context,
-                        "No se pudo identificar el usuario para iniciar el pago en línea.",
-                        Toast.LENGTH_LONG
-                    ).show()
-                    return@MetodoPagoItem
-                }
-                if (valorNumericoPago <= 0L) {
-                    Toast.makeText(context, "El valor del pago no es válido.", Toast.LENGTH_LONG).show()
-                    return@MetodoPagoItem
-                }
                 if (!AuthManager.isAuthenticated()) {
                     Toast.makeText(
                         context,
@@ -289,23 +274,9 @@ fun PantallaPagos(
                 }
                 android.util.Log.d(
                     "PagosResidente",
-                    "Pago en línea: JWT presente (len=${AuthManager.getToken()?.length ?: 0})"
+                    "Pago en línea: monto=$valorNumericoPago, JWT len=${AuthManager.getToken()?.length ?: 0}"
                 )
-                val apartamento = apartamentoParaPago(usuarioPago)
-                if (apartamento.isBlank()) {
-                    Toast.makeText(
-                        context,
-                        "Falta el apartamento en tu perfil. Actualízalo para pagar en línea.",
-                        Toast.LENGTH_LONG
-                    ).show()
-                    return@MetodoPagoItem
-                }
-                pagoAdministracionViewModel.crearCheckoutAdministracion(
-                    usuarioId = usuarioId,
-                    apartamento = apartamento,
-                    valor = valorNumericoPago,
-                    descripcion = "Pago administración"
-                )
+                pagoAdministracionViewModel.crearCheckoutAdministracion()
             }
         }
 

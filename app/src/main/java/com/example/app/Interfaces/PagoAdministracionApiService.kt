@@ -6,6 +6,7 @@ import com.example.app.Model.ConfirmarPagoResponse
 import com.example.app.Model.CrearPagoRequest
 import com.example.app.Model.EstadoPagoAdmin
 import com.example.app.Model.PagoAdministracion
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -29,7 +30,9 @@ interface PagoAdministracionApiService {
     suspend fun obtenerPago(@Path("id") id: Long): PagoAdministracion
 
     @POST("/api/pagos/checkout/administracion")
-    suspend fun crearCheckoutAdministracion(@Body request: CrearPagoRequest): CheckoutAdministracionResponse
+    suspend fun crearCheckout(
+        @Body request: CrearPagoRequest
+    ): Response<CheckoutAdministracionResponse>
 
     @POST("/api/pagos/crear")
     suspend fun crearPagoEnLinea(@Body request: CrearPagoRequest): CheckoutAdministracionResponse
