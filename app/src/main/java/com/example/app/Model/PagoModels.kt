@@ -7,8 +7,19 @@ import java.util.Calendar
 import java.util.Locale
 
 const val MONTO_ADMINISTRACION = 150_000L
-const val CONCEPTO_PAGO_ADMINISTRACION = "Pago administración"
+const val CONCEPTO_PAGO_ADMINISTRACION = "Pago administracion"
 const val MONTO_ADMINISTRACION_TEXTO = "150.000 COP"
+
+enum class ResultadoSimulacionPago(val estadoPago: String, val mensaje: String) {
+    APROBADO("APROBADO", "Pago de administración simulado correctamente (modo prueba)."),
+    RECHAZADO("RECHAZADO", "Pago simulado rechazado (modo prueba)."),
+    PENDIENTE("PENDIENTE", "Pago simulado quedó pendiente (modo prueba).")
+}
+
+fun referenciaSimulacionPago(usuarioId: Long?, periodo: String): String {
+    val uid = usuarioId ?: 0L
+    return "SIM-ADMIN-$uid-$periodo-${System.currentTimeMillis()}"
+}
 
 data class CrearPagoRequest(
     @SerializedName("monto")

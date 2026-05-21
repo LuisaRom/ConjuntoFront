@@ -14,9 +14,11 @@ import com.example.app.Model.esPagoPendienteCheckout
 import com.example.app.Model.normalizarPeriodoPago
 import com.example.app.Model.periodoCheckoutActual
 import com.example.app.Model.urlCheckoutDisponible
+import com.example.app.BuildConfig
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import retrofit2.HttpException
+import retrofit2.Response
 import javax.inject.Inject
 
 class PagoAdministracionRepository @Inject constructor(
@@ -94,7 +96,11 @@ class PagoAdministracionRepository @Inject constructor(
             throw IllegalStateException("El token JWT expiró. Inicia sesión de nuevo.")
         }
 
-        val response = api.crearCheckout(request)
+        var response = api.crearCheckout(request)
+        if (!response.isSuccessful && response.code() in listOf(404, 500, 502, 503)) {
+            Log.w(tag, "checkout/administracion falló (${response.code()}), probando rutas Mercado Pago...")
+            response = intentarCheckoutAlternativo(request, response)
+        }
         val cuerpoError = response.errorBody()?.string().orEmpty()
         Log.d(tag, "Response HTTP ${response.code()} body=${if (response.isSuccessful) gson.toJson(response.body()) else cuerpoError}")
 
@@ -133,17 +139,17 @@ class PagoAdministracionRepository @Inject constructor(
             }
             404 -> {
                 Log.w(tag, "404 en checkout/administracion, probando rutas alternas...")
-                val fallback = runCatching { api.crearPagoEnLinea(request) }
-                    .recoverCatching { api.crearPagoEnLineaCheckout(request) }
-                    .recoverCatching { api.crearPagoEnLineaMercadoPago(request) }
-                    .getOrElse {
-                        throw IllegalStateException(
-                            extraerMensajeHttp(cuerpoError, response.code()),
-                            HttpException(response)
-                        )
-                    }
-                Log.d(tag, "Response fallback (completo): ${gson.toJson(fallback)}")
-                return fallback
+                val alt = intentarCheckoutAlternativo(request, response)
+                if (!alt.isSuccessful) {
+                    throw IllegalStateException(
+                        extraerMensajeHttp(cuerpoError, response.code()),
+                        HttpException(response)
+                    )
+                }
+                val body = alt.body()
+                    ?: throw IllegalStateException("El servidor respondió sin datos de checkout")
+                validarRespuestaCheckout(body)
+                return body
             }
             500, 409, 422 -> {
                 val mensaje = extraerMensajeHttp(cuerpoError, response.code())
@@ -192,15 +198,44 @@ class PagoAdministracionRepository @Inject constructor(
     }
 
     suspend fun extraerUrlCheckout(response: CheckoutAdministracionResponse): String {
-        val url = response.initPoint
-            ?: response.checkoutUrl
-            ?: response.sandboxInitPoint
-            ?: response.redirectUrl
-            ?: response.preferenceId?.let { construirUrlDesdePreferencia(it) }
-            ?: throw IllegalStateException("El backend no devolvió initPoint ni checkoutUrl para redirección")
+        val url = if (BuildConfig.PAGO_MODO_PRUEBA) {
+            response.sandboxInitPoint
+                ?: response.initPoint
+                ?: response.checkoutUrl
+                ?: response.redirectUrl
+        } else {
+            response.initPoint
+                ?: response.checkoutUrl
+                ?: response.sandboxInitPoint
+                ?: response.redirectUrl
+        } ?: response.preferenceId?.let { construirUrlDesdePreferencia(it, sandbox = BuildConfig.PAGO_MODO_PRUEBA) }
+            ?: throw IllegalStateException(
+                "El backend no devolvió URL de Mercado Pago. " +
+                    "Revisa credenciales TEST en el servidor (Render)."
+            )
 
-        Log.d(tag, "URL de checkout seleccionada: $url")
+        Log.d(tag, "URL de checkout seleccionada (modoPrueba=${BuildConfig.PAGO_MODO_PRUEBA}): $url")
         return normalizarCheckoutUrl(url)
+    }
+
+    private suspend fun intentarCheckoutAlternativo(
+        request: CrearPagoRequest,
+        original: Response<CheckoutAdministracionResponse>
+    ): Response<CheckoutAdministracionResponse> {
+        val alternativas = listOf(
+            "mercado-pago/crear" to suspend { api.crearPagoMercadoPagoCrear(request) },
+            "mercado-pago" to suspend { api.crearPagoMercadoPagoDash(request) },
+            "mercadopago/crear" to suspend { api.crearPagoMercadoPagoCrearAlt(request) },
+            "mercadopago" to suspend { api.crearPagoEnLineaMercadoPago(request) },
+            "checkout" to suspend { api.crearPagoEnLineaCheckout(request) },
+            "crear" to suspend { api.crearPagoEnLinea(request) }
+        )
+        for ((nombre, llamada) in alternativas) {
+            val alt = runCatching { llamada() }.getOrNull() ?: continue
+            Log.d(tag, "Ruta alternativa $nombre -> HTTP ${alt.code()}")
+            if (alt.isSuccessful) return alt
+        }
+        return original
     }
 
     suspend fun confirmarPago(referenciaExterna: String): ConfirmarPagoResponse {
@@ -245,9 +280,13 @@ class PagoAdministracionRepository @Inject constructor(
         return if (valor.startsWith("http://") || valor.startsWith("https://")) valor else "https://$valor"
     }
 
-    private fun construirUrlDesdePreferencia(preferenceId: String): String {
+    private fun construirUrlDesdePreferencia(preferenceId: String, sandbox: Boolean = false): String {
         val pref = preferenceId.trim()
         if (pref.isBlank()) throw IllegalStateException("PreferenceId vacío")
-        return "https://www.mercadopago.com.co/checkout/v1/redirect?pref_id=$pref"
+        return if (sandbox) {
+            "https://sandbox.mercadopago.com.co/checkout/v1/redirect?pref_id=$pref"
+        } else {
+            "https://www.mercadopago.com.co/checkout/v1/redirect?pref_id=$pref"
+        }
     }
 }

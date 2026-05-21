@@ -35,13 +35,22 @@ interface PagoAdministracionApiService {
     ): Response<CheckoutAdministracionResponse>
 
     @POST("/api/pagos/crear")
-    suspend fun crearPagoEnLinea(@Body request: CrearPagoRequest): CheckoutAdministracionResponse
+    suspend fun crearPagoEnLinea(@Body request: CrearPagoRequest): Response<CheckoutAdministracionResponse>
 
     @POST("/api/pagos/checkout")
-    suspend fun crearPagoEnLineaCheckout(@Body request: CrearPagoRequest): CheckoutAdministracionResponse
+    suspend fun crearPagoEnLineaCheckout(@Body request: CrearPagoRequest): Response<CheckoutAdministracionResponse>
 
     @POST("/api/pagos/mercadopago")
-    suspend fun crearPagoEnLineaMercadoPago(@Body request: CrearPagoRequest): CheckoutAdministracionResponse
+    suspend fun crearPagoEnLineaMercadoPago(@Body request: CrearPagoRequest): Response<CheckoutAdministracionResponse>
+
+    @POST("/api/pagos/mercado-pago/crear")
+    suspend fun crearPagoMercadoPagoCrear(@Body request: CrearPagoRequest): Response<CheckoutAdministracionResponse>
+
+    @POST("/api/pagos/mercado-pago")
+    suspend fun crearPagoMercadoPagoDash(@Body request: CrearPagoRequest): Response<CheckoutAdministracionResponse>
+
+    @POST("/api/pagos/mercadopago/crear")
+    suspend fun crearPagoMercadoPagoCrearAlt(@Body request: CrearPagoRequest): Response<CheckoutAdministracionResponse>
 
     @POST("/api/pagos/confirmar")
     suspend fun confirmarPago(@Body request: ConfirmarPagoRequest): ConfirmarPagoResponse

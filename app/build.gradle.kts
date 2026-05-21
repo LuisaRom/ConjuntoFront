@@ -23,11 +23,13 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("Boolean", "PAGO_MODO_PRUEBA", "true")
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
+            buildConfigField("Boolean", "PAGO_MODO_PRUEBA", "false")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -45,6 +47,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
