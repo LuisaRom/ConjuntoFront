@@ -10,17 +10,6 @@ const val MONTO_ADMINISTRACION = 150_000L
 const val CONCEPTO_PAGO_ADMINISTRACION = "Pago administracion"
 const val MONTO_ADMINISTRACION_TEXTO = "150.000 COP"
 
-enum class ResultadoSimulacionPago(val estadoPago: String, val mensaje: String) {
-    APROBADO("APROBADO", "Pago de administración simulado correctamente (modo prueba)."),
-    RECHAZADO("RECHAZADO", "Pago simulado rechazado (modo prueba)."),
-    PENDIENTE("PENDIENTE", "Pago simulado quedó pendiente (modo prueba).")
-}
-
-fun referenciaSimulacionPago(usuarioId: Long?, periodo: String): String {
-    val uid = usuarioId ?: 0L
-    return "SIM-ADMIN-$uid-$periodo-${System.currentTimeMillis()}"
-}
-
 data class CrearPagoRequest(
     @SerializedName("monto")
     val monto: Long,
@@ -175,4 +164,27 @@ fun esPagoPendienteCheckout(estadoPago: String?): Boolean {
 
 fun PagoAdministracion.urlCheckoutDisponible(): String? {
     return checkoutUrl?.trim()?.takeIf { it.isNotBlank() }
+}
+
+/** Prioriza URL sandbox de Mercado Pago TEST para el flujo de prueba. */
+fun urlCheckoutMercadoPago(response: CheckoutAdministracionResponse, modoPrueba: Boolean): String? {
+    if (modoPrueba) {
+        return response.sandboxInitPoint?.takeIf { it.isNotBlank() }
+            ?: response.initPoint?.takeIf { it.isNotBlank() }
+            ?: response.checkoutUrl?.takeIf { it.isNotBlank() }
+            ?: response.redirectUrl?.takeIf { it.isNotBlank() }
+    }
+    return response.initPoint?.takeIf { it.isNotBlank() }
+        ?: response.checkoutUrl?.takeIf { it.isNotBlank() }
+        ?: response.sandboxInitPoint?.takeIf { it.isNotBlank() }
+        ?: response.redirectUrl?.takeIf { it.isNotBlank() }
+}
+
+fun forzarUrlSandboxMercadoPago(url: String): String {
+    val valor = url.trim()
+    if (valor.contains("sandbox.mercadopago", ignoreCase = true)) return valor
+    return valor
+        .replace("https://www.mercadopago.com", "https://sandbox.mercadopago.com", ignoreCase = true)
+        .replace("http://www.mercadopago.com", "https://sandbox.mercadopago.com", ignoreCase = true)
+        .replace("https://mercadopago.com", "https://sandbox.mercadopago.com", ignoreCase = true)
 }

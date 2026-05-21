@@ -10,8 +10,6 @@ import com.example.app.Model.CrearPagoRequest
 import com.example.app.Model.EstadoPagoAdmin
 import com.example.app.Model.MONTO_ADMINISTRACION
 import com.example.app.Model.PagoAdministracion
-import com.example.app.Model.ResultadoSimulacionPago
-import com.example.app.Model.referenciaSimulacionPago
 import com.example.app.Model.periodoCheckoutActual
 import com.example.app.Repository.PagoAdministracionRepository
 import com.example.app.Repository.PagoAdministracionRepository.ResultadoPreparacionCheckout
@@ -77,6 +75,7 @@ class PagoAdministracionViewModel @Inject constructor(
         }
     }
 
+    /** Abre Mercado Pago TEST (sandbox) vía el backend con credenciales de prueba. */
     fun crearCheckoutAdministracion() = viewModelScope.launch {
         _isLoading.value = true
         _error.value = null
@@ -102,7 +101,7 @@ class PagoAdministracionViewModel @Inject constructor(
                     return@launch
                 }
                 is ResultadoPreparacionCheckout.AbrirUrlExistente -> {
-                    Log.d("PagosCheckout", "Reutilizando checkout existente: ${preparacion.url}")
+                    Log.d("PagosCheckout", "Checkout TEST existente: ${preparacion.url}")
                     _checkoutUrl.value = preparacion.url
                     return@launch
                 }
@@ -121,27 +120,13 @@ class PagoAdministracionViewModel @Inject constructor(
             val url = withContext(Dispatchers.IO) {
                 repository.extraerUrlCheckout(response)
             }
-            Log.d("PagosCheckout", "Abriendo checkout en navegador: $url")
+            Log.d("PagosCheckout", "Redirigiendo a Mercado Pago TEST: $url")
             _checkoutUrl.value = url
             obtenerTodos()
         } catch (e: Exception) {
-            Log.e("PagosCheckout", "Error al iniciar checkout", e)
-            val mensaje = e.message.orEmpty()
-            if (mensaje.contains("base de datos", ignoreCase = true) ||
-                mensaje.contains("registrar", ignoreCase = true)
-            ) {
-                runCatching {
-                    withContext(Dispatchers.IO) {
-                        repository.resolverCheckoutPeriodoActual()
-                    }
-                }.getOrNull()?.let { urlRecuperada ->
-                    Log.d("PagosCheckout", "Checkout recuperado tras error: $urlRecuperada")
-                    _checkoutUrl.value = urlRecuperada
-                    return@launch
-                }
-            }
-            _error.value = mensaje.ifBlank { "Error al iniciar checkout" } +
-                " Puedes usar «Simular pago en línea» para probar el flujo sin Mercado Pago."
+            Log.e("PagosCheckout", "Error al iniciar checkout TEST", e)
+            _error.value = e.message?.ifBlank { "Error al conectar con Mercado Pago" }
+                ?: "Error al conectar con Mercado Pago"
         } finally {
             _isLoading.value = false
         }
@@ -191,44 +176,4 @@ class PagoAdministracionViewModel @Inject constructor(
     fun clearError() {
         _error.value = null
     }
-
-    /**
-     * Simula el flujo completo sin abrir Mercado Pago (útil para demostración académica).
-     * Intenta confirmar en el backend; si falla, muestra el resultado solo en la app.
-     */
-    fun simularPagoAdministracion(resultado: ResultadoSimulacionPago) = viewModelScope.launch {
-        _isLoading.value = true
-        _error.value = null
-        _confirmacionPago.value = null
-        try {
-            val periodo = periodoCheckoutActual()
-            val usuarioId = AuthManager.getUser()?.id
-            val referencia = referenciaSimulacionPago(usuarioId, periodo)
-
-            val confirmacion = runCatching {
-                withContext(Dispatchers.IO) {
-                    repository.confirmarPago(referencia)
-                }
-            }.getOrElse {
-                ConfirmarPagoResponse(
-                    estadoPago = resultado.estadoPago,
-                    mensaje = "${resultado.mensaje} Referencia: $referencia. " +
-                        "(El servidor no registró esta simulación; solo vista en la app.)",
-                    referenciaExterna = referencia
-                )
-            }
-
-            _confirmacionPago.value = confirmacion.copy(
-                estadoPago = confirmacion.estadoPago ?: resultado.estadoPago,
-                mensaje = confirmacion.mensaje ?: resultado.mensaje,
-                referenciaExterna = confirmacion.referenciaExterna ?: referencia
-            )
-            obtenerTodos()
-        } catch (e: Exception) {
-            _error.value = "Error en simulación: ${e.message}"
-        } finally {
-            _isLoading.value = false
-        }
-    }
-
 }

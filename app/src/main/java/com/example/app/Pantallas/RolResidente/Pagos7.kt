@@ -22,10 +22,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
@@ -48,10 +46,8 @@ import com.example.app.R
 import com.example.app.Auth.AuthManager
 import com.example.app.Payment.PaymentReturnHandler
 import com.example.app.ViewModel.UsuarioViewModel
-import com.example.app.BuildConfig
 import com.example.app.Model.MONTO_ADMINISTRACION
 import com.example.app.Model.MONTO_ADMINISTRACION_TEXTO
-import com.example.app.Model.ResultadoSimulacionPago
 import com.example.app.ViewModel.PagoAdministracionViewModel
 import com.example.app.ui.theme.AzulOscuro
 import com.example.app.ui.theme.DoradoElegante
@@ -85,8 +81,7 @@ fun PantallaPagos(
     val pendingReferencia by PaymentReturnHandler.pendingReferencia.collectAsState()
     var metodoSeleccionado by remember { mutableStateOf("EFECTIVO") }
     var confirmandoRetorno by remember { mutableStateOf(false) }
-    var mostrarDialogoSimulacion by remember { mutableStateOf(false) }
-    
+
     // Estado para los campos del formulario
     val torreApartamento = remember(usuarioPago) {
         if (usuarioPago?.torre != null && usuarioPago?.apartamento != null) {
@@ -130,7 +125,7 @@ fun PantallaPagos(
         val url = checkoutUrl ?: return@LaunchedEffect
         try {
             abrirUrlDePago(context, url)
-            Toast.makeText(context, "Redirigiendo a Mercado Pago...", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Abriendo Mercado Pago (pago de prueba)...", Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
             Toast.makeText(context, "No se pudo abrir el checkout: ${e.message}", Toast.LENGTH_LONG).show()
         } finally {
@@ -296,79 +291,8 @@ fun PantallaPagos(
                     color = DoradoElegante,
                     strokeWidth = 2.dp
                 )
-                Text("Iniciando pago en línea...", color = GrisClaro, fontSize = 13.sp)
+                Text("Conectando con Mercado Pago (prueba)...", color = GrisClaro, fontSize = 13.sp)
             }
-        }
-
-        Spacer(modifier = Modifier.height(20.dp))
-        Text(
-            text = "Demostración (sin dinero real)",
-            color = DoradoElegante,
-            fontWeight = FontWeight.Bold,
-            fontSize = 14.sp
-        )
-        Spacer(modifier = Modifier.height(6.dp))
-        Text(
-            text = "Usa la simulación para ver el flujo en la app. Mercado Pago real requiere credenciales TEST en el servidor.",
-            color = GrisClaro,
-            fontSize = 12.sp
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "Simular pago en línea",
-            color = Color.White,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier
-                .clickable(enabled = !isLoading) { mostrarDialogoSimulacion = true }
-                .padding(vertical = 8.dp)
-        )
-
-        if (mostrarDialogoSimulacion) {
-            AlertDialog(
-                onDismissRequest = { mostrarDialogoSimulacion = false },
-                title = { Text("Simular pago de administración") },
-                text = {
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(
-                            "Elige el resultado para probar el flujo en la aplicación. " +
-                                "No se usa dinero real ni tarjeta."
-                        )
-                        TextButton(
-                            onClick = {
-                                mostrarDialogoSimulacion = false
-                                metodoSeleccionado = "Pago en línea"
-                                pagoAdministracionViewModel.simularPagoAdministracion(ResultadoSimulacionPago.APROBADO)
-                            }
-                        ) { Text("Pago aprobado") }
-                        TextButton(
-                            onClick = {
-                                mostrarDialogoSimulacion = false
-                                metodoSeleccionado = "Pago en línea"
-                                pagoAdministracionViewModel.simularPagoAdministracion(ResultadoSimulacionPago.RECHAZADO)
-                            }
-                        ) { Text("Pago rechazado") }
-                        TextButton(
-                            onClick = {
-                                mostrarDialogoSimulacion = false
-                                metodoSeleccionado = "Pago en línea"
-                                pagoAdministracionViewModel.simularPagoAdministracion(ResultadoSimulacionPago.PENDIENTE)
-                            }
-                        ) { Text("Pago pendiente") }
-                    }
-                },
-                confirmButton = {
-                    TextButton(onClick = { mostrarDialogoSimulacion = false }) { Text("Cerrar") }
-                }
-            )
-        }
-
-        if (BuildConfig.PAGO_MODO_PRUEBA) {
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "Modo prueba activo: se prioriza URL sandbox de Mercado Pago.",
-                color = GrisClaro,
-                fontSize = 11.sp
-            )
         }
 
         if (pagos.isNotEmpty()) {
@@ -457,7 +381,7 @@ fun MetodoPagoItem(
 }
 
 private fun abrirUrlDePago(context: android.content.Context, url: String) {
-    android.util.Log.d("PagosResidente", "Abriendo URL externa de Mercado Pago: $url")
+    android.util.Log.d("PagosResidente", "Abriendo Mercado Pago TEST (sandbox): $url")
     val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
         addCategory(Intent.CATEGORY_BROWSABLE)
     }
