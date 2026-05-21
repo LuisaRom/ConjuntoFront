@@ -68,6 +68,14 @@ class PagoAdministracionRepository @Inject constructor(
             Log.e(tag, "Response HTTP ${error.code()} body=$cuerpo")
 
             when (error.code()) {
+                400 -> {
+                    Log.e(tag, "400 Bad Request. Revisa usuarioId, apartamento, monto y periodo en el body.")
+                    throw IllegalStateException(
+                        extraerMensajeHttp(error).ifBlank {
+                            "Datos de pago inválidos (400). Verifica monto y periodo."
+                        }
+                    )
+                }
                 401 -> {
                     val jwtExpirado = AuthManager.isTokenExpired()
                     Log.e(tag, "401 Unauthorized. JWT expirado según payload: $jwtExpirado")
@@ -133,6 +141,8 @@ class PagoAdministracionRepository @Inject constructor(
             json.get("mensaje")?.asString
                 ?: json.get("error")?.asString
                 ?: json.get("message")?.asString
+                ?: json.get("detalle")?.asString
+                ?: json.get("detail")?.asString
         }.getOrNull()?.takeIf { it.isNotBlank() }
             ?: cuerpo.removeSurrounding("\"")
     }

@@ -46,6 +46,7 @@ import com.example.app.R
 import com.example.app.Auth.AuthManager
 import com.example.app.Payment.PaymentReturnHandler
 import com.example.app.ViewModel.UsuarioViewModel
+import com.example.app.Model.apartamentoParaPago
 import com.example.app.ViewModel.PagoAdministracionViewModel
 import com.example.app.ui.theme.AzulOscuro
 import com.example.app.ui.theme.DoradoElegante
@@ -58,7 +59,6 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
-import java.time.YearMonth
 import java.util.*
 
 @Composable
@@ -291,10 +291,20 @@ fun PantallaPagos(
                     "PagosResidente",
                     "Pago en línea: JWT presente (len=${AuthManager.getToken()?.length ?: 0})"
                 )
+                val apartamento = apartamentoParaPago(usuarioPago)
+                if (apartamento.isBlank()) {
+                    Toast.makeText(
+                        context,
+                        "Falta el apartamento en tu perfil. Actualízalo para pagar en línea.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                    return@MetodoPagoItem
+                }
                 pagoAdministracionViewModel.crearCheckoutAdministracion(
+                    usuarioId = usuarioId,
+                    apartamento = apartamento,
                     valor = valorNumericoPago,
-                    descripcion = "Pago administración",
-                    periodo = YearMonth.now().toString()
+                    descripcion = "Pago administración"
                 )
             }
         }
