@@ -1,6 +1,8 @@
 package com.example.app.Auth
 
 import android.content.Context
+import android.util.Base64
+import android.util.Log
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import com.example.app.Model.Usuario
@@ -64,6 +66,32 @@ object AuthManager {
 
     fun isAuthenticated(): Boolean = !getToken().isNullOrBlank()
 
+    /** Decodifica el claim `exp` del JWT (segundos UNIX). Sin librerías externas. */
+    fun isTokenExpired(): Boolean {
+        val token = getToken()?.trim().orEmpty()
+        if (token.isBlank()) return true
+
+        val partes = token.split(".")
+        if (partes.size < 2) return false
+
+        return runCatching {
+            val payloadJson = decodificarJwtPayload(partes[1])
+            val exp = Regex(""""exp"\s*:\s*(\d+)""")
+                .find(payloadJson)
+                ?.groupValues
+                ?.getOrNull(1)
+                ?.toLongOrNull()
+                ?: return@runCatching false
+
+            val ahoraSegundos = System.currentTimeMillis() / 1000L
+            val expirado = ahoraSegundos >= exp
+            if (expirado) {
+                Log.w(TAG, "JWT expirado: exp=$exp, ahora=$ahoraSegundos")
+            }
+            expirado
+        }.getOrDefault(false)
+    }
+
     fun handleUnauthorized() {
         logout()
         _authMessage.value = "Sesión expirada. Inicia sesión de nuevo."
@@ -76,6 +104,19 @@ object AuthManager {
 
     fun clearAuthMessage() {
         _authMessage.value = null
+    }
+
+    private const val TAG = "AuthManager"
+
+    private fun decodificarJwtPayload(segmento: String): String {
+        val normalizado = segmento.replace('-', '+').replace('_', '/')
+        val padding = when (normalizado.length % 4) {
+            2 -> "=="
+            3 -> "="
+            else -> ""
+        }
+        val bytes = Base64.decode(normalizado + padding, Base64.DEFAULT)
+        return String(bytes, Charsets.UTF_8)
     }
 
     private fun securePrefs() = EncryptedSharedPreferences.create(

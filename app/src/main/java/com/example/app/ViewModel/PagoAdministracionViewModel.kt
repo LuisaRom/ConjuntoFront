@@ -2,6 +2,8 @@ package com.example.app.ViewModel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import android.util.Log
+import com.example.app.Auth.AuthManager
 import com.example.app.Model.ConfirmarPagoResponse
 import com.example.app.Model.CrearPagoRequest
 import com.example.app.Model.EstadoPagoAdmin
@@ -78,6 +80,16 @@ class PagoAdministracionViewModel @Inject constructor(
         _isLoading.value = true
         _error.value = null
         try {
+            if (!AuthManager.isAuthenticated()) {
+                _error.value = "No hay sesión activa. Inicia sesión de nuevo."
+                return@launch
+            }
+            if (AuthManager.isTokenExpired()) {
+                AuthManager.handleUnauthorized()
+                _error.value = "El token JWT expiró. Inicia sesión de nuevo."
+                return@launch
+            }
+
             val request = CrearPagoRequest(
                 monto = valor,
                 valor = valor,
@@ -91,9 +103,11 @@ class PagoAdministracionViewModel @Inject constructor(
             val url = withContext(Dispatchers.IO) {
                 repository.extraerUrlCheckout(response)
             }
+            Log.d("PagosCheckout", "Abriendo checkout en navegador: $url")
             _checkoutUrl.value = url
         } catch (e: Exception) {
-            _error.value = e.message?.substringAfter(": ")?.ifBlank { e.message } ?: "Error al iniciar checkout"
+            Log.e("PagosCheckout", "Error al iniciar checkout", e)
+            _error.value = e.message?.ifBlank { "Error al iniciar checkout" } ?: "Error al iniciar checkout"
         } finally {
             _isLoading.value = false
         }

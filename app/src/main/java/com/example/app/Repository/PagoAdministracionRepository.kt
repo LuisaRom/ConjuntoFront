@@ -1,5 +1,7 @@
 package com.example.app.Repository
 
+import android.util.Log
+import com.example.app.Auth.AuthManager
 import com.example.app.Interfaces.PagoAdministracionApiService
 import com.example.app.Model.CheckoutAdministracionResponse
 import com.example.app.Model.ConfirmarPagoRequest
@@ -17,6 +19,7 @@ class PagoAdministracionRepository @Inject constructor(
 ) {
 
     private val gson = Gson()
+    private val tag = "PagosCheckout"
 
     suspend fun obtenerTodos(): List<PagoAdministracion> {
         return runCatching { api.obtenerMisPagos() }
@@ -31,27 +34,76 @@ class PagoAdministracionRepository @Inject constructor(
     }
 
     suspend fun crearCheckoutAdministracion(request: CrearPagoRequest): CheckoutAdministracionResponse {
-        return try {
-            api.crearCheckoutAdministracion(request)
-        } catch (error: HttpException) {
-            if (error.code() == 404) {
-                runCatching { api.crearPagoEnLinea(request) }
-                    .recoverCatching { api.crearPagoEnLineaCheckout(request) }
-                    .recoverCatching { api.crearPagoEnLineaMercadoPago(request) }
-                    .getOrElse { throw IllegalStateException(extraerMensajeHttp(error), error) }
+        val token = AuthManager.getToken()
+        Log.d(tag, "=== POST /api/pagos/checkout/administracion ===")
+        Log.d(tag, "Request body: ${gson.toJson(request)}")
+        Log.d(
+            tag,
+            if (token.isNullOrBlank()) {
+                "Authorization: NO CONFIGURADO (sin JWT en sesión)"
             } else {
-                throw IllegalStateException(extraerMensajeHttp(error), error)
+                "Authorization: Bearer *** (presente, len=${token.length}, expirado=${AuthManager.isTokenExpired()})"
+            }
+        )
+
+        if (token.isNullOrBlank()) {
+            throw IllegalStateException("No hay sesión activa. Inicia sesión de nuevo.")
+        }
+        if (AuthManager.isTokenExpired()) {
+            AuthManager.handleUnauthorized()
+            throw IllegalStateException("El token JWT expiró. Inicia sesión de nuevo.")
+        }
+
+        return try {
+            val response = api.crearCheckoutAdministracion(request)
+            Log.d(tag, "Response 200 OK (completo): ${gson.toJson(response)}")
+            Log.d(
+                tag,
+                "initPoint=${response.initPoint}, checkoutUrl=${response.checkoutUrl}, " +
+                    "sandboxInitPoint=${response.sandboxInitPoint}, redirectUrl=${response.redirectUrl}"
+            )
+            response
+        } catch (error: HttpException) {
+            val cuerpo = error.response()?.errorBody()?.string().orEmpty()
+            Log.e(tag, "Response HTTP ${error.code()} body=$cuerpo")
+
+            when (error.code()) {
+                401 -> {
+                    val jwtExpirado = AuthManager.isTokenExpired()
+                    Log.e(tag, "401 Unauthorized. JWT expirado según payload: $jwtExpirado")
+                    AuthManager.handleUnauthorized()
+                    throw IllegalStateException(
+                        if (jwtExpirado) {
+                            "Sesión expirada (JWT vencido). Inicia sesión de nuevo."
+                        } else {
+                            extraerMensajeHttp(error).ifBlank { "No autorizado (401). Verifica tu sesión." }
+                        }
+                    )
+                }
+                404 -> {
+                    Log.w(tag, "404 en checkout/administracion, probando rutas alternas...")
+                    runCatching { api.crearPagoEnLinea(request) }
+                        .recoverCatching { api.crearPagoEnLineaCheckout(request) }
+                        .recoverCatching { api.crearPagoEnLineaMercadoPago(request) }
+                        .getOrElse { throw IllegalStateException(extraerMensajeHttp(error), error) }
+                        .also { fallback ->
+                            Log.d(tag, "Response fallback (completo): ${gson.toJson(fallback)}")
+                        }
+                }
+                else -> throw IllegalStateException(extraerMensajeHttp(error), error)
             }
         }
     }
 
     suspend fun extraerUrlCheckout(response: CheckoutAdministracionResponse): String {
-        val url = response.sandboxInitPoint
-            ?: response.initPoint
+        val url = response.initPoint
             ?: response.checkoutUrl
+            ?: response.sandboxInitPoint
             ?: response.redirectUrl
             ?: response.preferenceId?.let { construirUrlDesdePreferencia(it) }
-            ?: throw IllegalStateException("El backend no devolvió URL de checkout para redirección")
+            ?: throw IllegalStateException("El backend no devolvió initPoint ni checkoutUrl para redirección")
+
+        Log.d(tag, "URL de checkout seleccionada: $url")
         return normalizarCheckoutUrl(url)
     }
 

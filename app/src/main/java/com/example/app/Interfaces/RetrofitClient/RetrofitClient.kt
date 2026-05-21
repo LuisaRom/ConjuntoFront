@@ -13,6 +13,7 @@ import com.example.app.Interfaces.ReservaZonaComunApiService
 import com.example.app.Interfaces.UsuarioApiService
 import com.example.app.Interfaces.VehiculoResidenteApiService
 import com.example.app.Interfaces.VisitanteApiService
+import android.util.Log
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.logging.HttpLoggingInterceptor
@@ -22,6 +23,7 @@ import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
 
+    private const val TAG = "RetrofitClient"
     private const val BASE_URL = "https://conjuntoback.onrender.com/"
 
     private fun shouldSkipAuth(path: String): Boolean {
@@ -48,16 +50,33 @@ object RetrofitClient {
             val request: Request = if (
                 token.isNullOrBlank() || shouldSkipAuth(path)
             ) {
+                if (path.contains("/api/pagos/checkout/administracion")) {
+                    Log.w(TAG, "POST /api/pagos/checkout/administracion SIN Authorization (token vacío o ruta exenta)")
+                }
                 original
             } else {
+                if (path.contains("/api/pagos/checkout/administracion")) {
+                    Log.d(TAG, "POST /api/pagos/checkout/administracion con Authorization: Bearer *** (len=${token.length})")
+                }
                 original.newBuilder()
-                    .addHeader("Authorization", "Bearer $token")
+                    .header("Authorization", "Bearer $token")
                     .build()
             }
 
             val response = chain.proceed(request)
+            if (path.contains("/api/pagos/checkout/administracion")) {
+                Log.d(TAG, "POST /api/pagos/checkout/administracion -> HTTP ${response.code}")
+            }
             when (response.code) {
-                401 -> AuthManager.handleUnauthorized()
+                401 -> {
+                    if (path.contains("/api/pagos/checkout/administracion")) {
+                        Log.e(
+                            TAG,
+                            "401 en checkout/administracion. JWT expirado=${AuthManager.isTokenExpired()}"
+                        )
+                    }
+                    AuthManager.handleUnauthorized()
+                }
                 403 -> if (!shouldSkipForbiddenToast(path)) AuthManager.handleForbidden()
             }
             response

@@ -270,6 +270,27 @@ fun PantallaPagos(
                     Toast.makeText(context, "El valor del pago no es válido.", Toast.LENGTH_LONG).show()
                     return@MetodoPagoItem
                 }
+                if (!AuthManager.isAuthenticated()) {
+                    Toast.makeText(
+                        context,
+                        "No hay sesión activa. Inicia sesión de nuevo.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                    return@MetodoPagoItem
+                }
+                if (AuthManager.isTokenExpired()) {
+                    AuthManager.handleUnauthorized()
+                    Toast.makeText(
+                        context,
+                        "Tu sesión expiró. Inicia sesión de nuevo.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                    return@MetodoPagoItem
+                }
+                android.util.Log.d(
+                    "PagosResidente",
+                    "Pago en línea: JWT presente (len=${AuthManager.getToken()?.length ?: 0})"
+                )
                 pagoAdministracionViewModel.crearCheckoutAdministracion(
                     valor = valorNumericoPago,
                     descripcion = "Pago administración",
@@ -379,12 +400,15 @@ fun MetodoPagoItem(
 }
 
 private fun abrirUrlDePago(context: android.content.Context, url: String) {
-    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+    android.util.Log.d("PagosResidente", "Abriendo URL externa de Mercado Pago: $url")
+    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+        addCategory(Intent.CATEGORY_BROWSABLE)
+    }
     val canOpen = intent.resolveActivity(context.packageManager) != null
     if (!canOpen) {
         throw IllegalStateException("No se encontró una app para abrir el enlace de pago.")
     }
-    context.startActivity(intent)
+    context.startActivity(Intent.createChooser(intent, "Pagar con Mercado Pago"))
 }
 
 @Composable
