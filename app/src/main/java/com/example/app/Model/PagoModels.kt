@@ -9,6 +9,8 @@ import java.util.Locale
 const val MONTO_ADMINISTRACION = 150_000L
 const val CONCEPTO_PAGO_ADMINISTRACION = "Pago administracion"
 const val MONTO_ADMINISTRACION_TEXTO = "150.000 COP"
+/** Valor aceptado por PostgreSQL (check constraint); no usar EN_LINEA. */
+const val METODO_PAGO_MERCADO_PAGO = "MERCADO_PAGO"
 
 data class CrearPagoRequest(
     @SerializedName("monto")
@@ -16,7 +18,9 @@ data class CrearPagoRequest(
     @SerializedName("concepto")
     val concepto: String,
     @SerializedName("periodo")
-    val periodo: String
+    val periodo: String,
+    @SerializedName("metodoPago")
+    val metodoPago: String = METODO_PAGO_MERCADO_PAGO
 )
 
 data class ConfirmarPagoRequest(
@@ -119,10 +123,22 @@ data class EstadoPagoAdmin(
             ?: "Residente"
 
     fun estaAlDiaEfectivo(): Boolean {
-        estaAlDia?.let { return it }
-        alDia?.let { return it }
+        if (estaEnMora == true) return false
+        if (estaAlDia == true || alDia == true) return true
+
+        val pagoEstado = pagoPeriodoActual?.estadoPago.orEmpty().uppercase()
+        if (pagoEstado.contains("APROB") ||
+            pagoEstado == "PAGADO" ||
+            pagoEstado == "COMPLETADO" ||
+            pagoEstado == "APPROVED"
+        ) {
+            return true
+        }
+
         val estado = estadoAdministracion.orEmpty().uppercase()
-        return estado == "AL_DIA" || estado == "PAGADO_EN_MORA"
+        return estado == "AL_DIA" ||
+            estado == "PAGADO_EN_MORA" ||
+            estado == "PAGADO"
     }
 
     fun etiquetaEstado(): String {

@@ -272,6 +272,16 @@ fun PantallaPagos(
                     ).show()
                     return@MetodoPagoItem
                 }
+                val torre = usuarioPago?.torre?.trim().orEmpty()
+                val apto = usuarioPago?.apartamento?.trim().orEmpty()
+                if (torre.isBlank() || apto.isBlank()) {
+                    Toast.makeText(
+                        context,
+                        "Tu perfil debe tener torre y apartamento. Pide al administrador que los actualice.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                    return@MetodoPagoItem
+                }
                 android.util.Log.d(
                     "PagosResidente",
                     "Pago en línea: monto=$valorNumericoPago, JWT len=${AuthManager.getToken()?.length ?: 0}"

@@ -125,8 +125,16 @@ class PagoAdministracionViewModel @Inject constructor(
             obtenerTodos()
         } catch (e: Exception) {
             Log.e("PagosCheckout", "Error al iniciar checkout TEST", e)
-            _error.value = e.message?.ifBlank { "Error al conectar con Mercado Pago" }
+            val base = e.message?.ifBlank { "Error al conectar con Mercado Pago" }
                 ?: "Error al conectar con Mercado Pago"
+            _error.value = if (base.contains("base de datos", ignoreCase = true) ||
+                base.contains("registrar", ignoreCase = true)
+            ) {
+                "$base El servidor debe guardar el pago en BD antes de Mercado Pago. " +
+                    "Revisa token TEST- en Render y pagos PENDIENTE duplicados del mes."
+            } else {
+                base
+            }
         } finally {
             _isLoading.value = false
         }

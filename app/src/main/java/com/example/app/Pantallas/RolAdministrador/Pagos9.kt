@@ -19,6 +19,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -72,7 +73,22 @@ fun PantallaPagos(
                 modifier = Modifier.clickable { navController.popBackStack() }
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Pagos", color = Color.White, style = MaterialTheme.typography.headlineSmall)
+            Text(
+                "Pagos",
+                color = Color.White,
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.weight(1f)
+            )
+            Icon(
+                imageVector = Icons.Default.Refresh,
+                contentDescription = "Actualizar",
+                tint = DoradoElegante,
+                modifier = Modifier
+                    .size(28.dp)
+                    .clickable(enabled = !isLoading) {
+                        pagoAdministracionViewModel.obtenerEstadoPagosAdmin()
+                    }
+            )
         }
 
         Spacer(modifier = Modifier.height(10.dp))
