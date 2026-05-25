@@ -42,6 +42,8 @@ import com.example.app.ui.theme.AzulOscuro
 import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
 import com.example.app.ui.theme.GrisOscuro
+import com.example.app.Util.archivoMultimediaValido
+import com.example.app.Util.copiarImagenComoArchivoTemporal
 import com.example.app.ViewModel.NotificacionViewModel
 import com.example.app.ViewModel.UsuarioViewModel
 import java.io.File
@@ -575,49 +577,58 @@ fun PantallaCreacionPublicacionAdmin(
                             else -> null
                         }
                         
-                        // Se envía la ruta disponible (local o remota) para que el backend la persista.
-                        // Así la imagen/video adjuntos puedan renderizarse después en el feed.
-                        val imagenParaBackend = imagenSeleccionada?.takeIf { it.isNotBlank() }
-                        val videoParaBackend = videoPath?.takeIf { it.isNotBlank() }
+                        val imagenArchivo = imagenSeleccionada?.let { archivoMultimediaValido(it) }
+                            ?: imagenUri?.toString()?.let { copiarImagenComoArchivoTemporal(context, it) }
+                        val videoArchivo = videoFile?.takeIf { it.exists() && it.canRead() }
 
                         val notificacion = Notificacion(
                             mensaje = descripcion,
                             fechaEnvio = fechaActual,
                             usuario = usuarioActual,
-                            imagenUrl = imagenParaBackend,
-                            videoUrl = videoParaBackend,
                             usuariosEtiquetados = usuariosEtiquetadosJson
                         )
                         
-                        // Log para debugging
-                        android.util.Log.d("CreacionPublicacion", "Guardando notificación: mensaje=$descripcion, usuario=${usuarioActual?.id}, imagenUrl=${imagenSeleccionada}, videoUrl=$videoPath, etiquetas=${usuariosEtiquetados.size}")
+                        android.util.Log.d(
+                            "CreacionPublicacion",
+                            "Guardando notificación: mensaje=$descripcion, imagen=${imagenArchivo?.name}, video=${videoArchivo?.name}, etiquetas=${usuariosEtiquetados.size}"
+                        )
                         
                         coroutineScope.launch {
-                            notificacionViewModel.guardar(
-                                notificacion = notificacion,
-                                onSuccess = {
-                                    mensajeExito = "Publicación creada exitosamente"
-                                    mensajeError = null
-
-                                    // Limpiar campos después de guardar
-                                    descripcion = ""
-                                    imagenSeleccionada = null
-                                    imagenUri = null
-                                    videoSeleccionado = null
-                                    videoFile = null
-                                    usuariosEtiquetados = emptyList()
-                                    imageFile = null
-
-                                    navController.navigate("PantallaDashboardAdmin") {
-                                        popUpTo("PantallaDashboardAdmin") { inclusive = false }
-                                        launchSingleTop = true
-                                    }
-                                },
-                                onError = { errorGuardado ->
-                                    mensajeError = errorGuardado
-                                    mensajeExito = null
+                            val onSuccess = {
+                                mensajeExito = "Publicación creada exitosamente"
+                                mensajeError = null
+                                descripcion = ""
+                                imagenSeleccionada = null
+                                imagenUri = null
+                                videoSeleccionado = null
+                                videoFile = null
+                                usuariosEtiquetados = emptyList()
+                                imageFile = null
+                                navController.navigate("PantallaDashboardAdmin") {
+                                    popUpTo("PantallaDashboardAdmin") { inclusive = false }
+                                    launchSingleTop = true
                                 }
-                            )
+                            }
+                            val onError = { errorGuardado: String ->
+                                mensajeError = errorGuardado
+                                mensajeExito = null
+                            }
+
+                            if (imagenArchivo != null || videoArchivo != null) {
+                                notificacionViewModel.guardarConMultimedia(
+                                    notificacion = notificacion,
+                                    imagenFile = imagenArchivo,
+                                    videoFile = videoArchivo,
+                                    onSuccess = onSuccess,
+                                    onError = onError
+                                )
+                            } else {
+                                notificacionViewModel.guardar(
+                                    notificacion = notificacion,
+                                    onSuccess = onSuccess,
+                                    onError = onError
+                                )
+                            }
                         }
                     }
                 },

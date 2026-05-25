@@ -6,7 +6,6 @@ import com.example.app.Model.Usuario
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
-import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.HttpException
 import java.io.File
 import java.util.Locale
@@ -30,75 +29,91 @@ class MascotaRepository @Inject constructor(
             api.guardarMascota(payloadConId)
         } catch (_: Exception) {
             try {
-                api.guardarMascotaBase(payloadConId)
+                api.guardarMascotaCrear(payloadConId)
             } catch (_: Exception) {
                 try {
-                    // Fallback para backends que asignan usuario por JWT.
                     api.guardarMascota(mascota.copy(usuario = null))
                 } catch (_: Exception) {
-                    api.guardarMascotaBase(mascota.copy(usuario = null))
+                    api.guardarMascotaCrear(mascota.copy(usuario = null))
                 }
             }
         }
     }
 
     suspend fun guardarConFoto(mascota: Mascota, fotoFile: File): Mascota {
-        val textPlain = "text/plain".toMediaTypeOrNull()
-        val nombre = mascota.nombre.toRequestBody(textPlain)
-        val tipo = mascota.tipo.toRequestBody(textPlain)
-        val raza = mascota.raza.toRequestBody(textPlain)
-        val usuarioId = mascota.usuario?.id?.toString()?.toRequestBody(textPlain)
-        val mimeFoto = when (fotoFile.extension.lowercase(Locale.getDefault())) {
-            "png" -> "image/png"
-            "webp" -> "image/webp"
-            else -> "image/jpeg"
-        }
-        val fotoRequest = fotoFile.asRequestBody(mimeFoto.toMediaTypeOrNull())
-        val fotoPart = MultipartBody.Part.createFormData("foto", fotoFile.name, fotoRequest)
-        val imagenPart = MultipartBody.Part.createFormData("imagen", fotoFile.name, fotoRequest)
+        val descripcion = mascota.raza.substringBefore(" | Vacunación:").trim().ifBlank { null }
 
-        return try {
-            api.guardarMascotaMultipart(
-                nombre = nombre,
-                tipo = tipo,
-                raza = raza,
-                usuarioId = usuarioId,
-                foto = fotoPart
-            )
-        } catch (e: HttpException) {
-            if (e.code() == 400 || e.code() == 404 || e.code() == 405 || e.code() == 415) {
-                try {
-                    api.guardarMascotaMultipartImagen(
-                        nombre = nombre,
-                        tipo = tipo,
-                        raza = raza,
-                        usuarioId = usuarioId,
-                        imagen = imagenPart
-                    )
-                } catch (_: Exception) {
-                    try {
-                        // Fallback: enviar sin usuarioId para backends que lo ignoran o lo rechazan.
-                        api.guardarMascotaMultipartImagen(
-                            nombre = nombre,
-                            tipo = tipo,
-                            raza = raza,
-                            usuarioId = null,
-                            imagen = imagenPart
-                        )
-                    } catch (_: Exception) {
-                        api.guardarMascotaMultipartBase(
-                            nombre = nombre,
-                            tipo = tipo,
-                            raza = raza,
-                            usuarioId = usuarioId,
-                            foto = fotoPart
-                        )
-                    }
+        fun crearPartes(): Pair<MultipartBody.Part, MultipartBody.Part> {
+            val mimeFoto = when (fotoFile.extension.lowercase(Locale.getDefault())) {
+                "png" -> "image/png"
+                "webp" -> "image/webp"
+                else -> "image/jpeg"
+            }
+            val fotoRequest = fotoFile.asRequestBody(mimeFoto.toMediaTypeOrNull())
+            val fotoPart = MultipartBody.Part.createFormData("foto", fotoFile.name, fotoRequest)
+            val imagenRequest = fotoFile.asRequestBody(mimeFoto.toMediaTypeOrNull())
+            val imagenPart = MultipartBody.Part.createFormData("imagen", fotoFile.name, imagenRequest)
+            return fotoPart to imagenPart
+        }
+
+        val intentos: List<suspend () -> Mascota> = listOf(
+            {
+                val (fotoPart, imagenPart) = crearPartes()
+                api.guardarMascotaConFoto(
+                    nombre = mascota.nombre,
+                    tipo = mascota.tipo,
+                    raza = mascota.raza,
+                    descripcion = descripcion,
+                    foto = fotoPart
+                )
+            },
+            {
+                val (fotoPart, imagenPart) = crearPartes()
+                api.guardarMascotaConImagen(
+                    nombre = mascota.nombre,
+                    tipo = mascota.tipo,
+                    raza = mascota.raza,
+                    descripcion = descripcion,
+                    imagen = imagenPart
+                )
+            },
+            {
+                val (fotoPart, _) = crearPartes()
+                api.guardarMascotaConFotoCrear(
+                    nombre = mascota.nombre,
+                    tipo = mascota.tipo,
+                    raza = mascota.raza,
+                    descripcion = descripcion,
+                    foto = fotoPart
+                )
+            },
+            {
+                val (_, imagenPart) = crearPartes()
+                api.guardarMascotaConImagenCrear(
+                    nombre = mascota.nombre,
+                    tipo = mascota.tipo,
+                    raza = mascota.raza,
+                    descripcion = descripcion,
+                    imagen = imagenPart
+                )
+            }
+        )
+
+        var ultimoError: Exception? = null
+        for (intento in intentos) {
+            try {
+                return intento()
+            } catch (e: HttpException) {
+                ultimoError = e
+                if (e.code() !in listOf(400, 404, 405, 415)) {
+                    throw e
                 }
-            } else {
-                throw e
+            } catch (e: Exception) {
+                ultimoError = e
             }
         }
+
+        throw ultimoError ?: IllegalStateException("No se pudo subir la foto de la mascota")
     }
 
     suspend fun eliminar(id: Long) {

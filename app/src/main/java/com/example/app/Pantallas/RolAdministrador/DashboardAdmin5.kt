@@ -40,6 +40,7 @@ import com.example.app.ui.theme.AzulOscuro
 import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
 import com.example.app.ui.theme.GrisOscuro
+import com.example.app.Util.resolverUrlImagenNotificacion
 import com.example.app.ViewModel.NotificacionViewModel
 import com.example.app.ViewModel.UsuarioViewModel
 import com.google.gson.Gson
@@ -435,12 +436,11 @@ fun PublicacionItem(
             }
 
             // Imagen si existe (ocupa todo el ancho, como en Facebook)
-            val imagenPath = notificacion.imagenUrl
-            if (imagenPath != null && imagenPath.isNotBlank()) {
+            val imagenPath = resolverUrlImagenNotificacion(notificacion.imagenUrl)
+            if (!imagenPath.isNullOrBlank()) {
                 val imagenSource: Any? = remember(imagenPath) {
                     when {
                         imagenPath.startsWith("http://") || imagenPath.startsWith("https://") -> imagenPath
-                        imagenPath.startsWith("/") && !imagenPath.startsWith("/storage/") -> "https://conjuntoback.onrender.com${imagenPath}"
                         else -> File(imagenPath).takeIf { it.exists() && it.canRead() }
                     }
                 }

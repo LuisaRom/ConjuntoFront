@@ -50,6 +50,7 @@ import com.example.app.Model.Mascota
 import com.example.app.ViewModel.MascotaViewModel
 import com.example.app.ui.theme.AzulOscuro
 import com.example.app.ui.theme.DoradoElegante
+import com.example.app.Util.resolverUrlImagenMascota
 import kotlinx.coroutines.launch
 
 @Composable
@@ -228,11 +229,3 @@ private fun PublicacionMascotaItem(
     }
 }
 
-private fun resolverUrlImagenMascota(path: String?): String? {
-    if (path.isNullOrBlank()) return null
-    val limpio = path.trim()
-    if (limpio.startsWith("http://") || limpio.startsWith("https://") || limpio.startsWith("content://")) {
-        return limpio
-    }
-    return "https://conjuntoback.onrender.com/${limpio.removePrefix("/")}"
-}

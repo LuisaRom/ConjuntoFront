@@ -7,7 +7,11 @@ import com.example.app.Model.Notificacion
 import com.example.app.Model.Usuario
 import com.example.app.Model.mensajeRecibo
 import com.example.app.Model.paraApi
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
 import retrofit2.HttpException
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -111,7 +115,6 @@ class NotificacionRepository @Inject constructor(
         } catch (e: retrofit2.HttpException) {
             when (e.code()) {
                 400, 500 -> {
-                    // Fallback: payload mínimo para backends más estrictos.
                     val payloadMinimo = payloadPrincipal.copy(
                         imagenUrl = null,
                         videoUrl = null,
@@ -122,7 +125,7 @@ class NotificacionRepository @Inject constructor(
                     runCatching { api.guardarNotificacion(payloadMinimo) }.getOrElse {
                         val payloadJwt = payloadMinimo.copy(usuario = null)
                         runCatching { api.guardarNotificacion(payloadJwt) }.getOrElse {
-                            throw Exception("No se pudo guardar la publicación. Verifica descripción e intenta de nuevo.")
+                            throw Exception(extraerMensajeHttp(e))
                         }
                     }
                 }
@@ -131,6 +134,101 @@ class NotificacionRepository @Inject constructor(
         } catch (e: Exception) {
             throw Exception("Error al guardar publicación: ${e.message}")
         }
+    }
+
+    suspend fun guardarConMultimedia(
+        notificacion: Notificacion,
+        imagenFile: File?,
+        videoFile: File?
+    ): Notificacion {
+        val mensaje = notificacion.mensaje?.trim().orEmpty()
+        if (mensaje.isBlank()) {
+            throw Exception("La descripción es obligatoria")
+        }
+
+        val tieneArchivos = imagenFile != null || videoFile != null
+        if (!tieneArchivos) {
+            return guardar(notificacion)
+        }
+
+        fun crearPartes(): Triple<MultipartBody.Part?, MultipartBody.Part?, MultipartBody.Part?> {
+            val imagenPart = imagenFile?.let { file ->
+                val mime = when (file.extension.lowercase(Locale.getDefault())) {
+                    "png" -> "image/png"
+                    "webp" -> "image/webp"
+                    else -> "image/jpeg"
+                }
+                MultipartBody.Part.createFormData(
+                    "imagen",
+                    file.name,
+                    file.asRequestBody(mime.toMediaTypeOrNull())
+                )
+            }
+            val fotoPart = imagenFile?.let { file ->
+                val mime = when (file.extension.lowercase(Locale.getDefault())) {
+                    "png" -> "image/png"
+                    "webp" -> "image/webp"
+                    else -> "image/jpeg"
+                }
+                MultipartBody.Part.createFormData(
+                    "foto",
+                    file.name,
+                    file.asRequestBody(mime.toMediaTypeOrNull())
+                )
+            }
+            val videoPart = videoFile?.let { file ->
+                val mime = when (file.extension.lowercase(Locale.getDefault())) {
+                    "mov" -> "video/quicktime"
+                    "webm" -> "video/webm"
+                    else -> "video/mp4"
+                }
+                MultipartBody.Part.createFormData(
+                    "video",
+                    file.name,
+                    file.asRequestBody(mime.toMediaTypeOrNull())
+                )
+            }
+            return Triple(imagenPart, fotoPart, videoPart)
+        }
+
+        val intentos: List<suspend () -> Notificacion> = listOf(
+            {
+                val (imagenPart, _, videoPart) = crearPartes()
+                api.guardarNotificacionMultipart(
+                    mensaje = mensaje,
+                    fechaEnvio = notificacion.fechaEnvio,
+                    usuariosEtiquetados = notificacion.usuariosEtiquetados,
+                    imagen = imagenPart,
+                    video = videoPart
+                )
+            },
+            {
+                val (_, fotoPart, videoPart) = crearPartes()
+                api.guardarNotificacionMultipart(
+                    mensaje = mensaje,
+                    fechaEnvio = notificacion.fechaEnvio,
+                    usuariosEtiquetados = notificacion.usuariosEtiquetados,
+                    foto = fotoPart,
+                    video = videoPart
+                )
+            }
+        )
+
+        var ultimoError: Exception? = null
+        for (intento in intentos) {
+            try {
+                return intento()
+            } catch (e: HttpException) {
+                ultimoError = Exception(extraerMensajeHttp(e))
+                if (e.code() !in listOf(400, 404, 405, 415, 500)) {
+                    throw ultimoError
+                }
+            } catch (e: Exception) {
+                ultimoError = Exception("Error al guardar publicación con multimedia: ${e.message}")
+            }
+        }
+
+        throw ultimoError ?: Exception("No se pudo guardar la publicación con imagen o video")
     }
     
     suspend fun actualizar(id: Long, notificacion: Notificacion): Notificacion {

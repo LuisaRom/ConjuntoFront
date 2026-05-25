@@ -35,6 +35,7 @@ import com.example.app.ui.theme.AzulOscuro
 import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
 import com.example.app.ui.theme.GrisOscuro
+import com.example.app.Util.resolverUrlImagenNotificacion
 import com.example.app.ViewModel.NotificacionViewModel
 import com.example.app.ViewModel.UsuarioViewModel
 import java.io.File
@@ -368,13 +369,12 @@ fun PublicacionItemCelador(
             }
 
             // Imagen si existe
-            val imagenPath = notificacion.imagenUrl
-            if (imagenPath != null && imagenPath.isNotBlank()) {
+            val imagenPath = resolverUrlImagenNotificacion(notificacion.imagenUrl)
+            if (!imagenPath.isNullOrBlank()) {
                 val imagenSource: Any? = remember(imagenPath) {
-                    if (imagenPath.startsWith("http://") || imagenPath.startsWith("https://")) {
-                        imagenPath
-                    } else {
-                        File(imagenPath).takeIf { it.exists() && it.canRead() }
+                    when {
+                        imagenPath.startsWith("http://") || imagenPath.startsWith("https://") -> imagenPath
+                        else -> File(imagenPath).takeIf { it.exists() && it.canRead() }
                     }
                 }
 

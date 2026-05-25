@@ -40,6 +40,7 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.app.Model.Mascota
 import com.example.app.ViewModel.MascotaViewModel
+import com.example.app.Util.resolverUrlImagenMascota
 import com.example.app.ui.theme.AzulOscuro
 
 @Composable
@@ -156,11 +157,3 @@ private fun PublicacionMascotaSoloLectura(mascota: Mascota) {
     }
 }
 
-private fun resolverUrlImagenMascota(path: String?): String? {
-    if (path.isNullOrBlank()) return null
-    val limpio = path.trim()
-    if (limpio.startsWith("http://") || limpio.startsWith("https://") || limpio.startsWith("content://")) {
-        return limpio
-    }
-    return "https://conjuntoback.onrender.com/${limpio.removePrefix("/")}"
-}

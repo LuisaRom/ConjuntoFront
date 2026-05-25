@@ -187,13 +187,39 @@ class NotificacionViewModel @Inject constructor(
                 repository.guardar(notificacion)
             }
             android.util.Log.d("NotificacionViewModel", "Notificación guardada exitosamente: id=${notificacionGuardada.id}")
-            // Esperar un momento antes de refrescar para asegurar que el servidor procesó
             kotlinx.coroutines.delay(300)
             obtenerTodos()
             onSuccess?.invoke()
         } catch (e: Exception) {
             android.util.Log.e("NotificacionViewModel", "Error al guardar notificación", e)
             val mensaje = "Error al guardar notificación: ${e.message}"
+            _error.value = mensaje
+            onError?.invoke(mensaje)
+        } finally {
+            _isLoading.value = false
+        }
+    }
+
+    fun guardarConMultimedia(
+        notificacion: Notificacion,
+        imagenFile: java.io.File?,
+        videoFile: java.io.File?,
+        onSuccess: (() -> Unit)? = null,
+        onError: ((String) -> Unit)? = null
+    ) = viewModelScope.launch {
+        _isLoading.value = true
+        _error.value = null
+        try {
+            val notificacionGuardada = withContext(Dispatchers.IO) {
+                repository.guardarConMultimedia(notificacion, imagenFile, videoFile)
+            }
+            android.util.Log.d("NotificacionViewModel", "Publicación con multimedia guardada: id=${notificacionGuardada.id}, imagen=${notificacionGuardada.imagenUrl}")
+            kotlinx.coroutines.delay(300)
+            obtenerTodos()
+            onSuccess?.invoke()
+        } catch (e: Exception) {
+            android.util.Log.e("NotificacionViewModel", "Error al guardar publicación con multimedia", e)
+            val mensaje = "Error al guardar publicación: ${e.message}"
             _error.value = mensaje
             onError?.invoke(mensaje)
         } finally {

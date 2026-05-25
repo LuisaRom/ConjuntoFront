@@ -14,7 +14,7 @@ data class Mascota(
     @SerializedName("raza")
     val raza: String,
 
-    @SerializedName(value = "imagenUrl", alternate = ["fotoUrl", "foto", "imagen"])
+    @SerializedName(value = "imagenUrl", alternate = ["fotoHttpUrl", "fotoUrl", "foto", "imagen"])
     val imagenUrl: String? = null,
 
     @SerializedName(value = "fechaCreacion", alternate = ["fecha", "createdAt", "fechaPublicacion"])

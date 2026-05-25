@@ -1,14 +1,16 @@
 package com.example.app.Interfaces
 
-import com.example.app.Model.EnviarReciboRequest
 import com.example.app.Model.Notificacion
-import com.example.app.Model.ChatMensajeRequest
+import okhttp3.MultipartBody
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.PUT
+import retrofit2.http.Part
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface NotificacionApiService {
     @GET("/api/notificaciones")
@@ -20,14 +22,25 @@ interface NotificacionApiService {
     @POST("/api/notificaciones")
     suspend fun guardarNotificacion(@Body notificacion: Notificacion): Notificacion
 
+    @Multipart
+    @POST("/api/notificaciones")
+    suspend fun guardarNotificacionMultipart(
+        @Query("mensaje") mensaje: String,
+        @Query("fechaEnvio") fechaEnvio: String? = null,
+        @Query("usuariosEtiquetados") usuariosEtiquetados: String? = null,
+        @Part imagen: MultipartBody.Part? = null,
+        @Part foto: MultipartBody.Part? = null,
+        @Part video: MultipartBody.Part? = null
+    ): Notificacion
+
     @POST("/api/notificaciones/recibos/enviar")
-    suspend fun enviarRecibo(@Body request: EnviarReciboRequest): Notificacion
+    suspend fun enviarRecibo(@Body request: com.example.app.Model.EnviarReciboRequest): Notificacion
 
     @GET("/api/notificaciones/chat/historial")
     suspend fun obtenerHistorialChat(): List<Notificacion>
 
     @POST("/api/notificaciones/chat/enviar")
-    suspend fun enviarMensajeChat(@Body request: ChatMensajeRequest): Notificacion
+    suspend fun enviarMensajeChat(@Body request: com.example.app.Model.ChatMensajeRequest): Notificacion
 
     @PUT("/api/notificaciones/{id}")
     suspend fun actualizarNotificacion(@Path("id") id: Long, @Body notificacion: Notificacion): Notificacion

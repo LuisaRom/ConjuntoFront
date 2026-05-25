@@ -38,6 +38,8 @@ import com.example.app.ui.theme.AzulOscuro
 import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
 import coil.compose.AsyncImage
+import com.example.app.Util.resolverUrlImagenMascota
+import com.example.app.ui.theme.AzulOscuro
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -415,10 +417,10 @@ private fun PublicacionMascotaFeed(mascota: Mascota) {
                 }
             }
 
-            val imagenPath = mascota.imagenUrl
-            if (!imagenPath.isNullOrBlank()) {
+            val imagenUrl = resolverUrlImagenMascota(mascota.imagenUrl)
+            if (!imagenUrl.isNullOrBlank()) {
                 AsyncImage(
-                    model = imagenPath,
+                    model = imagenUrl,
                     contentDescription = "Imagen mascota",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier

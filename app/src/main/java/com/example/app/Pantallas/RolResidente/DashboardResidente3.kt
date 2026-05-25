@@ -32,6 +32,7 @@ import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.app.Model.Notificacion
 import com.example.app.R
+import com.example.app.Util.resolverUrlImagenNotificacion
 import com.example.app.ui.theme.AzulOscuro
 import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
@@ -389,12 +390,11 @@ fun PublicacionItemResidente(
             }
 
             // Imagen si existe
-            val imagenPath = notificacion.imagenUrl
-            if (imagenPath != null && imagenPath.isNotBlank()) {
+            val imagenPath = resolverUrlImagenNotificacion(notificacion.imagenUrl)
+            if (!imagenPath.isNullOrBlank()) {
                 val imagenSource: Any? = remember(imagenPath) {
                     when {
                         imagenPath.startsWith("http://") || imagenPath.startsWith("https://") -> imagenPath
-                        imagenPath.startsWith("/") && !imagenPath.startsWith("/storage/") -> "https://conjuntoback.onrender.com${imagenPath}"
                         else -> File(imagenPath).takeIf { it.exists() && it.canRead() }
                     }
                 }
