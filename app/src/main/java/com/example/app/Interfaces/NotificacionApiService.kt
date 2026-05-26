@@ -17,6 +17,11 @@ interface NotificacionApiService {
     @GET("/api/notificaciones")
     suspend fun obtenerNotificaciones(): List<Notificacion>
 
+    @GET("/api/notificaciones/novedades")
+    suspend fun obtenerNovedades(
+        @Query("search") search: String? = null
+    ): List<Notificacion>
+
     @GET("/api/notificaciones/{id}")
     suspend fun obtenerNotificacion(@Path("id") id: Long): Notificacion
 
