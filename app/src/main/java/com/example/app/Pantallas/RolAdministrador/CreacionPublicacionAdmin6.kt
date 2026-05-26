@@ -42,8 +42,7 @@ import com.example.app.ui.theme.AzulOscuro
 import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
 import com.example.app.ui.theme.GrisOscuro
-import com.example.app.Util.archivoMultimediaValido
-import com.example.app.Util.copiarImagenComoArchivoTemporal
+import com.example.app.Util.prepararImagenPublicacion
 import com.example.app.ViewModel.NotificacionViewModel
 import com.example.app.ViewModel.UsuarioViewModel
 import java.io.File
@@ -577,8 +576,11 @@ fun PantallaCreacionPublicacionAdmin(
                             else -> null
                         }
                         
-                        val imagenArchivo = imagenSeleccionada?.let { archivoMultimediaValido(it) }
-                            ?: imagenUri?.toString()?.let { copiarImagenComoArchivoTemporal(context, it) }
+                        val imagenArchivo = prepararImagenPublicacion(
+                            context = context,
+                            rutaLocal = imagenSeleccionada,
+                            uriString = imagenUri?.toString()
+                        )
                         val videoArchivo = videoFile?.takeIf { it.exists() && it.canRead() }
 
                         val notificacion = Notificacion(
