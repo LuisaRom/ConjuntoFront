@@ -2,6 +2,7 @@ package com.example.app.Interfaces
 
 import com.example.app.Model.Notificacion
 import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -28,6 +29,17 @@ interface NotificacionApiService {
         @Query("mensaje") mensaje: String,
         @Query("fechaEnvio") fechaEnvio: String? = null,
         @Query("usuariosEtiquetados") usuariosEtiquetados: String? = null,
+        @Part imagen: MultipartBody.Part? = null,
+        @Part foto: MultipartBody.Part? = null,
+        @Part video: MultipartBody.Part? = null
+    ): Notificacion
+
+    @Multipart
+    @POST("/api/notificaciones")
+    suspend fun guardarNotificacionMultipartForm(
+        @Part("mensaje") mensaje: RequestBody,
+        @Part("fechaEnvio") fechaEnvio: RequestBody? = null,
+        @Part("usuariosEtiquetados") usuariosEtiquetados: RequestBody? = null,
         @Part imagen: MultipartBody.Part? = null,
         @Part foto: MultipartBody.Part? = null,
         @Part video: MultipartBody.Part? = null

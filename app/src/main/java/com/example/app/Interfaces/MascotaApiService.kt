@@ -2,6 +2,7 @@ package com.example.app.Interfaces
 
 import com.example.app.Model.Mascota
 import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -63,6 +64,30 @@ interface MascotaApiService {
         @Query("raza") raza: String,
         @Query("descripcion") descripcion: String? = null,
         @Part imagen: MultipartBody.Part
+    ): Mascota
+
+    @Multipart
+    @POST("/api/mascotas")
+    suspend fun guardarMascotaConFotoForm(
+        @Part("nombre") nombre: RequestBody,
+        @Part("tipo") tipo: RequestBody,
+        @Part("raza") raza: RequestBody,
+        @Part("descripcion") descripcion: RequestBody? = null,
+        @Part foto: MultipartBody.Part? = null,
+        @Part imagen: MultipartBody.Part? = null,
+        @Part file: MultipartBody.Part? = null
+    ): Mascota
+
+    @Multipart
+    @POST("/api/mascotas/crear")
+    suspend fun guardarMascotaConFotoFormCrear(
+        @Part("nombre") nombre: RequestBody,
+        @Part("tipo") tipo: RequestBody,
+        @Part("raza") raza: RequestBody,
+        @Part("descripcion") descripcion: RequestBody? = null,
+        @Part foto: MultipartBody.Part? = null,
+        @Part imagen: MultipartBody.Part? = null,
+        @Part file: MultipartBody.Part? = null
     ): Mascota
 
     @DELETE("/api/mascotas/{id}")

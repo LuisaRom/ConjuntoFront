@@ -17,3 +17,5 @@ fun resolverUrlMedio(path: String?): String? {
 fun resolverUrlImagenMascota(path: String?): String? = resolverUrlMedio(path)
 
 fun resolverUrlImagenNotificacion(path: String?): String? = resolverUrlMedio(path)
+
+fun resolverUrlVideoNotificacion(path: String?): String? = resolverUrlMedio(path)

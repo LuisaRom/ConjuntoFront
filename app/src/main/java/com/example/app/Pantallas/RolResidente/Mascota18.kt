@@ -409,11 +409,13 @@ private fun PublicacionMascotaFeed(mascota: Mascota) {
                         color = Color.White,
                         fontWeight = FontWeight.Bold
                     )
-                    Text(
-                        text = formatearFechaMascota(mascota.fechaCreacion),
-                        color = GrisClaro,
-                        fontSize = 12.sp
-                    )
+                    formatearFechaMascota(mascota.fechaCreacion)?.let { fechaFormateada ->
+                        Text(
+                            text = fechaFormateada,
+                            color = GrisClaro,
+                            fontSize = 12.sp
+                        )
+                    }
                 }
             }
 
@@ -491,8 +493,8 @@ private fun guardarUriComoArchivoTemporal(
     }
 }
 
-private fun formatearFechaMascota(fechaRaw: String?): String {
-    if (fechaRaw.isNullOrBlank()) return "Fecha no disponible"
+private fun formatearFechaMascota(fechaRaw: String?): String? {
+    if (fechaRaw.isNullOrBlank()) return null
     val formatos = listOf(
         "yyyy-MM-dd'T'HH:mm:ss",
         "yyyy-MM-dd'T'HH:mm:ss.SSS",
@@ -507,5 +509,5 @@ private fun formatearFechaMascota(fechaRaw: String?): String {
             return outFmt.format(date)
         }
     }
-    return fechaRaw
+    return fechaRaw.takeIf { it.isNotBlank() }
 }

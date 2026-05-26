@@ -73,18 +73,43 @@ fun PantallaAccesoVehicularCelador(
         accesoVehicularViewModel.obtenerAccesosVehiculares()
     }
 
+    fun extraerCodigoDesdePayload(texto: String): String? {
+        val limpio = texto.trim()
+        if (limpio.isBlank()) return null
+        // Formato tipo: "tipo=PEATONAL|codigo=XYZ|..."
+        limpio.split("|").forEach { parte ->
+            val pair = parte.split("=", limit = 2)
+            if (pair.size == 2 && pair[0].equals("codigo", ignoreCase = true)) {
+                return pair[1].trim()
+            }
+        }
+        return null
+    }
+
     val qrLauncher = rememberLauncherForActivityResult(ScanContract()) { result ->
-        val codigo = result.contents?.trim().orEmpty()
+        val raw = result.contents?.trim().orEmpty()
+        val codigo = extraerCodigoDesdePayload(raw) ?: raw
         if (codigo.isBlank()) {
             mensajeEstado = "Escaneo cancelado."
             accesoValido = null
             return@rememberLauncherForActivityResult
         }
-        accesoSeleccionado = accesosDelDia.firstOrNull { acceso ->
+        // Buscar primero en accesos del día y luego en todos los accesos como respaldo.
+        accesoSeleccionado = (accesosDelDia.firstOrNull { acceso ->
+            val codigoQr = acceso.codigoQr.orEmpty()
             acceso.id?.toString() == codigo ||
                 acceso.placaVehiculo.equals(codigo, ignoreCase = true) ||
-                codigo.uppercase(Locale.ROOT).contains(acceso.placaVehiculo.uppercase(Locale.ROOT))
-        }
+                codigo.equals(codigoQr, ignoreCase = true) ||
+                raw.contains(codigoQr, ignoreCase = true) ||
+                raw.uppercase(Locale.ROOT).contains(acceso.placaVehiculo.uppercase(Locale.ROOT))
+        } ?: accesos.firstOrNull { acceso ->
+            val codigoQr = acceso.codigoQr.orEmpty()
+            acceso.id?.toString() == codigo ||
+                acceso.placaVehiculo.equals(codigo, ignoreCase = true) ||
+                codigo.equals(codigoQr, ignoreCase = true) ||
+                raw.contains(codigoQr, ignoreCase = true) ||
+                raw.uppercase(Locale.ROOT).contains(acceso.placaVehiculo.uppercase(Locale.ROOT))
+        })
         accesoSeleccionado?.id?.let { accesoVehicularViewModel.obtenerAccesoVehicular(it) }
         mensajeEstado = if (accesoSeleccionado != null) {
             "Acceso encontrado."

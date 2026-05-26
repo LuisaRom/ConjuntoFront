@@ -41,6 +41,7 @@ import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
 import com.example.app.ui.theme.GrisOscuro
 import com.example.app.Util.resolverUrlImagenNotificacion
+import com.example.app.Util.resolverUrlVideoNotificacion
 import com.example.app.ViewModel.NotificacionViewModel
 import com.example.app.ViewModel.UsuarioViewModel
 import com.google.gson.Gson
@@ -458,7 +459,7 @@ fun PublicacionItem(
             }
             
             // Video si existe
-            val videoPath = notificacion.videoUrl
+            val videoPath = resolverUrlVideoNotificacion(notificacion.videoUrl)
             if (videoPath != null && videoPath.isNotBlank()) {
                 Card(
                     modifier = Modifier

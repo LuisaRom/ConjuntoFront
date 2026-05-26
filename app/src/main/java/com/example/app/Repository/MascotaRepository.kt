@@ -6,6 +6,7 @@ import com.example.app.Model.Usuario
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.HttpException
 import java.io.File
 import java.util.Locale
@@ -56,9 +57,25 @@ class MascotaRepository @Inject constructor(
             return fotoPart to imagenPart
         }
 
+        fun crearFilePartGenerico(): MultipartBody.Part {
+            val mimeFoto = when (fotoFile.extension.lowercase(Locale.getDefault())) {
+                "png" -> "image/png"
+                "webp" -> "image/webp"
+                else -> "image/jpeg"
+            }
+            return MultipartBody.Part.createFormData(
+                "file",
+                fotoFile.name,
+                fotoFile.asRequestBody(mimeFoto.toMediaTypeOrNull())
+            )
+        }
+
+        fun textoPart(valor: String?): okhttp3.RequestBody? =
+            valor?.takeIf { it.isNotBlank() }?.toRequestBody("text/plain".toMediaTypeOrNull())
+
         val intentos: List<suspend () -> Mascota> = listOf(
             {
-                val (fotoPart, imagenPart) = crearPartes()
+                val (fotoPart, _) = crearPartes()
                 api.guardarMascotaConFoto(
                     nombre = mascota.nombre,
                     tipo = mascota.tipo,
@@ -95,6 +112,32 @@ class MascotaRepository @Inject constructor(
                     raza = mascota.raza,
                     descripcion = descripcion,
                     imagen = imagenPart
+                )
+            },
+            {
+                val (fotoPart, imagenPart) = crearPartes()
+                val filePart = crearFilePartGenerico()
+                api.guardarMascotaConFotoForm(
+                    nombre = mascota.nombre.toRequestBody("text/plain".toMediaTypeOrNull()),
+                    tipo = mascota.tipo.toRequestBody("text/plain".toMediaTypeOrNull()),
+                    raza = mascota.raza.toRequestBody("text/plain".toMediaTypeOrNull()),
+                    descripcion = textoPart(descripcion),
+                    foto = fotoPart,
+                    imagen = imagenPart,
+                    file = filePart
+                )
+            },
+            {
+                val (fotoPart, imagenPart) = crearPartes()
+                val filePart = crearFilePartGenerico()
+                api.guardarMascotaConFotoFormCrear(
+                    nombre = mascota.nombre.toRequestBody("text/plain".toMediaTypeOrNull()),
+                    tipo = mascota.tipo.toRequestBody("text/plain".toMediaTypeOrNull()),
+                    raza = mascota.raza.toRequestBody("text/plain".toMediaTypeOrNull()),
+                    descripcion = textoPart(descripcion),
+                    foto = fotoPart,
+                    imagen = imagenPart,
+                    file = filePart
                 )
             }
         )

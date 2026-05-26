@@ -74,18 +74,43 @@ fun PantallaAccesoPeatonalCelador(
         accesoPeatonalViewModel.obtenerAccesosPeatonales()
     }
 
+    fun extraerCodigoDesdePayload(texto: String): String? {
+        val limpio = texto.trim()
+        if (limpio.isBlank()) return null
+        // Formato tipo: "tipo=PEATONAL|codigo=XYZ|..."
+        limpio.split("|").forEach { parte ->
+            val pair = parte.split("=", limit = 2)
+            if (pair.size == 2 && pair[0].equals("codigo", ignoreCase = true)) {
+                return pair[1].trim()
+            }
+        }
+        return null
+    }
+
     val qrLauncher = rememberLauncherForActivityResult(ScanContract()) { result ->
-        val codigo = result.contents?.trim().orEmpty()
+        val raw = result.contents?.trim().orEmpty()
+        val codigo = extraerCodigoDesdePayload(raw) ?: raw
         if (codigo.isBlank()) {
             mensajeEstado = "Escaneo cancelado."
             accesoValido = null
             return@rememberLauncherForActivityResult
         }
-        accesoSeleccionado = accesosDelDia.firstOrNull { acceso ->
-            acceso.codigoQr.equals(codigo, ignoreCase = true) ||
-                codigo.contains(acceso.codigoQr ?: "", ignoreCase = true) ||
+        // Buscar primero en accesos del día y luego en todos los accesos como respaldo.
+        accesoSeleccionado = (accesosDelDia.firstOrNull { acceso ->
+            val codigoQr = acceso.codigoQr
+            (codigoQr != null && (
+                codigo.equals(codigoQr, ignoreCase = true) ||
+                    raw.contains(codigoQr, ignoreCase = true)
+                )) ||
                 acceso.id?.toString() == codigo
-        }
+        } ?: accesos.firstOrNull { acceso ->
+            val codigoQr = acceso.codigoQr
+            (codigoQr != null && (
+                codigo.equals(codigoQr, ignoreCase = true) ||
+                    raw.contains(codigoQr, ignoreCase = true)
+                )) ||
+                acceso.id?.toString() == codigo
+        })
         accesoSeleccionado?.id?.let { accesoPeatonalViewModel.obtenerAccesoPeatonal(it) }
         mensajeEstado = if (accesoSeleccionado != null) {
             "Acceso encontrado."

@@ -33,6 +33,7 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.app.Model.Notificacion
 import com.example.app.R
 import com.example.app.Util.resolverUrlImagenNotificacion
+import com.example.app.Util.resolverUrlVideoNotificacion
 import com.example.app.ui.theme.AzulOscuro
 import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
@@ -412,7 +413,7 @@ fun PublicacionItemResidente(
             }
             
             // Video si existe
-            val videoPath = notificacion.videoUrl
+            val videoPath = resolverUrlVideoNotificacion(notificacion.videoUrl)
             if (videoPath != null && videoPath.isNotBlank()) {
                 Card(
                     modifier = Modifier

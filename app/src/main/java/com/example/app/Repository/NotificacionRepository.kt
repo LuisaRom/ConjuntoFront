@@ -9,7 +9,9 @@ import com.example.app.Model.mensajeRecibo
 import com.example.app.Model.paraApi
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.HttpException
 import java.io.File
 import java.text.SimpleDateFormat
@@ -191,6 +193,12 @@ class NotificacionRepository @Inject constructor(
             return Triple(imagenPart, fotoPart, videoPart)
         }
 
+        fun textoPart(valor: String?): RequestBody? {
+            return valor
+                ?.takeIf { it.isNotBlank() }
+                ?.toRequestBody("text/plain".toMediaTypeOrNull())
+        }
+
         val intentos: List<suspend () -> Notificacion> = listOf(
             {
                 val (imagenPart, _, videoPart) = crearPartes()
@@ -208,6 +216,26 @@ class NotificacionRepository @Inject constructor(
                     mensaje = mensaje,
                     fechaEnvio = notificacion.fechaEnvio,
                     usuariosEtiquetados = notificacion.usuariosEtiquetados,
+                    foto = fotoPart,
+                    video = videoPart
+                )
+            },
+            {
+                val (imagenPart, _, videoPart) = crearPartes()
+                api.guardarNotificacionMultipartForm(
+                    mensaje = mensaje.toRequestBody("text/plain".toMediaTypeOrNull()),
+                    fechaEnvio = textoPart(notificacion.fechaEnvio),
+                    usuariosEtiquetados = textoPart(notificacion.usuariosEtiquetados),
+                    imagen = imagenPart,
+                    video = videoPart
+                )
+            },
+            {
+                val (_, fotoPart, videoPart) = crearPartes()
+                api.guardarNotificacionMultipartForm(
+                    mensaje = mensaje.toRequestBody("text/plain".toMediaTypeOrNull()),
+                    fechaEnvio = textoPart(notificacion.fechaEnvio),
+                    usuariosEtiquetados = textoPart(notificacion.usuariosEtiquetados),
                     foto = fotoPart,
                     video = videoPart
                 )
