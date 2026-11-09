@@ -1,5 +1,6 @@
 package com.example.app.Pantallas.RolCelador
 
+import android.R.attr.onClick
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -65,10 +66,9 @@ fun PantallaDetallesPaqueteriaCelador(
     val isLoadingPaquete by paqueteriaViewModel.isLoading.collectAsState()
     val errorPaquete by paqueteriaViewModel.error.collectAsState()
     var intentoFallbackUsuarios by remember { mutableStateOf(false) }
-    
-    // Cargar usuarios al iniciar (lista completa) y filtrar residentes en app.
+
     LaunchedEffect(Unit) {
-        usuarioViewModel.obtenerTodos()
+        usuarioViewModel.obtenerResidentes()   // solo rol RESIDENTE, permitido al celador
         paqueteriaViewModel.obtenerTodos()
     }
 
@@ -284,10 +284,9 @@ fun PantallaDetallesPaqueteriaCelador(
                                 color = Color.White
                             )
                         },
-                        onClick = {
-                            usuarioViewModel.obtenerTodos()
-                            usuarioViewModel.obtenerResidentes()
-                        },
+                        onClick = { usuarioViewModel.obtenerResidentes()
+                                  },
+
                         colors = MenuDefaults.itemColors(
                             textColor = Color.White
                         )
