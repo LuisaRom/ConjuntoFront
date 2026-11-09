@@ -109,7 +109,8 @@ class NotificacionRepository @Inject constructor(
             mensaje = mensaje
         )
         return try {
-            api.enviarRecibo(request)
+            api.enviarRecibo(request).firstOrNull()
+                ?: throw Exception("El servidor no devolvió la notificación creada")
         } catch (error: HttpException) {
             if (error.code() in listOf(400, 404, 405)) {
                 guardar(
@@ -124,6 +125,17 @@ class NotificacionRepository @Inject constructor(
             }
         } catch (error: Exception) {
             throw Exception("Error al enviar recibo: ${error.message}")
+        }
+    }
+
+    /** Recibos del residente autenticado (GET /api/notificaciones/recibos/mis-recibos). */
+    suspend fun obtenerMisRecibos(): List<Notificacion> {
+        return try {
+            api.obtenerMisRecibos()
+        } catch (e: HttpException) {
+            throw Exception(extraerMensajeHttp(e))
+        } catch (e: Exception) {
+            throw Exception("Error al obtener recibos: ${e.message}")
         }
     }
 

@@ -1,6 +1,5 @@
 package com.example.app.Pantallas.RolResidente
 
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,30 +24,24 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
-import com.example.app.R
-import androidx.navigation.NavController
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.app.Auth.AuthManager
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import com.example.app.Model.Notificacion
-import com.example.app.Model.filtrarRecibosResidente
+import com.example.app.R
 import com.example.app.ViewModel.NotificacionViewModel
-import com.example.app.ViewModel.UsuarioViewModel
 import com.example.app.ui.theme.AzulOscuro
 import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
@@ -63,60 +56,19 @@ val ColorScheme.doradoElegante: Color
 @Composable
 fun PantallaRecibos(
     navController: NavController,
-    notificacionViewModel: NotificacionViewModel = hiltViewModel(),
-    usuarioViewModel: UsuarioViewModel = hiltViewModel()
+    notificacionViewModel: NotificacionViewModel = hiltViewModel()
 ) {
-    val usuarioActual by usuarioViewModel.usuarioActual.collectAsState()
-    val usuarioSesion by AuthManager.currentUser.collectAsState()
-    val notificaciones by notificacionViewModel.notificaciones.collectAsState()
-    val isLoading by notificacionViewModel.isLoading.collectAsState()
+    val notificacionesRecibos by notificacionViewModel.misRecibos.collectAsState()
+    val isLoading by notificacionViewModel.cargandoMisRecibos.collectAsState()
+    val error by notificacionViewModel.error.collectAsState()
 
-    // Cargar notificaciones siempre que se entre a la pantalla
+    // Carga al entrar y refresca cada 5 segundos para detectar recibos nuevos
     LaunchedEffect(Unit) {
-        Log.d("Recibos", "Cargando notificaciones... Usuario actual: ${usuarioActual?.nombre} (ID: ${usuarioActual?.id})")
-        // Cargar notificaciones
-        notificacionViewModel.obtenerTodos()
-        // Si no hay usuario actual, intentar obtenerlo desde los usuarios existentes
-        if (usuarioActual == null) {
-            Log.w("Recibos", "Usuario actual es null, intentando obtenerlo desde la lista de usuarios...")
-            usuarioViewModel.obtenerTodos()
-        }
-    }
-
-    // Refrescar notificaciones cuando cambia el usuario actual
-    LaunchedEffect(usuarioActual?.id) {
-        if (usuarioActual?.id != null) {
-            Log.d("Recibos", "Usuario actual actualizado, refrescando notificaciones. ID: ${usuarioActual?.id}, Nombre: ${usuarioActual?.nombre}")
-            notificacionViewModel.obtenerTodos()
-        } else {
-            Log.w("Recibos", "ADVERTENCIA: Usuario actual es null")
-        }
-    }
-    
-    // Refrescar notificaciones periódicamente para detectar nuevas
-    LaunchedEffect(Unit) {
+        notificacionViewModel.cargarMisRecibos()
         while (true) {
-            delay(3000) // Refrescar cada 3 segundos
-            if (usuarioActual?.id != null) {
-                Log.d("Recibos", "Refrescando notificaciones periódicamente...")
-                notificacionViewModel.obtenerTodos()
-            }
+            delay(5000)
+            notificacionViewModel.cargarMisRecibos(silencioso = true)
         }
-    }
-    
-    // Refrescar notificaciones cuando cambia la lista de notificaciones (para detectar nuevas)
-    LaunchedEffect(notificaciones.size) {
-        if (usuarioActual?.id != null) {
-            Log.d("Recibos", "Lista de notificaciones cambió (${notificaciones.size} totales), verificando recibos...")
-        }
-    }
-
-    val usuarioIdEfectivo = usuarioActual?.id ?: usuarioSesion?.id
-
-    val notificacionesRecibos = remember(notificaciones, usuarioIdEfectivo) {
-        val filtradas = filtrarRecibosResidente(notificaciones, usuarioIdEfectivo)
-        Log.d("Recibos", "Recibos para residente $usuarioIdEfectivo: ${filtradas.size} de ${notificaciones.size}")
-        filtradas
     }
 
     val notificacionesEnel = notificacionesRecibos.filter { tipoReciboDeNotificacion(it) == "ENEL" }
@@ -147,7 +99,7 @@ fun PantallaRecibos(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        if (isLoading) {
+        if (isLoading && notificacionesRecibos.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center
@@ -171,43 +123,40 @@ fun PantallaRecibos(
                         color = GrisClaro,
                         fontSize = 12.sp
                     )
+                    if (!error.isNullOrBlank()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = error ?: "",
+                            color = Color(0xFFFFB4AB),
+                            fontSize = 12.sp
+                        )
+                    }
                 }
             }
         } else {
             LazyColumn(
-                verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Mostrar recibos ENEL
-                if (notificacionesEnel.isNotEmpty()) {
-                    items(notificacionesEnel) { notificacion ->
-                        ReciboNotificacionItem(
-                            logoResId = R.drawable.logoenel,
-                            nombreRecibo = "ENEL",
-                            notificacion = notificacion
-                        )
-                    }
+                items(notificacionesEnel) { notificacion ->
+                    ReciboNotificacionItem(
+                        logoResId = R.drawable.logoenel,
+                        nombreRecibo = "ENEL",
+                        notificacion = notificacion
+                    )
                 }
-                
-                // Mostrar recibos VANTI
-                if (notificacionesVanti.isNotEmpty()) {
-                    items(notificacionesVanti) { notificacion ->
-                        ReciboNotificacionItem(
-                            logoResId = R.drawable.logovanti,
-                            nombreRecibo = "VANTI",
-                            notificacion = notificacion
-                        )
-                    }
+                items(notificacionesVanti) { notificacion ->
+                    ReciboNotificacionItem(
+                        logoResId = R.drawable.logovanti,
+                        nombreRecibo = "VANTI",
+                        notificacion = notificacion
+                    )
                 }
-                
-                // Mostrar recibos EPZ
-                if (notificacionesEpz.isNotEmpty()) {
-                    items(notificacionesEpz) { notificacion ->
-                        ReciboNotificacionItem(
-                            logoResId = R.drawable.logoepz,
-                            nombreRecibo = "EPZ",
-                            notificacion = notificacion
-                        )
-                    }
+                items(notificacionesEpz) { notificacion ->
+                    ReciboNotificacionItem(
+                        logoResId = R.drawable.logoepz,
+                        nombreRecibo = "EPZ",
+                        notificacion = notificacion
+                    )
                 }
             }
         }
@@ -239,7 +188,7 @@ fun ReciboNotificacionItem(
                 modifier = Modifier.size(80.dp)
             )
             Spacer(modifier = Modifier.width(16.dp))
-            
+
             Column(modifier = Modifier.weight(1f)) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -251,7 +200,6 @@ fun ReciboNotificacionItem(
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp
                     )
-                    // Badge "NUEVO" destacado
                     Box(
                         modifier = Modifier
                             .background(Color.Green, RoundedCornerShape(8.dp))
@@ -266,7 +214,6 @@ fun ReciboNotificacionItem(
                     }
                 }
                 Spacer(modifier = Modifier.height(8.dp))
-                // Mensaje de alerta destacado
                 Text(
                     text = "⚠️ ${notificacion.mensaje ?: "Recibo disponible"}",
                     color = DoradoElegante,
@@ -280,10 +227,9 @@ fun ReciboNotificacionItem(
                     fontSize = 12.sp
                 )
             }
-            
+
             Spacer(modifier = Modifier.width(8.dp))
-            
-            // Indicador grande verde destacado
+
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
@@ -316,20 +262,17 @@ private fun tipoReciboDeNotificacion(notificacion: Notificacion): String? {
     }
 }
 
-// Función para formatear la fecha del recibo
+// Formatea la fecha del recibo (ignora fracciones de segundo y zona horaria)
 fun formatearFechaRecibo(fechaISO: String?): String {
     if (fechaISO.isNullOrBlank()) return "Fecha no disponible"
     return try {
-        val formatosEntrada = listOf(
-            "yyyy-MM-dd'T'HH:mm:ss.SSS",
-            "yyyy-MM-dd'T'HH:mm:ss"
-        )
-        val fecha = formatosEntrada.firstNotNullOfOrNull { patron ->
-            runCatching {
-                SimpleDateFormat(patron, Locale.getDefault()).parse(fechaISO)
-            }.getOrNull()
-        } ?: return fechaISO
-        SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(fecha)
+        val base = fechaISO.take(19) // yyyy-MM-ddTHH:mm:ss
+        val fecha = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).parse(base)
+        if (fecha != null) {
+            SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(fecha)
+        } else {
+            fechaISO
+        }
     } catch (e: Exception) {
         fechaISO
     }

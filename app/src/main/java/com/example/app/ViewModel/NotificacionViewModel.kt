@@ -17,7 +17,7 @@ import javax.inject.Inject
 class NotificacionViewModel @Inject constructor(
     private val repository: NotificacionRepository
 ) : ViewModel() {
-    
+
     private val _notificaciones = MutableStateFlow<List<Notificacion>>(emptyList())
     val notificaciones: StateFlow<List<Notificacion>> = _notificaciones.asStateFlow()
 
@@ -26,6 +26,12 @@ class NotificacionViewModel @Inject constructor(
 
     private val _notificacionSeleccionada = MutableStateFlow<Notificacion?>(null)
     val notificacionSeleccionada: StateFlow<Notificacion?> = _notificacionSeleccionada.asStateFlow()
+
+    private val _misRecibos = MutableStateFlow<List<Notificacion>>(emptyList())
+    val misRecibos: StateFlow<List<Notificacion>> = _misRecibos.asStateFlow()
+
+    private val _cargandoMisRecibos = MutableStateFlow(false)
+    val cargandoMisRecibos: StateFlow<Boolean> = _cargandoMisRecibos.asStateFlow()
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
@@ -109,6 +115,20 @@ class NotificacionViewModel @Inject constructor(
         android.util.Log.d("NotificacionViewModel", "Novedades válidas: ${listaValida.size}")
         _notificaciones.value = listaValida
         _notificacionesNoLeidas.value = listaValida.size
+    }
+
+    /** Recibos del residente autenticado. [silencioso] = refresco sin spinner ni errores en pantalla. */
+    fun cargarMisRecibos(silencioso: Boolean = false) = viewModelScope.launch {
+        if (!silencioso) _cargandoMisRecibos.value = true
+        try {
+            _misRecibos.value = withContext(Dispatchers.IO) { repository.obtenerMisRecibos() }
+            if (!silencioso) _error.value = null
+        } catch (e: Exception) {
+            android.util.Log.e("NotificacionViewModel", "Error al obtener mis recibos", e)
+            if (!silencioso) _error.value = e.message
+        } finally {
+            _cargandoMisRecibos.value = false
+        }
     }
 
     fun obtenerHistorialChat() = viewModelScope.launch {
@@ -259,7 +279,7 @@ class NotificacionViewModel @Inject constructor(
             _isLoading.value = false
         }
     }
-    
+
     fun actualizar(id: Long, notificacion: Notificacion) = viewModelScope.launch {
         _isLoading.value = true
         _error.value = null

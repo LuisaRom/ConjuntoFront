@@ -51,7 +51,10 @@ interface NotificacionApiService {
     ): Notificacion
 
     @POST("/api/notificaciones/recibos/enviar")
-    suspend fun enviarRecibo(@Body request: com.example.app.Model.EnviarReciboRequest): Notificacion
+    suspend fun enviarRecibo(@Body request: com.example.app.Model.EnviarReciboRequest): List<Notificacion>
+
+    @GET("/api/notificaciones/recibos/mis-recibos")
+    suspend fun obtenerMisRecibos(): List<Notificacion>
 
     @GET("/api/notificaciones/chat/historial")
     suspend fun obtenerHistorialChat(): List<Notificacion>
