@@ -72,17 +72,6 @@ fun PantallaDetallesPaqueteriaCelador(
         paqueteriaViewModel.obtenerTodos()
     }
 
-    // Si no cargan usuarios o llegan muy pocos residentes, intentar endpoints alternos.
-    LaunchedEffect(isLoading, usuarios) {
-        val residentesDetectados = usuarios.count { esRolResidente(it.rol) }
-        if (!isLoading && (usuarios.isEmpty() || residentesDetectados <= 1) && !intentoFallbackUsuarios) {
-            intentoFallbackUsuarios = true
-            usuarioViewModel.obtenerContactosMensajeria()
-            // Reintento con carga de residentes por rutas alternativas.
-            kotlinx.coroutines.delay(300)
-            usuarioViewModel.obtenerResidentes()
-        }
-    }
     
     // Filtrar residentes desde usuarios y fallback desde paquetes existentes.
     val residentes = remember(usuarios, paquetes) {
