@@ -26,14 +26,11 @@ interface UsuarioApiService {
     @GET("api/residentes")
     suspend fun obtenerResidentesAlt(): List<Usuario>
 
-    @POST("api/usuarios/residentes")
-    suspend fun obtenerResidentesPost(): List<Usuario>
-
-    @GET("api/usuarios/rol/{rol}")
-    suspend fun obtenerUsuariosPorRol(@Path("rol") rol: String): List<Usuario>
-
-    @GET("api/usuarios")
-    suspend fun obtenerUsuariosPorRolQuery(@Query("rol") rol: String): List<Usuario>
+    @GET("api/residentes")
+    suspend fun buscarResidentes(
+        @Query("torre") torre: String,
+        @Query("apartamento") apartamento: String
+    ): List<Usuario>
 
     @GET("api/usuarios/{id}")
     suspend fun obtenerUsuario(@Path("id") id: Long): Usuario

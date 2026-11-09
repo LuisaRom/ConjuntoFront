@@ -23,25 +23,18 @@ class UsuarioRepository @Inject constructor() {
         return api.obtenerUsuarios()
     }
 
+    suspend fun buscarResidentes(torre: String, apartamento: String): List<Usuario> =
+        api.buscarResidentes(torre.trim(), apartamento.trim())
+
     suspend fun obtenerContactosMensajeria(): List<Usuario> {
         return api.obtenerContactosMensajeria()
     }
 
     suspend fun obtenerResidentes(): List<Usuario> {
         return runCatching { api.obtenerResidentes() }
+            .onFailure { android.util.Log.e("UsuarioRepo", "residentes falló: ${it.message}") }
             .recoverCatching { api.obtenerResidentesAlt() }
-            .recoverCatching { api.obtenerResidentesPost() }
-            .recoverCatching { api.obtenerUsuariosPorRol("RESIDENTE") }
-            .recoverCatching { api.obtenerUsuariosPorRol("residente") }
-            .recoverCatching { api.obtenerUsuariosPorRolQuery("RESIDENTE") }
-            .recoverCatching { api.obtenerUsuariosPorRolQuery("residente") }
-            .recoverCatching {
-                // Último fallback: cargar todos y filtrar residentes en app.
-                api.obtenerUsuarios().filter { usuario ->
-                    val rol = usuario.rol.trim().uppercase()
-                    rol == "RESIDENTE" || rol.contains("RESIDENTE")
-                }
-            }
+            .onFailure { android.util.Log.e("UsuarioRepo", "residentes alt falló: ${it.message}") }
             .getOrThrow()
     }
 

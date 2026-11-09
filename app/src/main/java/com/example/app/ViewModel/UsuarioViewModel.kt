@@ -6,6 +6,7 @@ import com.example.app.Auth.AuthManager
 import com.example.app.Model.Usuario
 import com.example.app.Repository.UsuarioRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -32,8 +33,51 @@ class UsuarioViewModel @Inject constructor(
     private val _rolSeleccionado = MutableStateFlow<String?>(null)
     val rolSeleccionado: StateFlow<String?> = _rolSeleccionado.asStateFlow()
 
+    // Búsqueda de residente por torre y apartamento
+    private val _residentesEncontrados = MutableStateFlow<List<Usuario>>(emptyList())
+    val residentesEncontrados: StateFlow<List<Usuario>> = _residentesEncontrados.asStateFlow()
+
+    private val _buscando = MutableStateFlow(false)
+    val buscando: StateFlow<Boolean> = _buscando.asStateFlow()
+
+    private val _busquedaRealizada = MutableStateFlow(false)
+    val busquedaRealizada: StateFlow<Boolean> = _busquedaRealizada.asStateFlow()
+
+    private val _errorBusqueda = MutableStateFlow<String?>(null)
+    val errorBusqueda: StateFlow<String?> = _errorBusqueda.asStateFlow()
+
+    private var busquedaJob: Job? = null
+
     init {
         _usuarioActual.value = AuthManager.getUser()
+    }
+
+    fun buscarResidente(torre: String, apartamento: String) {
+        busquedaJob?.cancel()
+        busquedaJob = viewModelScope.launch {
+            _buscando.value = true
+            _errorBusqueda.value = null
+            _busquedaRealizada.value = false
+            try {
+                _residentesEncontrados.value = repository.buscarResidentes(torre, apartamento)
+                _busquedaRealizada.value = true
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _residentesEncontrados.value = emptyList()
+                _errorBusqueda.value = "No se pudo verificar: ${e.message}"
+            } finally {
+                _buscando.value = false
+            }
+        }
+    }
+
+    fun limpiarBusqueda() {
+        busquedaJob?.cancel()
+        _buscando.value = false
+        _residentesEncontrados.value = emptyList()
+        _busquedaRealizada.value = false
+        _errorBusqueda.value = null
     }
 
     fun seleccionarRol(rol: String) {
@@ -116,7 +160,7 @@ class UsuarioViewModel @Inject constructor(
             _isLoading.value = false
         }
     }
-    
+
     suspend fun guardarUsuario(usuario: Usuario): Usuario {
         _isLoading.value = true
         _error.value = null
@@ -132,4 +176,3 @@ class UsuarioViewModel @Inject constructor(
         }
     }
 }
-
