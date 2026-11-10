@@ -62,6 +62,12 @@ class PagoAdministracionRepository @Inject constructor(
             return ResultadoPreparacionCheckout.YaPagado
         }
 
+        // En pruebas siempre se pide un link nuevo: el backend reutiliza el registro
+        // pendiente del mes y genera una preferencia nueva en Mercado Pago.
+        if (BuildConfig.PAGO_MODO_PRUEBA) {
+            return ResultadoPreparacionCheckout.ContinuarCreacion
+        }
+
         pago.urlCheckoutDisponible()?.let { url ->
             return ResultadoPreparacionCheckout.AbrirUrlExistente(normalizarCheckoutUrl(url))
         }
