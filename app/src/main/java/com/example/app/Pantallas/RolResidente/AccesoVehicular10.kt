@@ -2,8 +2,6 @@ package com.example.app.Pantallas.RolResidente
 
 import android.app.DatePickerDialog
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.util.Base64
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -57,7 +55,6 @@ fun PantallaAccesoVehicularResidente(
     val isLoading by accesoVehicularViewModel.isLoading.collectAsState()
     val error by accesoVehicularViewModel.error.collectAsState()
     val ultimoAccesoGuardado by accesoVehicularViewModel.ultimoAccesoGuardado.collectAsState()
-    val accesoSeleccionado by accesoVehicularViewModel.accesoSeleccionado.collectAsState()
 
     var torre by remember { mutableStateOf("") }
     var apartamento by remember { mutableStateOf("") }
@@ -88,27 +85,13 @@ fun PantallaAccesoVehicularResidente(
         apartamento = usuarioActual?.apartamento.orEmpty()
     }
 
+    // Solo marcar éxito cuando el endpoint responde correctamente
     LaunchedEffect(ultimoAccesoGuardado?.id, ultimoAccesoGuardado?.codigoQr) {
         ultimoAccesoGuardado?.let {
             accesoGuardado = it
             qrBitmap = null
             Toast.makeText(context, "Acceso vehicular creado", Toast.LENGTH_SHORT).show()
             accesoVehicularViewModel.clearUltimoAccesoGuardado()
-        }
-    }
-
-    LaunchedEffect(accesoSeleccionado?.id, accesoSeleccionado?.qrBase64, accesoSeleccionado?.qrDataUrl) {
-        accesoSeleccionado?.let { acceso ->
-            val qrDesdeBackend = extraerBitmapQr(acceso)
-            if (qrDesdeBackend != null) {
-                qrBitmap = qrDesdeBackend
-            } else {
-                Toast.makeText(
-                    context,
-                    "El endpoint no devolvió un QR válido (qrBase64/qrDataUrl)",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
         }
     }
 
@@ -225,19 +208,25 @@ fun PantallaAccesoVehicularResidente(
             Button(
                 onClick = {
                     val acceso = accesoGuardado ?: return@Button
-                    val accesoId = acceso.id
-                    if (accesoId == null) {
-                        Toast.makeText(context, "No se pudo obtener el id del acceso", Toast.LENGTH_SHORT).show()
+                    if (acceso.codigoQr.isNullOrBlank()) {
+                        Toast.makeText(context, "El acceso no tiene código QR", Toast.LENGTH_SHORT).show()
                         return@Button
                     }
-                    accesoVehicularViewModel.obtenerAccesoVehicular(accesoId)
+                    val autoriza = usuarioActual?.nombre?.takeIf { it.isNotBlank() }
+                        ?: usuarioActual?.usuario.orEmpty()
+                    // El QR se genera en la app (igual que el acceso peatonal)
+                    qrBitmap = runCatching {
+                        generarCodigoQR(construirPayloadQrVehicular(acceso, autoriza))
+                    }.getOrElse {
+                        Toast.makeText(context, "No se pudo generar el QR", Toast.LENGTH_SHORT).show()
+                        null
+                    }
                 },
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = DoradoElegante),
-                enabled = !isLoading
+                colors = ButtonDefaults.buttonColors(containerColor = DoradoElegante)
             ) {
                 Text(
-                    text = if (isLoading) "Consultando..." else "Generar QR",
+                    text = "Generar QR",
                     color = AzulOscuro,
                     fontWeight = FontWeight.Bold
                 )
@@ -363,19 +352,21 @@ private fun String.toIsoDateTimeOrNow(): String {
     }
 }
 
-private fun extraerBitmapQr(acceso: AccesoVehicular): Bitmap? {
-    val base64Raw = when {
-        !acceso.qrDataUrl.isNullOrBlank() && acceso.qrDataUrl.contains(",") ->
-            acceso.qrDataUrl.substringAfter(",")
-        !acceso.qrBase64.isNullOrBlank() ->
-            acceso.qrBase64
-        else -> null
-    } ?: return null
-
-    return try {
-        val bytes = Base64.decode(base64Raw, Base64.DEFAULT)
-        BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-    } catch (_: IllegalArgumentException) {
-        null
-    }
+/**
+ * Contenido del QR vehicular. Mismo formato que el peatonal ("clave=valor" separado por "|"):
+ * el escáner del celador extrae "codigo=" y lo compara con el código del acceso o con la placa.
+ */
+private fun construirPayloadQrVehicular(acceso: AccesoVehicular, autoriza: String): String {
+    fun limpio(valor: String?): String = valor.orEmpty().replace("|", "/").trim()
+    return listOf(
+        "tipo=VEHICULAR",
+        "codigo=${limpio(acceso.codigoQr)}",
+        "placa=${limpio(acceso.placaVehiculo)}",
+        "vehiculo=${limpio(acceso.tipoVehiculo)}",
+        "ingresa=${limpio(acceso.quienIngresa)}",
+        "torre=${limpio(acceso.torre)}",
+        "apartamento=${limpio(acceso.apartamento)}",
+        "autoriza=${limpio(autoriza)}",
+        "fecha=${limpio(acceso.horaAutorizada)}"
+    ).joinToString("|")
 }
