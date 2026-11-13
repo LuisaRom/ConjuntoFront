@@ -86,6 +86,12 @@ object AppModule {
         return RetrofitClient.vehiculoResidenteApiService
     }
 
+    @Provides
+    @Singleton
+    fun provideIaApiService(): IaApiService {
+        return RetrofitClient.iaApiService
+    }
+
     // Repositories
     @Provides
     @Singleton
@@ -156,4 +162,10 @@ object AppModule {
     fun provideVehiculoResidenteRepository(
         api: VehiculoResidenteApiService
     ): VehiculoResidenteRepository = VehiculoResidenteRepository(api)
+
+    @Provides
+    @Singleton
+    fun provideIaRepository(
+        api: IaApiService
+    ): IaRepository = IaRepository(api)
 }
