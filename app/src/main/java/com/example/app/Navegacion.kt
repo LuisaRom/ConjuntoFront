@@ -12,6 +12,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navDeepLink
 import com.example.app.Auth.AuthManager
 
+import com.example.app.Pantallas.PantallaAsistenteIA
 import com.example.app.Pantallas.PantallaLogin
 import com.example.app.Pantallas.PantallaSeleccionRol
 import com.example.app.Pantallas.RolAdministrador.PantallaAccesoPeatonalDetalle
@@ -24,6 +25,7 @@ import com.example.app.Pantallas.RolAdministrador.PantallaDetalleQuejas
 import com.example.app.Pantallas.RolAdministrador.PantallaDetalleReservaPiscina
 import com.example.app.Pantallas.RolAdministrador.PantallaDetalleReservaSalonComunal
 import com.example.app.Pantallas.RolAdministrador.PantallaDetalleReservaZonaBBQ
+import com.example.app.Pantallas.RolAdministrador.PantallaGestionIA
 import com.example.app.Pantallas.RolAdministrador.PantallaInicioAdmin
 import com.example.app.Pantallas.RolAdministrador.PantallaMascotas
 import com.example.app.Pantallas.RolAdministrador.PantallaMensajes
@@ -204,6 +206,10 @@ fun Navegacion(navController: NavHostController) {
             RoleGuard(navController, setOf("ADMINISTRADOR")) { PantallaDetalleQuejas(navController) }
         }
         composable("PantallaMascotas") { RoleGuard(navController, setOf("ADMINISTRADOR")) { PantallaMascotas(navController) } }
+        composable("PantallaGestionIA") { RoleGuard(navController, setOf("ADMINISTRADOR")) { PantallaGestionIA(navController) } }
+        composable("PantallaAsistenteIA") {
+            RoleGuard(navController, setOf("ADMINISTRADOR", "CELADOR", "RESIDENTE")) { PantallaAsistenteIA(navController) }
+        }
         composable("PantallaPerfil") { 
             RoleGuard(navController, setOf("ADMINISTRADOR")) {
                 PantallaPerfil(navController, usuarioViewModel)

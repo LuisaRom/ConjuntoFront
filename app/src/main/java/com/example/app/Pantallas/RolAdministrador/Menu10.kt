@@ -2,6 +2,8 @@ package com.example.app.Pantallas.RolAdministrador
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,11 +17,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.filled.ReportProblem
 import androidx.compose.material.icons.filled.SensorDoor
+import androidx.compose.material.icons.filled.SmartToy
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -43,6 +47,7 @@ fun PantallaMenu(navController: NavController) {
         modifier = Modifier
             .fillMaxSize()
             .background(AzulOscuro)
+            .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -86,6 +91,20 @@ fun PantallaMenu(navController: NavController) {
                 }
                 OpcionMenuBoton("Mascotas", Icons.Default.Pets) {
                     navController.navigate("PantallaMascotas")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                OpcionMenuBoton("Asistente IA", Icons.Default.SmartToy) {
+                    navController.navigate("PantallaAsistenteIA")
+                }
+                OpcionMenuBoton("Gestión IA", Icons.Default.AutoAwesome) {
+                    navController.navigate("PantallaGestionIA")
                 }
             }
 

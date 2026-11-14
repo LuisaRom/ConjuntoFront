@@ -4,6 +4,7 @@ import com.example.app.Auth.AuthManager
 import com.example.app.Interfaces.AccesoPeatonalApiService
 import com.example.app.Interfaces.AccesoAdminApiService
 import com.example.app.Interfaces.AccesoVehicularApiService
+import com.example.app.Interfaces.IaApiService
 import com.example.app.Interfaces.MascotaApiService
 import com.example.app.Interfaces.NotificacionApiService
 import com.example.app.Interfaces.PagoAdministracionApiService
@@ -114,4 +115,5 @@ object RetrofitClient {
     val paqueteriaApiService: PaqueteriaApiService = retrofit.create(PaqueteriaApiService::class.java)
     val quejaApiService: QuejaApiService = retrofit.create(QuejaApiService::class.java)
     val reservaZonaComunApiService: ReservaZonaComunApiService = retrofit.create(ReservaZonaComunApiService::class.java)
+    val iaApiService: IaApiService = retrofit.create(IaApiService::class.java)
 }

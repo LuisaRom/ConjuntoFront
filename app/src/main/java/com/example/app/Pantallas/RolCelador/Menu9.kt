@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.filled.ReportProblem
 import androidx.compose.material.icons.filled.SensorDoor
+import androidx.compose.material.icons.filled.SmartToy
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -85,7 +86,10 @@ fun PantallaMenuCelador(navController: NavController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                MenuBoton("Asistente IA", Icons.Default.SmartToy) {
+                    navController.navigate("PantallaAsistenteIA")
+                }
                 MenuBoton("Perfil", Icons.Default.Person) {
                     navController.navigate("PantallaPerfilCelador")
                 }
