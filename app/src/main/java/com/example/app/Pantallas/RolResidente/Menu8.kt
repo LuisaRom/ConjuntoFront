@@ -12,10 +12,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.filled.ReportProblem
@@ -44,6 +47,7 @@ fun PantallaMenuResidente(navController: NavController) {
         modifier = Modifier
             .fillMaxSize()
             .background(AzulOscuro)
+            .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -93,6 +97,15 @@ fun PantallaMenuResidente(navController: NavController) {
                 MenuBoton("Perfil", Icons.Default.Person) {
                     navController.navigate("PantallaPerfilResidente")
                 }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                MenuBoton("Mapa", Icons.Default.Map) {
+                    navController.navigate("PantallaMapaConjunto")
+                }
+                Spacer(modifier = Modifier.width(150.dp))
             }
         }
     }
