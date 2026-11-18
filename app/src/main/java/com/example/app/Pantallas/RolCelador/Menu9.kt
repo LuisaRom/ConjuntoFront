@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.filled.ReportProblem
@@ -105,7 +106,9 @@ fun PantallaMenuCelador(navController: NavController) {
                 MenuBoton("Vehículos", Icons.Default.DirectionsCar) {
                     navController.navigate("PantallaVehiculosParqueaderos")
                 }
-                Spacer(modifier = Modifier.width(150.dp))
+                MenuBoton("Mapa", Icons.Default.Map) {
+                    navController.navigate("PantallaMapaConjunto")
+                }
             }
         }
     }

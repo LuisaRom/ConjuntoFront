@@ -20,6 +20,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.filled.ReportProblem
@@ -118,6 +119,17 @@ fun PantallaMenu(navController: NavController) {
                 OpcionMenuBoton("Vehículos", Icons.Default.DirectionsCar) {
                     navController.navigate("PantallaVehiculosParqueaderos")
                 }
+                OpcionMenuBoton("Mapa", Icons.Default.Map) {
+                    navController.navigate("PantallaMapaConjunto")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
                 OpcionMenuBoton("Perfil", Icons.Default.Person) {
                     navController.navigate("PantallaPerfil")
                 }
