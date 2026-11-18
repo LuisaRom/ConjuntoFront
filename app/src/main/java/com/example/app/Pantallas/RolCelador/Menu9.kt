@@ -2,6 +2,8 @@ package com.example.app.Pantallas.RolCelador
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,6 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Pets
@@ -44,6 +47,7 @@ fun PantallaMenuCelador(navController: NavController) {
         modifier = Modifier
             .fillMaxSize()
             .background(AzulOscuro)
+            .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -93,6 +97,15 @@ fun PantallaMenuCelador(navController: NavController) {
                 MenuBoton("Perfil", Icons.Default.Person) {
                     navController.navigate("PantallaPerfilCelador")
                 }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                MenuBoton("Vehículos", Icons.Default.DirectionsCar) {
+                    navController.navigate("PantallaVehiculosParqueaderos")
+                }
+                Spacer(modifier = Modifier.width(150.dp))
             }
         }
     }

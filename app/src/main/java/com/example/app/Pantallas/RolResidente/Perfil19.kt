@@ -3,6 +3,8 @@ package com.example.app.Pantallas.RolResidente
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -50,6 +52,7 @@ fun PantallaPerfilResidente(
         modifier = Modifier
             .fillMaxSize()
             .background(AzulOscuro)
+            .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
         // Botón volver
@@ -90,6 +93,10 @@ fun PantallaPerfilResidente(
         Spacer(modifier = Modifier.height(24.dp))
 
         CampoPerfil("Nombre", usuarioPerfil?.nombre ?: "", enabled = false)
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        SeccionMisVehiculos()
 
         Spacer(modifier = Modifier.height(32.dp))
 

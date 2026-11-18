@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Pets
@@ -112,8 +113,11 @@ fun PantallaMenu(navController: NavController) {
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
+                horizontalArrangement = Arrangement.SpaceEvenly
             ) {
+                OpcionMenuBoton("Vehículos", Icons.Default.DirectionsCar) {
+                    navController.navigate("PantallaVehiculosParqueaderos")
+                }
                 OpcionMenuBoton("Perfil", Icons.Default.Person) {
                     navController.navigate("PantallaPerfil")
                 }
