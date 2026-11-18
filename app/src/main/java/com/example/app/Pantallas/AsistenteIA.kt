@@ -46,19 +46,21 @@ private fun sugerenciasPorRol(rol: String?): List<String> = when (rol?.uppercase
         "Dame un resumen del conjunto hoy",
         "¿Quiénes no han pagado la administración este mes?",
         "¿Qué quejas pendientes son prioritarias?",
-        "¿Qué reservas hay esta semana?"
+        "¿Qué reservas hay esta semana?",
+        "¿Qué vehículos no tienen parqueadero?"
     )
     "CELADOR" -> listOf(
         "¿Qué paquetes están pendientes por entregar?",
         "¿Quién ha ingresado hoy?",
         "¿Qué reservas hay hoy?",
-        "¿Hay quejas abiertas de ruido?"
+        "¿De quién es la placa ABC123?"
     )
     else -> listOf(
         "¿Tengo paquetes pendientes?",
         "¿Cuál es el horario de la piscina?",
         "¿Estoy al día con la administración?",
-        "¿En qué va mi queja?"
+        "¿En qué va mi queja?",
+        "¿Ya me asignaron parqueadero?"
     )
 }
 
@@ -129,7 +131,7 @@ fun PantallaAsistenteIA(
 
         if (estado?.disponible == false) {
             Text(
-                text = "La IA no está configurada en el servidor. Respondo con la base de conocimiento del conjunto.",
+                text = "Modo básico activo: respondo con los datos reales del conjunto. Con una clave de IA en el servidor las respuestas son aún más flexibles.",
                 color = GrisClaro.copy(alpha = 0.7f),
                 fontSize = 12.sp,
                 modifier = Modifier

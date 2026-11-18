@@ -2,6 +2,7 @@ package com.example.app.ViewModel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.app.Model.NuevoVehiculoRequest
 import com.example.app.Model.VehiculoResidente
 import com.example.app.Repository.VehiculoResidenteRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -11,6 +12,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import retrofit2.HttpException
 import javax.inject.Inject
 
 @HiltViewModel
@@ -84,6 +86,84 @@ class VehiculoResidenteViewModel @Inject constructor(
         } finally {
             _isLoading.value = false
         }
+    }
+
+    private val _misVehiculos = MutableStateFlow<List<VehiculoResidente>>(emptyList())
+    val misVehiculos: StateFlow<List<VehiculoResidente>> = _misVehiculos.asStateFlow()
+
+    private val _mensaje = MutableStateFlow<String?>(null)
+    val mensaje: StateFlow<String?> = _mensaje.asStateFlow()
+
+    fun cargarMisVehiculos() = viewModelScope.launch {
+        _isLoading.value = true
+        _error.value = null
+        try {
+            _misVehiculos.value = withContext(Dispatchers.IO) { repository.misVehiculos() }
+        } catch (e: Exception) {
+            _error.value = mensajeError(e, "Error al cargar tus vehículos")
+        } finally {
+            _isLoading.value = false
+        }
+    }
+
+    fun registrarMiVehiculo(placa: String, marca: String, modelo: String, color: String, tipo: String, onExito: () -> Unit) =
+        viewModelScope.launch {
+            _isLoading.value = true
+            _error.value = null
+            try {
+                withContext(Dispatchers.IO) {
+                    repository.registrarMiVehiculo(
+                        NuevoVehiculoRequest(placa.trim(), marca.trim(), modelo.trim(), color.trim().ifBlank { null }, tipo)
+                    )
+                }
+                _mensaje.value = "Vehículo registrado. La administración te asignará el parqueadero."
+                _misVehiculos.value = withContext(Dispatchers.IO) { repository.misVehiculos() }
+                onExito()
+            } catch (e: Exception) {
+                _error.value = mensajeError(e, "No se pudo registrar el vehículo")
+            } finally {
+                _isLoading.value = false
+            }
+        }
+
+    fun eliminarMiVehiculo(id: Long) = viewModelScope.launch {
+        _error.value = null
+        try {
+            withContext(Dispatchers.IO) { repository.eliminarMiVehiculo(id) }
+            _misVehiculos.value = _misVehiculos.value.filterNot { it.id == id }
+            _mensaje.value = "Vehículo eliminado"
+        } catch (e: Exception) {
+            _error.value = mensajeError(e, "No se pudo eliminar el vehículo")
+        }
+    }
+
+    fun asignarParqueadero(id: Long, parqueadero: String?, onExito: () -> Unit = {}) = viewModelScope.launch {
+        _isLoading.value = true
+        _error.value = null
+        try {
+            val actualizado = withContext(Dispatchers.IO) { repository.asignarParqueadero(id, parqueadero?.trim()) }
+            _vehiculos.value = _vehiculos.value.map { if (it.id == id) actualizado else it }
+            _mensaje.value = if (actualizado.parqueadero.isNullOrBlank()) "Parqueadero liberado"
+            else "Parqueadero ${actualizado.parqueadero} asignado a ${actualizado.placa}"
+            onExito()
+        } catch (e: Exception) {
+            _error.value = mensajeError(e, "No se pudo asignar el parqueadero")
+        } finally {
+            _isLoading.value = false
+        }
+    }
+
+    fun limpiarMensaje() {
+        _mensaje.value = null
+    }
+
+    private fun mensajeError(e: Exception, base: String): String {
+        if (e is HttpException) {
+            val cuerpo = runCatching { e.response()?.errorBody()?.string() }.getOrNull().orEmpty()
+            val detalle = Regex("\"(?:mensaje|message|error)\"\\s*:\\s*\"([^\"]+)\"").find(cuerpo)?.groupValues?.get(1)
+            return detalle ?: "$base (HTTP ${e.code()})"
+        }
+        return "$base: ${e.message ?: "error de conexión"}"
     }
 
     fun clearError() {

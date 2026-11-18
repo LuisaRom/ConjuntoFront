@@ -27,6 +27,7 @@ import com.example.app.Pantallas.RolAdministrador.PantallaDetalleReservaPiscina
 import com.example.app.Pantallas.RolAdministrador.PantallaDetalleReservaSalonComunal
 import com.example.app.Pantallas.RolAdministrador.PantallaDetalleReservaZonaBBQ
 import com.example.app.Pantallas.RolAdministrador.PantallaGestionIA
+import com.example.app.Pantallas.RolAdministrador.PantallaVehiculosParqueaderos
 import com.example.app.Pantallas.RolAdministrador.PantallaInicioAdmin
 import com.example.app.Pantallas.RolAdministrador.PantallaMascotas
 import com.example.app.Pantallas.RolAdministrador.PantallaMensajes
@@ -271,6 +272,9 @@ fun Navegacion(navController: NavHostController) {
         composable("PantallaDashboardCelador") { RoleGuard(navController, setOf("CELADOR")) { PantallaDashboardCelador(navController) } }
         composable("PantallaRecibosCelador") { RoleGuard(navController, setOf("CELADOR")) { PantallaRecibosCelador(navController) } }
         composable("PantallaMenuCelador") { RoleGuard(navController, setOf("CELADOR")) { PantallaMenuCelador(navController) } }
+        composable("PantallaVehiculosParqueaderos") {
+            RoleGuard(navController, setOf("ADMINISTRADOR", "CELADOR")) { PantallaVehiculosParqueaderos(navController) }
+        }
         composable("PantallaNotificacionesCelador") { RoleGuard(navController, setOf("CELADOR")) { PantallaNotificacionesCelador(navController) } }
         composable("PantallaMensajesCelador") { RoleGuard(navController, setOf("CELADOR")) { PantallaMensajesCelador(navController) } }
         composable("PantallaPaqueteriaCelador") { RoleGuard(navController, setOf("CELADOR")) { PantallaPaqueteriaCelador(navController) } }
