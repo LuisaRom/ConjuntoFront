@@ -1,9 +1,11 @@
 package com.example.app.ViewModel
 
+import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.app.Auth.AuthManager
 import com.example.app.Model.Usuario
+import com.example.app.Repository.TerminosRepository
 import com.example.app.Repository.UsuarioRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -15,7 +17,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class UsuarioViewModel @Inject constructor(
-    private val repository: UsuarioRepository
+    private val repository: UsuarioRepository,
+    private val terminosRepository: TerminosRepository
 ) : ViewModel() {
 
     private val _usuarios = MutableStateFlow<List<Usuario>>(emptyList())
@@ -96,6 +99,7 @@ class UsuarioViewModel @Inject constructor(
                 println("Iniciando login para usuario: $usuario")
                 val usuarioAutenticado = repository.login(usuario, password)
                 _usuarioActual.value = usuarioAutenticado
+                registrarAceptacionTerminos()
                 println("Login exitoso, usuario autenticado: ${usuarioAutenticado.usuario}")
             } catch (e: Exception) {
                 _error.value = e.message ?: "Error desconocido"
@@ -104,6 +108,14 @@ class UsuarioViewModel @Inject constructor(
             } finally {
                 _isLoading.value = false
             }
+        }
+    }
+
+    private fun registrarAceptacionTerminos() {
+        viewModelScope.launch {
+            runCatching {
+                terminosRepository.aceptar("Android ${Build.VERSION.RELEASE} - ${Build.MANUFACTURER} ${Build.MODEL}")
+            }.onFailure { println("No se pudo registrar la aceptación de términos: ${it.message}") }
         }
     }
 

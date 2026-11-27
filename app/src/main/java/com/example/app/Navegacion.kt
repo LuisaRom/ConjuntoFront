@@ -2,7 +2,6 @@ package com.example.app
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -13,10 +12,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navDeepLink
 import com.example.app.Auth.AuthManager
 
-import com.example.app.Pantallas.CierreSesion
 import com.example.app.Pantallas.PantallaAsistenteIA
 import com.example.app.Pantallas.PantallaTerminos
-import com.example.app.Pantallas.PuertaTerminos
 import com.example.app.Pantallas.PantallaMapaConjunto
 import com.example.app.Pantallas.PantallaLogin
 import com.example.app.Pantallas.PantallaSeleccionRol
@@ -127,7 +124,7 @@ private fun RoleGuard(
     }
 
     if (isAllowed) {
-        PuertaTerminos(navController) { content() }
+        content()
     }
 }
 
@@ -136,8 +133,6 @@ fun Navegacion(navController: NavHostController) {
     // Obtenemos el VM via Hilt dentro de un contexto @Composable
     val usuarioViewModel: UsuarioViewModel = hiltViewModel()
     val currentUser by AuthManager.currentUser.collectAsState()
-
-    SideEffect { CierreSesion.accion = { usuarioViewModel.logout() } }
 
     val startDestination = if (currentUser == null) {
         "PantallaSeleccionRol"

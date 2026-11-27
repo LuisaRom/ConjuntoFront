@@ -21,119 +21,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.example.app.Auth.AuthManager
-import com.example.app.Auth.TerminosSesion
 import com.example.app.Model.SeccionTerminos
 import com.example.app.Model.TerminosCondiciones
 import com.example.app.ViewModel.TerminosViewModel
 import com.example.app.ui.theme.AzulOscuro
 import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
-
-object CierreSesion {
-    var accion: () -> Unit = { AuthManager.logout() }
-}
-
-@Composable
-fun PuertaTerminos(navController: NavController, contenido: @Composable () -> Unit) {
-    val usuario by AuthManager.currentUser.collectAsState()
-    val aceptados by TerminosSesion.aceptados.collectAsState()
-    val clave = TerminosSesion.clave(usuario?.id, TerminosCondiciones.VERSION)
-
-    if (usuario == null || clave in aceptados) {
-        contenido()
-        return
-    }
-
-    val viewModel: TerminosViewModel = hiltViewModel()
-    val verificando by viewModel.verificando.collectAsState()
-    val enviando by viewModel.enviando.collectAsState()
-    val error by viewModel.error.collectAsState()
-    var primeraVerificacion by remember(usuario?.id) { mutableStateOf(true) }
-
-    LaunchedEffect(usuario?.id) {
-        viewModel.verificar()
-        primeraVerificacion = false
-    }
-
-    if (verificando || primeraVerificacion) {
-        Box(Modifier.fillMaxSize().background(AzulOscuro), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(color = DoradoElegante)
-        }
-        return
-    }
-
-    var aceptaTerminos by remember { mutableStateOf(false) }
-    var autorizaDatos by remember { mutableStateOf(false) }
-    var aceptaAvisoIA by remember { mutableStateOf(false) }
-    val completo = aceptaTerminos && autorizaDatos && aceptaAvisoIA
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(AzulOscuro)
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-    ) {
-        EncabezadoTerminos(usuario?.rol, "Antes de continuar, lee y acepta los términos de uso de la aplicación.")
-
-        ListaSecciones(
-            secciones = TerminosCondiciones.secciones(usuario?.rol),
-            modifier = Modifier.weight(1f)
-        )
-
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(Color.White.copy(alpha = 0.06f))
-                .padding(8.dp)
-        ) {
-            Casilla(aceptaTerminos, { aceptaTerminos = it },
-                "He leído y acepto los Términos y Condiciones de uso, incluido el uso adecuado de la plataforma para mi rol.")
-            Casilla(autorizaDatos, { autorizaDatos = it },
-                "Autorizo de manera previa, expresa e informada el tratamiento de mis datos personales conforme a la Ley 1581 de 2012.")
-            Casilla(aceptaAvisoIA, { aceptaAvisoIA = it },
-                "Entiendo que el asistente de IA responde según la información de mi rol y es de uso exclusivo para asuntos del conjunto.")
-        }
-
-        error?.let {
-            Text(it, color = Color(0xFFFF8A80), fontSize = 13.sp, modifier = Modifier.padding(top = 6.dp))
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            OutlinedButton(
-                onClick = {
-                    CierreSesion.accion()
-                    navController.navigate("PantallaSeleccionRol") {
-                        popUpTo(navController.graph.findStartDestination().id) { inclusive = true }
-                        launchSingleTop = true
-                    }
-                },
-                enabled = !enviando,
-                modifier = Modifier.weight(1f).height(50.dp)
-            ) {
-                Text("Rechazar y salir", color = GrisClaro)
-            }
-            Button(
-                onClick = { viewModel.aceptar() },
-                enabled = completo && !enviando,
-                colors = ButtonDefaults.buttonColors(containerColor = DoradoElegante, contentColor = AzulOscuro),
-                modifier = Modifier.weight(1f).height(50.dp)
-            ) {
-                if (enviando) {
-                    CircularProgressIndicator(color = AzulOscuro, strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
-                } else {
-                    Text("Aceptar y continuar", fontWeight = FontWeight.Bold)
-                }
-            }
-        }
-    }
-}
 
 @Composable
 fun PantallaTerminos(navController: NavController, viewModel: TerminosViewModel = hiltViewModel()) {
@@ -159,6 +55,34 @@ fun PantallaTerminos(navController: NavController, viewModel: TerminosViewModel 
             fecha?.let { "Aceptados el ${it.take(16).replace("T", " a las ")}." } ?: "Versión vigente de los términos de uso."
         )
         ListaSecciones(TerminosCondiciones.secciones(usuario?.rol), Modifier.weight(1f))
+    }
+}
+
+@Composable
+fun DialogoTerminos(rol: String?, onCerrar: () -> Unit, onAceptar: () -> Unit) {
+    Dialog(onDismissRequest = onCerrar, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(AzulOscuro)
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onCerrar) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Cerrar", tint = GrisClaro)
+                }
+                Text("Términos y condiciones", color = GrisClaro, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            }
+            EncabezadoTerminos(rol, "Uso de la plataforma, tratamiento de datos personales y aviso del asistente de IA.")
+            ListaSecciones(TerminosCondiciones.secciones(rol), Modifier.weight(1f))
+            Button(
+                onClick = onAceptar,
+                colors = ButtonDefaults.buttonColors(containerColor = DoradoElegante, contentColor = AzulOscuro),
+                modifier = Modifier.fillMaxWidth().padding(top = 10.dp).height(50.dp)
+            ) {
+                Text("Leí y acepto", fontWeight = FontWeight.Bold)
+            }
+        }
     }
 }
 
@@ -221,27 +145,5 @@ private fun ListaSecciones(secciones: List<SeccionTerminos>, modifier: Modifier 
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun Casilla(marcada: Boolean, onCambio: (Boolean) -> Unit, texto: String) {
-    Row(
-        verticalAlignment = Alignment.Top,
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onCambio(!marcada) }
-            .padding(vertical = 2.dp)
-    ) {
-        Checkbox(
-            checked = marcada,
-            onCheckedChange = onCambio,
-            colors = CheckboxDefaults.colors(
-                checkedColor = DoradoElegante,
-                uncheckedColor = GrisClaro.copy(alpha = 0.7f),
-                checkmarkColor = AzulOscuro
-            )
-        )
-        Text(texto, color = GrisClaro, fontSize = 12.5.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 12.dp))
     }
 }
