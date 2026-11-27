@@ -92,6 +92,12 @@ object AppModule {
         return RetrofitClient.iaApiService
     }
 
+    @Provides
+    @Singleton
+    fun provideTerminosApiService(): TerminosApiService {
+        return RetrofitClient.terminosApiService
+    }
+
     // Repositories
     @Provides
     @Singleton
@@ -168,4 +174,10 @@ object AppModule {
     fun provideIaRepository(
         api: IaApiService
     ): IaRepository = IaRepository(api)
+
+    @Provides
+    @Singleton
+    fun provideTerminosRepository(
+        api: TerminosApiService
+    ): TerminosRepository = TerminosRepository(api)
 }

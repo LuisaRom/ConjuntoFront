@@ -53,6 +53,7 @@ import com.example.app.ui.theme.AzulOscuro
 import com.example.app.ui.theme.DoradoElegante
 import com.example.app.ui.theme.GrisClaro
 import com.example.app.ui.theme.GrisOscuro
+import com.example.app.Pantallas.EnlaceTerminos
 import com.example.app.ViewModel.UsuarioViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -122,6 +123,10 @@ fun PantallaPerfil(navController: NavController, usuarioViewModel: UsuarioViewMo
             Text("Usuarios", color = Color.White, fontWeight = FontWeight.Bold)
 
             InfoPerfil("Usuarios Creados", usuarios.size.toString())
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            EnlaceTerminos(navController)
 
             Spacer(modifier = Modifier.height(32.dp))
 
