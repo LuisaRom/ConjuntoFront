@@ -13,6 +13,7 @@ import androidx.navigation.navDeepLink
 import com.example.app.Auth.AuthManager
 
 import com.example.app.Pantallas.PantallaAsistenteIA
+import com.example.app.Pantallas.PantallaTerminos
 import com.example.app.Pantallas.PantallaMapaConjunto
 import com.example.app.Pantallas.PantallaLogin
 import com.example.app.Pantallas.PantallaSeleccionRol
@@ -272,6 +273,9 @@ fun Navegacion(navController: NavHostController) {
         composable("PantallaDashboardCelador") { RoleGuard(navController, setOf("CELADOR")) { PantallaDashboardCelador(navController) } }
         composable("PantallaRecibosCelador") { RoleGuard(navController, setOf("CELADOR")) { PantallaRecibosCelador(navController) } }
         composable("PantallaMenuCelador") { RoleGuard(navController, setOf("CELADOR")) { PantallaMenuCelador(navController) } }
+        composable("PantallaTerminos") {
+            RoleGuard(navController, setOf("ADMINISTRADOR", "CELADOR", "RESIDENTE")) { PantallaTerminos(navController) }
+        }
         composable("PantallaVehiculosParqueaderos") {
             RoleGuard(navController, setOf("ADMINISTRADOR", "CELADOR")) { PantallaVehiculosParqueaderos(navController) }
         }

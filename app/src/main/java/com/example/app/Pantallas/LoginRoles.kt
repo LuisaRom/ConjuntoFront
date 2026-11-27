@@ -1,5 +1,6 @@
 package com.example.app.Pantallas
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.*
@@ -7,7 +8,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
@@ -30,6 +36,19 @@ fun PantallaLogin(
     var usuario by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    var aceptaTerminos by remember { mutableStateOf(false) }
+    var verTerminos by remember { mutableStateOf(false) }
+
+    if (verTerminos) {
+        DialogoTerminos(
+            rol = rolSeleccionado,
+            onCerrar = { verTerminos = false },
+            onAceptar = {
+                aceptaTerminos = true
+                verTerminos = false
+            }
+        )
+    }
 
     // Reacciona cuando cambie el rol autenticado o el rol seleccionado
     LaunchedEffect(usuarioActual?.rol, rolSeleccionado) {
@@ -137,12 +156,49 @@ fun PantallaLogin(
                 )
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Checkbox(
+                    checked = aceptaTerminos,
+                    onCheckedChange = {
+                        aceptaTerminos = it
+                        usuarioViewModel.clearError()
+                    },
+                    colors = CheckboxDefaults.colors(
+                        checkedColor = Color(0xFFFDCB6E),
+                        uncheckedColor = Color.Gray,
+                        checkmarkColor = Color.Black
+                    )
+                )
+                Text(
+                    text = buildAnnotatedString {
+                        append("Acepto los ")
+                        withStyle(SpanStyle(color = Color(0xFFFDCB6E), fontWeight = FontWeight.Bold, textDecoration = TextDecoration.Underline)) {
+                            append("Términos y condiciones")
+                        }
+                        append(", el tratamiento de mis datos personales y el aviso del asistente de IA")
+                    },
+                    color = Color.White,
+                    fontSize = 13.sp,
+                    lineHeight = 18.sp,
+                    modifier = Modifier.clickable { verTerminos = true }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
 
             Button(
                 onClick = {
                     if (usuario.isBlank() || password.isBlank()) {
                         usuarioViewModel.setError("Completa usuario y contraseña")
+                        return@Button
+                    }
+                    if (!aceptaTerminos) {
+                        usuarioViewModel.setError("Debes aceptar los términos y condiciones para ingresar")
                         return@Button
                     }
                     usuarioViewModel.clearError()
@@ -151,8 +207,11 @@ fun PantallaLogin(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                enabled = !isLoading,
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFDCB6E))
+                enabled = !isLoading && aceptaTerminos,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFFDCB6E),
+                    disabledContainerColor = Color(0xFFFDCB6E).copy(alpha = 0.35f)
+                )
             ) {
                 Text("Ingresar", color = Color.Black, fontSize = 18.sp)
             }

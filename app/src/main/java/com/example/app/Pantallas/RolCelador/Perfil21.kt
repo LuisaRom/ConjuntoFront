@@ -3,6 +3,8 @@ package com.example.app.Pantallas.RolCelador
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -18,6 +20,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import com.example.app.Pantallas.EnlaceTerminos
 import com.example.app.ViewModel.UsuarioViewModel
 import com.example.app.ui.theme.AzulOscuro
 import com.example.app.ui.theme.DoradoElegante
@@ -56,6 +59,7 @@ fun PantallaPerfilCelador(
         modifier = Modifier
             .fillMaxSize()
             .background(AzulOscuro)
+            .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
         // Botón volver
@@ -96,6 +100,10 @@ fun PantallaPerfilCelador(
         Spacer(modifier = Modifier.height(24.dp))
 
         CampoPerfil("Nombre", usuarioPerfil?.nombre ?: "", enabled = false)
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        EnlaceTerminos(navController)
 
         Spacer(modifier = Modifier.height(32.dp))
 

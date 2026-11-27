@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import com.example.app.Pantallas.EnlaceTerminos
 import com.example.app.ViewModel.UsuarioViewModel
 import com.example.app.ui.theme.AzulOscuro
 import com.example.app.ui.theme.DoradoElegante
@@ -97,6 +98,10 @@ fun PantallaPerfilResidente(
         Spacer(modifier = Modifier.height(24.dp))
 
         SeccionMisVehiculos()
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        EnlaceTerminos(navController)
 
         Spacer(modifier = Modifier.height(32.dp))
 

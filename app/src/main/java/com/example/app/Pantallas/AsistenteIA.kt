@@ -7,7 +7,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -15,6 +17,7 @@ import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.SmartToy
 import androidx.compose.material.icons.filled.ThumbDown
 import androidx.compose.material.icons.filled.ThumbUp
@@ -35,6 +38,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.app.Auth.AuthManager
 import com.example.app.Model.MensajeIA
+import com.example.app.Model.TerminosCondiciones
 import com.example.app.ViewModel.AsistenteIaViewModel
 import com.example.app.ui.theme.AzulOscuro
 import com.example.app.ui.theme.DoradoElegante
@@ -80,6 +84,7 @@ fun PantallaAsistenteIA(
 
     var texto by remember { mutableStateOf("") }
     var mostrarHistorial by remember { mutableStateOf(false) }
+    var mostrarAviso by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
 
     LaunchedEffect(mensajes.size, escribiendo) {
@@ -140,6 +145,26 @@ fun PantallaAsistenteIA(
                     .clip(RoundedCornerShape(8.dp))
                     .background(Color.White.copy(alpha = 0.06f))
                     .padding(8.dp)
+            )
+        }
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(DoradoElegante.copy(alpha = 0.12f))
+                .clickable { mostrarAviso = true }
+                .padding(horizontal = 10.dp, vertical = 8.dp)
+        ) {
+            Icon(Icons.Default.Info, contentDescription = null, tint = DoradoElegante, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = TerminosCondiciones.AVISO_IA_CORTO + " Ver más",
+                color = GrisClaro.copy(alpha = 0.9f),
+                fontSize = 12.sp,
+                lineHeight = 16.sp
             )
         }
 
@@ -215,6 +240,25 @@ fun PantallaAsistenteIA(
                 Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Enviar", tint = AzulOscuro)
             }
         }
+    }
+
+    if (mostrarAviso) {
+        AlertDialog(
+            onDismissRequest = { mostrarAviso = false },
+            containerColor = GrisOscuro,
+            icon = { Icon(Icons.Default.Info, contentDescription = null, tint = DoradoElegante) },
+            title = { Text("Aviso sobre el asistente IA", color = GrisClaro) },
+            text = {
+                Column(Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState())) {
+                    TerminosCondiciones.AVISO_IA.forEach {
+                        Text(it, color = GrisClaro, fontSize = 13.sp, lineHeight = 19.sp, modifier = Modifier.padding(bottom = 10.dp))
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { mostrarAviso = false }) { Text("Entendido", color = DoradoElegante) }
+            }
+        )
     }
 
     if (mostrarHistorial) {
